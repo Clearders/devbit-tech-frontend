@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   runtimeConfig: {
     public: {
-      apiBaseUrl: import.meta.env.NUXT_PUBLIC_API_BASE_URL ?? '/api'
+      apiBase: '/api'
     }
   },
   devtools: { enabled: true },

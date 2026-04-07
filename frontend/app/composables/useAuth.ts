@@ -7,7 +7,7 @@ interface User {
 export const useAuth = () => {
   const config = useRuntimeConfig()
   const authApi = $fetch.create({
-    baseURL: config.public.apiBaseUrl,
+    baseURL: config.public.apiBase as string,
     headers: {
       accept: 'application/json',
       'content-type': 'application/json'
@@ -82,33 +82,35 @@ export const useAuth = () => {
     }
   }
 
+  // useAuth.ts - register 方法修正
   const register = async (
-    name: string,
-    email: string,
-    password: string,
-    code: string
-  ) => {
-    const payload = {
-      name: name.trim(),
-      email: email.trim(),
-      code: code.trim(),
-      password,
-      confirm_password: password
-    }
-
+      name: string,
+      email: string,
+      password: string,
+      code: string,
+      confirm_password: string) => {
     try {
-      await authRequest<User>('/register', payload)
+      await $fetch<{ status_code: number; name: string; email: string; id: number }>('/api/register', {
+        baseURL: config.public.apiBaseUrl as string,
+        method: 'POST',
+        body: { name, email, password, code, confirm_password }
+      })
+      await navigateTo('/login')
     } catch (error: unknown) {
-      try {
-        await authRequest<User>('/', payload)
-      } catch (fallbackError: unknown) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: pickErrorMessage(fallbackError ?? error, 'Registration failed.')
-        })
-      }
+      throw createError({
+        statusCode: 400,
+        statusMessage: pickErrorMessage(error, 'Registration failed.')
+      })
     }
-    await navigateTo('/login')
+  }
+
+  // useAuth.ts 中新增
+  const sendVerificationCode = async (email: string) => {
+    await $fetch('/api/register/send_code', {
+      baseURL: config.public.apiBaseUrl as string,
+      method: 'POST',
+      body: { email }
+    })
   }
 
   const logout = () => {
@@ -120,5 +122,5 @@ export const useAuth = () => {
     return navigateTo('/login')
   }
 
-  return { token, user, isAuthenticated, login, sendEmailCode, register, logout }
+  return { token, user, isAuthenticated, login, sendEmailCode, sendVerificationCode, register, logout }
 }

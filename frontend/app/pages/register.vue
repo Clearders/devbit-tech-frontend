@@ -230,10 +230,10 @@ async function handleSubmit() {
   loading.value = true
   try {
     await register(
-        form.name.trim(),
-        form.email.trim(),
-        form.code.trim(),
-        form.password
+      form.name.trim(),
+      form.email.trim(),
+      form.code.trim(),
+      form.password,
     )
   } catch (err: unknown) {
     const e = err as { data?: { message?: string }; message?: string }
