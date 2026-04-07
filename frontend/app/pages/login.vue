@@ -50,6 +50,8 @@
 </template>
 
 <script setup lang="ts">
+import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
+
 useSeoMeta({
   title: 'Sign In – DevBit Tech',
   description: 'Sign in to your DevBit Tech account.'
@@ -94,8 +96,7 @@ async function handleSubmit() {
   try {
     await login(form.email, form.password)
   } catch (err: unknown) {
-    const e = err as { data?: { message?: string }; message?: string }
-    apiError.value = e?.data?.message ?? e?.message ?? 'Login failed. Please try again.'
+    apiError.value = extractApiErrorMessage(err, 'Login failed. Please try again.')
   } finally {
     loading.value = false
   }

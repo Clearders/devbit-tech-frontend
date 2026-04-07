@@ -101,12 +101,14 @@
 </template>
 
 <script setup lang="ts">
+import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
+
 useSeoMeta({
   title: 'Create Account - DevBit Tech',
   description: 'Create a new DevBit Tech account.'
 })
 
-const { register, sendEmailCode } = useAuth()
+const { register, sendVerificationCode } = useAuth()
 
 const form = reactive({ name: '', email: '', code: '', password: '', confirmPassword: '' })
 const errors = reactive({ name: '', email: '', code: '', password: '', confirmPassword: '' })
@@ -211,12 +213,11 @@ async function handleSendCode() {
 
   codeLoading.value = true
   try {
-    await sendEmailCode(email)
+    await sendVerificationCode({ email })
     codeMessage.value = 'Verification code sent. Please check your inbox.'
     startCooldown()
   } catch (err: unknown) {
-    const e = err as { data?: { message?: string }; message?: string }
-    apiError.value = e?.data?.message ?? e?.message ?? 'Failed to send verification code. Please try again.'
+    apiError.value = extractApiErrorMessage(err, 'Failed to send verification code. Please try again.')
   } finally {
     codeLoading.value = false
   }
@@ -229,15 +230,15 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    await register(
-      form.name.trim(),
-      form.email.trim(),
-      form.code.trim(),
-      form.password,
-    )
+    await register({
+      name: form.name.trim(),
+      email: form.email.trim(),
+      password: form.password,
+      code: form.code.trim(),
+      confirm_password: form.confirmPassword
+    })
   } catch (err: unknown) {
-    const e = err as { data?: { message?: string }; message?: string }
-    apiError.value = e?.data?.message ?? e?.message ?? 'Registration failed. Please try again.'
+    apiError.value = extractApiErrorMessage(err, 'Registration failed. Please try again.')
   } finally {
     loading.value = false
   }
