@@ -3,6 +3,15 @@
 </template>
 
 <script setup lang="ts">
+const props = withDefaults(
+  defineProps<{
+    layer?: 'base' | 'overlay'
+  }>(),
+  {
+    layer: 'base'
+  }
+)
+
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 interface Particle {
@@ -68,6 +77,8 @@ onMounted(() => {
   }
 
   function initParticles() {
+    if (props.layer !== 'base') return
+
     particles.length = 0
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       particles.push(createParticle())
@@ -171,7 +182,13 @@ onMounted(() => {
   function tick() {
     ctx2d.clearRect(0, 0, canvasEl.width, canvasEl.height)
 
-    drawMouseGlow()
+    if (props.layer === 'overlay') {
+      drawMouseGlow()
+      drawRipples()
+      animId = requestAnimationFrame(tick)
+      return
+    }
+
     drawConnections()
 
     for (const p of particles) {
@@ -192,7 +209,6 @@ onMounted(() => {
       ctx2d.fill()
     }
 
-    drawRipples()
     animId = requestAnimationFrame(tick)
   }
 
@@ -200,9 +216,11 @@ onMounted(() => {
   initParticles()
   tick()
 
-  window.addEventListener('pointermove', onPointerMove)
-  window.addEventListener('pointerleave', onPointerLeave)
-  window.addEventListener('click', onClick)
+  if (props.layer === 'overlay') {
+    window.addEventListener('pointermove', onPointerMove)
+    window.addEventListener('pointerleave', onPointerLeave)
+    window.addEventListener('click', onClick)
+  }
 
   const ro = new ResizeObserver(() => {
     resize()
@@ -213,16 +231,18 @@ onMounted(() => {
   onUnmounted(() => {
     cancelAnimationFrame(animId)
     ro.disconnect()
-    window.removeEventListener('pointermove', onPointerMove)
-    window.removeEventListener('pointerleave', onPointerLeave)
-    window.removeEventListener('click', onClick)
+    if (props.layer === 'overlay') {
+      window.removeEventListener('pointermove', onPointerMove)
+      window.removeEventListener('pointerleave', onPointerLeave)
+      window.removeEventListener('click', onClick)
+    }
   })
 })
 </script>
 
 <style scoped>
 .dynamic-bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;

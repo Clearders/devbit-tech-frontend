@@ -1,0 +1,296 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Clearders",
+      "email": "clearders@devbit.tech",
+      "password": "Devbit123",
+      "avatar": "CD",
+      "isAdmin": true
+    },
+    {
+      "id": 2,
+      "name": "EpsilonHunter",
+      "email": "epsilon@devbit.tech",
+      "password": "Devbit123",
+      "avatar": "EH",
+      "isAdmin": true
+    },
+    {
+      "id": 3,
+      "name": "CodeMaster",
+      "email": "codemaster@example.com",
+      "password": "Devbit123",
+      "avatar": "CM",
+      "isAdmin": false
+    },
+    {
+      "id": 4,
+      "name": "DebugQueen",
+      "email": "debugqueen@example.com",
+      "password": "Devbit123",
+      "avatar": "DQ",
+      "isAdmin": false
+    },
+    {
+      "id": 5,
+      "name": "PixelArtist",
+      "email": "pixelartist@example.com",
+      "password": "Devbit123",
+      "avatar": "PA",
+      "isAdmin": false
+    },
+    {
+      "id": 6,
+      "name": "StackOverflow",
+      "email": "stack@example.com",
+      "password": "Devbit123",
+      "avatar": "SO",
+      "isAdmin": false
+    }
+  ],
+  "sessions": [
+    {
+      "token": "6642de69-1c1c-4a00-b301-09ccf1fd5b3b",
+      "userId": 1,
+      "expiresAt": "2026-05-04T23:58:28.955Z"
+    }
+  ],
+  "verificationCodes": [],
+  "posts": [
+    {
+      "id": 1,
+      "title": "Welcome to the DevBit Tech forum",
+      "content": "This space is for product discussion, engineering notes, and community questions. Share what you are building and help other developers move faster.",
+      "authorId": 1,
+      "category": "announcement",
+      "tags": [
+        "community",
+        "announcement"
+      ],
+      "createdAt": "2026-04-27T17:58:28.924Z",
+      "updatedAt": "2026-04-27T17:58:28.925Z",
+      "viewCount": 1024,
+      "likeUserIds": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "isPinned": true,
+      "isLocked": false
+    },
+    {
+      "id": 2,
+      "title": "Rust vs Go for backend services",
+      "content": "Our team is comparing Rust and Go for service development. We care about performance, deploy speed, and team onboarding. Interested in real project tradeoffs.",
+      "authorId": 3,
+      "category": "tech",
+      "tags": [
+        "rust",
+        "go",
+        "backend"
+      ],
+      "createdAt": "2026-05-01T17:58:28.925Z",
+      "updatedAt": "2026-05-02T17:58:28.925Z",
+      "viewCount": 567,
+      "likeUserIds": [
+        1,
+        2,
+        5
+      ],
+      "isPinned": false,
+      "isLocked": false
+    },
+    {
+      "id": 3,
+      "title": "Nuxt 4 patterns we use in DevBit",
+      "content": "We are standardizing composables, route guards, and server-first data loading in Nuxt 4. Sharing the patterns that reduced state duplication in our app.",
+      "authorId": 2,
+      "category": "devbit",
+      "tags": [
+        "nuxt",
+        "vue",
+        "frontend"
+      ],
+      "createdAt": "2026-05-02T17:58:28.925Z",
+      "updatedAt": "2026-05-03T17:58:28.925Z",
+      "viewCount": 389,
+      "likeUserIds": [
+        1,
+        3,
+        4,
+        5
+      ],
+      "isPinned": true,
+      "isLocked": false
+    },
+    {
+      "id": 4,
+      "title": "Need advice on PostgreSQL query performance",
+      "content": "Our log queries became slow after the dataset grew. We already added indexes and tuned shared buffers. Looking for ideas around plans, partitions, and query shape.",
+      "authorId": 4,
+      "category": "help",
+      "tags": [
+        "postgresql",
+        "database",
+        "performance"
+      ],
+      "createdAt": "2026-05-03T17:58:28.925Z",
+      "updatedAt": "2026-05-03T17:58:28.925Z",
+      "viewCount": 234,
+      "likeUserIds": [
+        2
+      ],
+      "isPinned": false,
+      "isLocked": false
+    },
+    {
+      "id": 5,
+      "title": "Open source markdown editor release",
+      "content": "I released a lightweight markdown editor with preview, syntax highlight, and theme switching. Built with Vue 3 and CodeMirror 6. Feedback welcome.",
+      "authorId": 5,
+      "category": "showcase",
+      "tags": [
+        "opensource",
+        "markdown",
+        "vue"
+      ],
+      "createdAt": "2026-04-29T17:58:28.925Z",
+      "updatedAt": "2026-04-30T17:58:28.925Z",
+      "viewCount": 456,
+      "likeUserIds": [
+        1,
+        2,
+        3,
+        4,
+        6
+      ],
+      "isPinned": false,
+      "isLocked": false
+    },
+    {
+      "id": 6,
+      "title": "Game development from prototype to release",
+      "content": "A retrospective on choosing an engine, building the first prototype, and finishing the release pipeline. Happy to discuss tradeoffs and process.",
+      "authorId": 6,
+      "category": "general",
+      "tags": [
+        "game-dev",
+        "prototype",
+        "release"
+      ],
+      "createdAt": "2026-04-24T17:58:28.925Z",
+      "updatedAt": "2026-04-26T17:58:28.925Z",
+      "viewCount": 678,
+      "likeUserIds": [
+        1,
+        3,
+        5
+      ],
+      "isPinned": false,
+      "isLocked": false
+    }
+  ],
+  "comments": [
+    {
+      "id": 1,
+      "postId": 1,
+      "authorId": 3,
+      "content": "Glad to see the forum live.",
+      "createdAt": "2026-04-28T17:58:28.925Z"
+    },
+    {
+      "id": 2,
+      "postId": 1,
+      "authorId": 4,
+      "content": "Looking forward to more technical posts here.",
+      "createdAt": "2026-04-29T17:58:28.925Z"
+    },
+    {
+      "id": 3,
+      "postId": 1,
+      "authorId": 1,
+      "content": "We will keep improving the experience.",
+      "createdAt": "2026-04-30T17:58:28.925Z"
+    },
+    {
+      "id": 4,
+      "postId": 2,
+      "authorId": 2,
+      "content": "Rust is harder up front but pays off in maintenance.",
+      "createdAt": "2026-05-02T17:58:28.925Z"
+    },
+    {
+      "id": 5,
+      "postId": 2,
+      "authorId": 5,
+      "content": "Go is still the fastest path when the team is small.",
+      "createdAt": "2026-05-03T17:58:28.925Z"
+    },
+    {
+      "id": 6,
+      "postId": 3,
+      "authorId": 4,
+      "content": "The Nuxt 4 DX improvements are noticeable.",
+      "createdAt": "2026-05-04T09:58:28.925Z"
+    },
+    {
+      "id": 7,
+      "postId": 4,
+      "authorId": 3,
+      "content": "Start with EXPLAIN ANALYZE and compare row estimates.",
+      "createdAt": "2026-05-04T07:58:28.925Z"
+    },
+    {
+      "id": 8,
+      "postId": 5,
+      "authorId": 6,
+      "content": "This looks solid. I already starred it.",
+      "createdAt": "2026-05-01T17:58:28.925Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": 1,
+      "senderId": 1,
+      "recipientId": 3,
+      "content": "Welcome to the community. Reach out if you need anything.",
+      "createdAt": "2026-04-29T17:58:28.925Z",
+      "isRead": true
+    },
+    {
+      "id": 2,
+      "senderId": 3,
+      "recipientId": 1,
+      "content": "Thanks. The forum is shaping up well.",
+      "createdAt": "2026-04-30T17:58:28.925Z",
+      "isRead": true
+    },
+    {
+      "id": 3,
+      "senderId": 1,
+      "recipientId": 1,
+      "content": "System note: your DevBit forum account is active.",
+      "createdAt": "2026-04-27T17:58:28.925Z",
+      "isRead": true
+    },
+    {
+      "id": 4,
+      "senderId": 4,
+      "recipientId": 1,
+      "content": "Could you take a look at my database thread when you have time?",
+      "createdAt": "2026-05-04T15:58:28.925Z",
+      "isRead": false
+    },
+    {
+      "id": 5,
+      "senderId": 2,
+      "recipientId": 3,
+      "content": "Your article draft is strong. Nice structure.",
+      "createdAt": "2026-05-04T16:58:28.925Z",
+      "isRead": false
+    }
+  ]
+}

@@ -1,21 +1,22 @@
+import type {
+  AuthUser,
+  LoginResponse,
+  RegisterPayload,
+  SendCodeResponse
+} from '~~/shared/auth'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
-
-interface User {
-  id: number
-  name: string
-  email: string
-}
-
-interface RegisterPayload {
-  name: string
-  email: string
-  password: string
-  code: string
-  confirm_password: string
-}
 
 export const useAuth = () => {
   const config = useRuntimeConfig()
+  const token = useCookie<string | null>('auth_token', {
+    default: () => null,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 6
+  })
+  const user = useState<AuthUser | null>('auth_user', () => null)
+  const pendingMe = useState<Promise<AuthUser | null> | null>('auth_me_pending', () => null)
+  const isAuthenticated = computed(() => !!token.value)
+
   const authApi = $fetch.create({
     baseURL: config.public.apiBase as string,
     headers: {
@@ -23,20 +24,48 @@ export const useAuth = () => {
       'content-type': 'application/json'
     },
     timeout: 10000,
-    retry: 0
+    retry: 0,
+    onRequest({ options }) {
+      if (token.value) {
+        options.headers = new Headers(options.headers as HeadersInit)
+        options.headers.set('authorization', `Bearer ${token.value}`)
+      }
+    }
   })
 
-  const token = useCookie<string | null>('auth_token', {
-    default: () => null,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7
-  })
-  const user = useState<User | null>('auth_user', () => null)
-  const isAuthenticated = computed(() => !!token.value)
+  const syncCurrentUser = async () => {
+    if (!token.value) {
+      user.value = null
+      return null
+    }
+    if (pendingMe.value) {
+      return pendingMe.value
+    }
+
+    pendingMe.value = authApi<AuthUser>('/me')
+      .then((me) => {
+        user.value = me
+        return me
+      })
+      .catch(() => {
+        token.value = null
+        user.value = null
+        return null
+      })
+      .finally(() => {
+        pendingMe.value = null
+      })
+
+    return pendingMe.value
+  }
+
+  if (token.value && !user.value && process.client) {
+    void syncCurrentUser()
+  }
 
   const login = async (email: string, password: string) => {
     try {
-      const data = await authApi<{ token: string; user?: User }>('/api/login', {
+      const data = await authApi<LoginResponse>('/login', {
         method: 'POST',
         body: {
           email: email.trim(),
@@ -45,22 +74,22 @@ export const useAuth = () => {
       })
 
       token.value = data.token
-      if (data.user) {
-        user.value = data.user
-      }
-
+      user.value = data.user
       await navigateTo('/')
     } catch (error: unknown) {
       throw createError({
         statusCode: 401,
-        statusMessage: extractApiErrorMessage(error, 'Login failed. Please check your email and password.')
+        statusMessage: extractApiErrorMessage(
+          error,
+          'Login failed. Please check your email and password.'
+        )
       })
     }
   }
 
   const sendVerificationCode = async ({ email }: { email: string }) => {
     try {
-      await authApi('/api/register/send_code', {
+      return await authApi<SendCodeResponse>('/register/send_code', {
         method: 'POST',
         body: {
           email: email.trim()
@@ -69,7 +98,10 @@ export const useAuth = () => {
     } catch (error: unknown) {
       throw createError({
         statusCode: 400,
-        statusMessage: extractApiErrorMessage(error, 'Failed to send verification code. Please try again.')
+        statusMessage: extractApiErrorMessage(
+          error,
+          'Failed to send verification code. Please try again.'
+        )
       })
     }
   }
@@ -84,7 +116,7 @@ export const useAuth = () => {
     }
 
     try {
-      await authApi('/api/register', {
+      await authApi('/register', {
         method: 'POST',
         body: normalizedPayload
       })
@@ -92,7 +124,10 @@ export const useAuth = () => {
     } catch (error: unknown) {
       throw createError({
         statusCode: 400,
-        statusMessage: extractApiErrorMessage(error, 'Registration failed. Please verify your information and try again.')
+        statusMessage: extractApiErrorMessage(
+          error,
+          'Registration failed. Please verify your information and try again.'
+        )
       })
     }
   }
@@ -103,5 +138,14 @@ export const useAuth = () => {
     return navigateTo('/login')
   }
 
-  return { token, user, isAuthenticated, login, sendVerificationCode, register, logout }
+  return {
+    token,
+    user,
+    isAuthenticated,
+    syncCurrentUser,
+    login,
+    sendVerificationCode,
+    register,
+    logout
+  }
 }

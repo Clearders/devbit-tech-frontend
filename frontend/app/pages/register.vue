@@ -213,8 +213,8 @@ async function handleSendCode() {
 
   codeLoading.value = true
   try {
-    await sendVerificationCode({ email })
-    codeMessage.value = 'Verification code sent. Please check your inbox.'
+    const response = await sendVerificationCode({ email })
+    codeMessage.value = response.message
     startCooldown()
   } catch (err: unknown) {
     apiError.value = extractApiErrorMessage(err, 'Failed to send verification code. Please try again.')

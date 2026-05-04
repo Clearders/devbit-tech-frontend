@@ -28,6 +28,7 @@
                 (编辑于 {{ formatRelativeTime(post.updatedAt) }})
               </span>
               <span>👁 {{ formatCount(post.viewCount) }} 浏览</span>
+              <span>👍 {{ post.likeCount }} 赞</span>
               <span>💬 {{ post.commentCount }} 评论</span>
             </div>
           </div>
@@ -67,6 +68,20 @@
             <!-- Tags -->
             <div class="forum-detail__tags" v-if="post.tags.length">
               <span v-for="tag in post.tags" :key="tag" class="forum-detail__tag">{{ tag }}</span>
+            </div>
+
+            <!-- Like action -->
+            <div class="forum-detail__actions mt-4 mb-4 text-center">
+              <button
+                class="btn btn--lg"
+                :class="post.likedByMe ? 'btn--primary' : 'btn--outline'"
+                @click="handleLike"
+                :disabled="!isAuthenticated"
+                :title="!isAuthenticated ? '请先登录' : ''"
+                style="min-width: 120px;"
+              >
+                👍 点赞 ({{ post.likeCount }})
+              </button>
             </div>
 
             <!-- Comments section -->
@@ -140,6 +155,7 @@
               <ul class="forum-sidebar-card__info-list">
                 <li><span>分类</span><span>{{ categoryInfo?.icon }} {{ categoryInfo?.label }}</span></li>
                 <li><span>浏览</span><span>{{ formatCount(post.viewCount) }}</span></li>
+                <li><span>点赞</span><span>{{ post.likeCount }}</span></li>
                 <li><span>评论</span><span>{{ post.commentCount }}</span></li>
                 <li><span>发布</span><span>{{ formatRelativeTime(post.createdAt) }}</span></li>
               </ul>
@@ -178,6 +194,7 @@
 import ForumComment from '~/components/ForumComment.vue'
 import { useForum } from '~/composables/useForum'
 
+// Update title and description dynamically
 useSeoMeta({
   title: '帖子详情 – DevBit Tech',
   description: '查看帖子详情与讨论。'
@@ -195,9 +212,11 @@ const {
   deleteComment,
   togglePinPost,
   toggleLockPost,
+  toggleLikePost,
   posts,
+  ensureInit,
+  loadPost,
   loadCommentsForPost,
-  initFromApi,
 } = useForum()
 
 const postId = computed(() => Number(route.params.id))
@@ -228,11 +247,14 @@ const canManage = computed(() => {
 
 // Load from API on mount and when postId changes
 onMounted(() => {
-  initFromApi()
-  loadCommentsForPost(postId.value)
+  ensureInit()
+    .then(() => loadPost(postId.value))
+    .then(() => loadCommentsForPost(postId.value))
 })
 watch(postId, (newId) => {
-  if (newId) loadCommentsForPost(newId)
+  if (!newId) return
+  void loadPost(newId)
+  void loadCommentsForPost(newId)
 })
 
 function canDeleteComment(comment: { author: { id: number } }) {
@@ -274,6 +296,11 @@ function handleDeletePost() {
     deletePost(postId.value)
     navigateTo('/forum')
   }
+}
+
+function handleLike() {
+  if (!isAuthenticated.value) return
+  toggleLikePost(postId.value)
 }
 
 function formatCount(n: number): string {
