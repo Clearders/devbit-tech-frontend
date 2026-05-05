@@ -59,7 +59,7 @@ export const useAuth = () => {
     return pendingMe.value
   }
 
-  if (token.value && !user.value && process.client) {
+  if (token.value && !user.value && import.meta.client) {
     void syncCurrentUser()
   }
 
