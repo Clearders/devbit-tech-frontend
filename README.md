@@ -1,15 +1,15 @@
 # devbit-tech
 
-A test front-end for the DevBit Tech website, powered by [Nuxt 3](https://nuxt.com/).
-If you are finding the back-end Src, its here <https://github.com/EpsilonHunter/devbit-tech-backend>
+DevBit Tech 网站的前端测试项目，基于 [Nuxt 3](https://nuxt.com/) 构建。
+如需查找后端源码，请访问 <https://github.com/EpsilonHunter/devbit-tech-backend>
 
-## Project Structure
+## 项目结构
 
 ```
-frontend/   # Nuxt 3 application
+frontend/   # Nuxt 3 应用
 ```
 
-## Getting Started
+## 快速开始
 
 ```bash
 cd frontend
@@ -17,19 +17,19 @@ npm install
 npm run dev
 ```
 
-The development server will start at <http://localhost:3000>.
+开发服务器将在 <http://localhost:3000> 启动。
 
-## Available Scripts
+## 可用脚本
 
-| Command | Description |
+| 命令 | 说明 |
 |---|---|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run generate` | Generate static site |
-| `npm run preview` | Preview production build |
+| `npm run dev` | 启动开发服务器 |
+| `npm run build` | 构建生产版本 |
+| `npm run generate` | 生成静态站点 |
+| `npm run preview` | 预览生产构建 |
 
-## Tech Stack
+## 技术栈
 
-- [Nuxt 3](https://nuxt.com/) – The intuitive Vue framework
-- [Vue 3](https://vuejs.org/) – Progressive JavaScript framework
-- [TypeScript](https://www.typescriptlang.org/) – Type safety
+- [Nuxt 3](https://nuxt.com/) – 直观的 Vue 框架
+- [Vue 3](https://vuejs.org/) – 渐进式 JavaScript 框架
+- [TypeScript](https://www.typescriptlang.org/) – 类型安全

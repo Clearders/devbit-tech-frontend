@@ -1,40 +1,63 @@
 # DevBit Tech API
 
-Last updated: 2026-05-05
+最后更新：2026-05-05
 
-This project now ships with a built-in Nitro API under `frontend/server/api`. The frontend uses the same contract in development and production through `runtimeConfig.public.apiBase = /api`.
+本项目在 `frontend/server/api` 下内置了 Nitro API。前端在开发和生产环境中通过 `runtimeConfig.public.apiBase = '/api'` 调用它。
 
-## Base URL
+## 基础 URL
 
-- Development: `http://localhost:3000/api`
-- Production preview: `/api`
+- 开发环境：`http://localhost:3000/api`
+- 生产预览：`/api`
 
-## Authentication
+## 身份认证
 
-- Auth is token-based.
-- The frontend stores the token in the `auth_token` cookie.
-- Authenticated requests also send `Authorization: Bearer <token>`.
-- Session lifetime: 6 hours.
+- 认证基于 Token（UUID v4 会话令牌）。
+- 前端将 Token 存储在 `auth_token` Cookie 中。
+- 已认证的请求同时发送 `Authorization: Bearer <token>`。
+- 两种方式（Cookie 或请求头）均可接受。
+- 会话有效期：6 小时。
 
-## Development Accounts
+## 开发账户
 
-All seeded accounts use the same password: `Devbit123`
+所有预置账户使用相同的密码：`Devbit123`
 
-- `clearders@devbit.tech` (admin)
-- `epsilon@devbit.tech` (admin)
-- `codemaster@example.com`
-- `debugqueen@example.com`
-- `pixelartist@example.com`
-- `stack@example.com`
+| 邮箱 | 用户名 | 管理员 |
+|---|---|---|
+| `clearders@devbit.tech` | Clearders | ✅ |
+| `epsilon@devbit.tech` | EpsilonHunter | ✅ |
+| `codemaster@example.com` | CodeMaster | ❌ |
+| `debugqueen@example.com` | DebugQueen | ❌ |
+| `pixelartist@example.com` | PixelArtist | ❌ |
+| `stack@example.com` | StackOverflow | ❌ |
 
-## Verification Code
+## 验证码
 
-`POST /api/register/send_code` returns a development message containing the active code.
+`POST /api/register/send_code` 返回一条包含当前验证码的开发消息。
 
-- Current generated code: `123456`
-- Expiration: 10 minutes
+- 当前生成的验证码：`123456`
+- 有效期：10 分钟
 
-## Shared Models
+## 错误响应
+
+所有接口可能返回以下格式的错误：
+
+```json
+{
+  "statusCode": 400,
+  "statusMessage": "Human-readable error description."
+}
+```
+
+常见状态码：
+
+| 状态码 | 含义 |
+|---|---|
+| 400 | 请求错误 — 缺少或无效的输入 |
+| 401 | 未授权 — 需要身份认证 |
+| 403 | 禁止访问 — 权限不足 |
+| 404 | 未找到 — 资源不存在 |
+
+## 共享数据模型
 
 ```ts
 type ForumCategory =
@@ -87,11 +110,18 @@ interface ForumMessage {
 }
 ```
 
-## Auth Endpoints
+---
+
+## 认证接口
 
 ### `POST /api/login`
 
-Request:
+使用邮箱和密码进行认证。成功后设置 `auth_token` Cookie。
+
+- **认证：** 无需
+- **状态码：** 成功返回 `200`，失败返回 `400` / `401`
+
+**请求：**
 
 ```json
 {
@@ -100,11 +130,11 @@ Request:
 }
 ```
 
-Response:
+**`200` 响应：**
 
 ```json
 {
-  "token": "session-token",
+  "token": "<uuid-v4-session-token>",
   "user": {
     "id": 1,
     "name": "Clearders",
@@ -113,13 +143,35 @@ Response:
 }
 ```
 
+---
+
 ### `GET /api/me`
 
-Returns the current authenticated user.
+返回当前已认证的用户信息。
+
+- **认证：** 必需
+- **状态码：** 成功返回 `200`，未登录返回 `401`
+
+**`200` 响应：**
+
+```json
+{
+  "id": 1,
+  "name": "Clearders",
+  "email": "clearders@devbit.tech"
+}
+```
+
+---
 
 ### `POST /api/register/send_code`
 
-Request:
+为指定邮箱生成开发环境验证码。
+
+- **认证：** 无需
+- **状态码：** 成功返回 `200`，邮箱无效返回 `400`
+
+**请求：**
 
 ```json
 {
@@ -127,7 +179,7 @@ Request:
 }
 ```
 
-Response:
+**`200` 响应：**
 
 ```json
 {
@@ -136,9 +188,21 @@ Response:
 }
 ```
 
+---
+
 ### `POST /api/register`
 
-Request:
+注册新用户账户。需要从 `send_code` 获取的有效验证码。
+
+- **认证：** 无需
+- **状态码：** 成功返回 `200`，验证失败返回 `400`
+
+**验证规则：**
+- 密码至少 8 个字符，且必须同时包含字母和数字
+- `password` 和 `confirm_password` 必须一致
+- 邮箱必须唯一
+
+**请求：**
 
 ```json
 {
@@ -150,7 +214,7 @@ Request:
 }
 ```
 
-Response:
+**`200` 响应：**
 
 ```json
 {
@@ -160,43 +224,105 @@ Response:
 }
 ```
 
-## Forum Endpoints
+---
+
+## 论坛接口
 
 ### `GET /api/forum/bootstrap`
 
-Returns the initial forum payload used by the frontend.
+返回论坛初始数据（用户、帖子、消息），前端用于在单次请求中初始化状态。
 
-Response:
+- **认证：** 可选
+- **状态码：** `200`
+
+**行为说明：**
+- `posts` — 所有帖子，排序规则：置顶优先，然后按 `createdAt` 降序排列
+- `users` — 所有论坛用户（已脱敏，不含密码）
+- `messages` — 已认证时：当前用户的所有私信（按时间顺序）；未认证时：空数组 `[]`
+
+**`200` 响应：**
 
 ```json
 {
-  "users": [],
-  "posts": [],
-  "messages": []
+  "users": [ /* ForumUser[] */ ],
+  "posts": [ /* ForumPost[]（已排序） */ ],
+  "messages": [ /* ForumMessage[] */ ]
 }
 ```
 
+---
+
 ### `GET /api/forum/users`
 
-Returns all visible forum users.
+返回所有可见的论坛用户（已脱敏）。
+
+- **认证：** 无需
+- **状态码：** `200`
+
+**`200` 响应：**
+
+```json
+[
+  { "id": 1, "name": "Clearders", "avatar": "CD", "isAdmin": true },
+  { "id": 2, "name": "EpsilonHunter", "avatar": "EH", "isAdmin": true }
+]
+```
+
+---
 
 ### `GET /api/forum/posts`
 
-Optional query:
+返回所有论坛帖子，已排序（置顶优先，然后最新优先）。
 
-- `category=<ForumCategory>`
+- **认证：** 可选
+- **状态码：** `200`
 
-### `GET /api/forum/posts/search?q=keyword`
+**查询参数：**
 
-Searches title, content, and tags.
+| 参数 | 类型 | 说明 |
+|---|---|---|
+| `category` | `ForumCategory` | 按分类筛选帖子。省略或设为 `'all'` 则返回全部。 |
+
+**`200` 响应：** `ForumPost[]`
+
+---
+
+### `GET /api/forum/posts/search`
+
+对帖子标题、正文内容和标签进行全文搜索。
+
+- **认证：** 可选
+- **状态码：** `200`
+
+**查询参数：**
+
+| 参数 | 类型 | 说明 |
+|---|---|---|
+| `q` | `string` | 不区分大小写的搜索关键词。空查询返回 `[]`。 |
+
+**`200` 响应：** `ForumPost[]`（已排序，置顶优先然后最新优先）
+
+---
 
 ### `GET /api/forum/posts/:id`
 
-Returns a single post and increments `viewCount`.
+按 ID 返回单个帖子。会将其 `viewCount` 加 1。
+
+- **认证：** 可选
+- **状态码：** 成功返回 `200`，未找到返回 `404`
+
+**`200` 响应：** `ForumPost`
+
+---
 
 ### `POST /api/forum/posts`
 
-Auth required.
+创建新的论坛帖子。
+
+- **认证：** 必需
+- **状态码：** 成功返回 `200`，失败返回 `400` / `401`
+
+**请求体：**
 
 ```json
 {
@@ -207,31 +333,82 @@ Auth required.
 }
 ```
 
+| 字段 | 类型 | 必填 | 默认值 |
+|---|---|---|---|
+| `title` | `string` | ✅ | — |
+| `content` | `string` | ✅ | — |
+| `category` | `ForumCategory` | ❌ | `"general"` |
+| `tags` | `string[]` | ❌ | `[]` |
+
+**`200` 响应：** 创建的 `ForumPost`
+
+---
+
 ### `DELETE /api/forum/posts/:id`
 
-Auth required. Allowed for the post author or admins.
+删除帖子及其所有关联评论。仅帖子作者或管理员可以操作。
+
+- **认证：** 必需
+- **状态码：** 成功返回 `204`，失败返回 `401` / `403` / `404`
+
+**响应：** 空响应体，HTTP 204 No Content
+
+---
 
 ### `PUT /api/forum/posts/:id/pin`
 
-Admin only.
+切换帖子的置顶状态。
+
+- **认证：** 必需（仅管理员）
+- **状态码：** 成功返回 `200`，失败返回 `401` / `403` / `404`
+
+**`200` 响应：** 更新后的 `ForumPost`（`isPinned` 已切换）
+
+---
 
 ### `PUT /api/forum/posts/:id/lock`
 
-Admin only.
+切换帖子的锁定状态。锁定的帖子将拒绝新评论。
+
+- **认证：** 必需（仅管理员）
+- **状态码：** 成功返回 `200`，失败返回 `401` / `403` / `404`
+
+**`200` 响应：** 更新后的 `ForumPost`（`isLocked` 已切换）
+
+---
 
 ### `PUT /api/forum/posts/:id/like`
 
-Auth required. Toggles the current user's like state and returns the updated post.
+切换当前用户对帖子的点赞状态。若已点赞则取消，否则添加点赞。
 
-## Comment Endpoints
+- **认证：** 必需
+- **状态码：** 成功返回 `200`，失败返回 `401` / `404`
+
+**`200` 响应：** 更新后的 `ForumPost`（`likedByMe` 和 `likeCount` 反映变更）
+
+---
+
+## 评论接口
 
 ### `GET /api/forum/posts/:id/comments`
 
-Returns comments in chronological order.
+返回帖子的所有评论，按时间顺序排列（最早优先）。
+
+- **认证：** 无需
+- **状态码：** 成功返回 `200`，帖子未找到返回 `404`
+
+**`200` 响应：** `ForumComment[]`
+
+---
 
 ### `POST /api/forum/posts/:id/comments`
 
-Auth required. Locked posts reject comment creation.
+为帖子添加评论。若帖子已锁定则拒绝。
+
+- **认证：** 必需
+- **状态码：** 成功返回 `200`，失败返回 `400` / `401` / `403` / `404`
+
+**请求：**
 
 ```json
 {
@@ -239,19 +416,42 @@ Auth required. Locked posts reject comment creation.
 }
 ```
 
+**`200` 响应：** 创建的 `ForumComment`
+
+---
+
 ### `DELETE /api/forum/comments/:id`
 
-Auth required. Allowed for the comment author or admins.
+删除评论。仅评论作者或管理员可以操作。
 
-## Message Endpoints
+- **认证：** 必需
+- **状态码：** 成功返回 `204`，失败返回 `401` / `403` / `404`
+
+**响应：** 空响应体，HTTP 204 No Content
+
+---
+
+## 私信接口
 
 ### `GET /api/forum/messages`
 
-Auth required. Returns all direct messages involving the current user.
+返回涉及当前用户的所有私信，按时间顺序排列（最早优先）。
+
+- **认证：** 必需
+- **状态码：** 成功返回 `200`，失败返回 `401`
+
+**`200` 响应：** `ForumMessage[]`
+
+---
 
 ### `POST /api/forum/messages`
 
-Auth required.
+向其他用户发送私信。
+
+- **认证：** 必需
+- **状态码：** 成功返回 `200`，失败返回 `400` / `401` / `404`
+
+**请求：**
 
 ```json
 {
@@ -260,16 +460,40 @@ Auth required.
 }
 ```
 
+| 字段 | 类型 | 必填 |
+|---|---|---|
+| `recipientId` | `number` | ✅ |
+| `content` | `string` | ✅ |
+
+**`200` 响应：** 创建的 `ForumMessage`（`isRead: false`）
+
+---
+
 ### `PUT /api/forum/messages/:id/read`
 
-Auth required. Marks one message as read.
+将单条消息标记为已读。仅消息的接收者可以标记。
+
+- **认证：** 必需
+- **状态码：** 成功返回 `204`，失败返回 `401` / `403` / `404`
+
+**响应：** 空响应体，HTTP 204 No Content
+
+---
 
 ### `PUT /api/forum/messages/conversation/:partnerId/read`
 
-Auth required. Marks all incoming messages from the specified partner as read.
+一次性将来自特定联系人的所有未读消息标记为已读。
 
-## Persistence
+- **认证：** 必需
+- **状态码：** 成功返回 `204`，失败返回 `401`
 
-- Data file: `frontend/server/data/forum-db.json`
-- The file is created automatically on first API access.
-- Posts, comments, messages, sessions, and verification codes are persisted there.
+**响应：** 空响应体，HTTP 204 No Content
+
+---
+
+## 数据持久化
+
+- **数据文件：** `frontend/server/data/forum-db.json`
+- 该文件在首次 API 访问时自动创建并填充种子数据。
+- 过期的会话和验证码在每次写入时被清理。
+- 持久化数据包括：用户、会话、验证码、帖子、评论、消息。
