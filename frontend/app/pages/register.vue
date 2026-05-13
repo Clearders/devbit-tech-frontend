@@ -103,6 +103,10 @@
 <script setup lang="ts">
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
+definePageMeta({
+  middleware: 'guest'
+})
+
 useSeoMeta({
   title: 'Create Account - DevBit Tech',
   description: 'Create a new DevBit Tech account.'

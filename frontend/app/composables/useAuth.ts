@@ -6,50 +6,55 @@ import type {
 } from '~~/shared/auth'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
+type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'anonymous'
+type ApiOptions = Parameters<typeof $fetch>[1]
+
 export const useAuth = () => {
   const config = useRuntimeConfig()
-  const token = useCookie<string | null>('auth_token', {
-    default: () => null,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 6
-  })
   const user = useState<AuthUser | null>('auth_user', () => null)
+  const status = useState<AuthStatus>('auth_status', () => 'idle')
   const pendingMe = useState<Promise<AuthUser | null> | null>('auth_me_pending', () => null)
-  const isAuthenticated = computed(() => !!token.value)
+  const isAuthenticated = computed(() => status.value === 'authenticated' && !!user.value)
+  const isResolving = computed(() => status.value === 'idle' || status.value === 'loading')
 
-  const authApi = $fetch.create({
-    baseURL: config.public.apiBase as string,
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json'
-    },
-    timeout: 10000,
-    retry: 0,
-    onRequest({ options }) {
-      if (token.value) {
-        options.headers = new Headers(options.headers as HeadersInit)
-        options.headers.set('authorization', `Bearer ${token.value}`)
-      }
+  const apiFetch = <T>(path: string, options: ApiOptions = {}) => {
+    const headers = new Headers(options.headers as HeadersInit | undefined)
+    if (!headers.has('accept')) {
+      headers.set('accept', 'application/json')
     }
-  })
+    if (!headers.has('content-type')) {
+      headers.set('content-type', 'application/json')
+    }
 
-  const syncCurrentUser = async () => {
-    if (!token.value) {
-      user.value = null
-      return null
+    const requestFetch = import.meta.server ? useRequestFetch() : $fetch
+    return requestFetch<T>(path, {
+      ...options,
+      baseURL: config.public.apiBase as string,
+      credentials: 'same-origin',
+      headers,
+      retry: 0,
+      timeout: 10000
+    })
+  }
+
+  const syncCurrentUser = async (force = false) => {
+    if (!force && status.value === 'authenticated' && user.value) {
+      return user.value
     }
     if (pendingMe.value) {
       return pendingMe.value
     }
 
-    pendingMe.value = authApi<AuthUser>('/me')
+    status.value = 'loading'
+    pendingMe.value = apiFetch<AuthUser>('/me')
       .then((me) => {
         user.value = me
+        status.value = 'authenticated'
         return me
       })
       .catch(() => {
-        token.value = null
         user.value = null
+        status.value = 'anonymous'
         return null
       })
       .finally(() => {
@@ -59,13 +64,13 @@ export const useAuth = () => {
     return pendingMe.value
   }
 
-  if (token.value && !user.value && import.meta.client) {
+  if (import.meta.client && status.value === 'idle') {
     void syncCurrentUser()
   }
 
   const login = async (email: string, password: string) => {
     try {
-      const data = await authApi<LoginResponse>('/login', {
+      const data = await apiFetch<LoginResponse>('/login', {
         method: 'POST',
         body: {
           email: email.trim(),
@@ -73,10 +78,12 @@ export const useAuth = () => {
         }
       })
 
-      token.value = data.token
       user.value = data.user
+      status.value = 'authenticated'
       await navigateTo('/')
     } catch (error: unknown) {
+      user.value = null
+      status.value = 'anonymous'
       throw createError({
         statusCode: 401,
         statusMessage: extractApiErrorMessage(
@@ -89,7 +96,7 @@ export const useAuth = () => {
 
   const sendVerificationCode = async ({ email }: { email: string }) => {
     try {
-      return await authApi<SendCodeResponse>('/register/send_code', {
+      return await apiFetch<SendCodeResponse>('/register/send_code', {
         method: 'POST',
         body: {
           email: email.trim()
@@ -116,7 +123,7 @@ export const useAuth = () => {
     }
 
     try {
-      await authApi('/register', {
+      await apiFetch('/register', {
         method: 'POST',
         body: normalizedPayload
       })
@@ -132,16 +139,21 @@ export const useAuth = () => {
     }
   }
 
-  const logout = () => {
-    token.value = null
-    user.value = null
-    return navigateTo('/login')
+  const logout = async () => {
+    try {
+      await apiFetch('/logout', { method: 'POST' })
+    } finally {
+      user.value = null
+      status.value = 'anonymous'
+      await navigateTo('/login')
+    }
   }
 
   return {
-    token,
     user,
+    status,
     isAuthenticated,
+    isResolving,
     syncCurrentUser,
     login,
     sendVerificationCode,

@@ -52,6 +52,10 @@
 <script setup lang="ts">
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
+definePageMeta({
+  middleware: 'guest'
+})
+
 useSeoMeta({
   title: 'Sign In – DevBit Tech',
   description: 'Sign in to your DevBit Tech account.'

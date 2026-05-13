@@ -14,7 +14,10 @@
         </ul>
 
         <div class="navbar__auth">
-          <template v-if="isAuthenticated">
+          <template v-if="isResolving">
+            <span class="navbar__user">Checking session...</span>
+          </template>
+          <template v-else-if="isAuthenticated">
             <span class="navbar__user">{{ user?.name }}</span>
             <button
               class="btn btn--outline navbar__logout navbar__magnetic"
@@ -53,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-const { isAuthenticated, user, logout } = useAuth()
+const { isAuthenticated, isResolving, user, logout } = useAuth()
 
 function onButtonPointerDown(event: PointerEvent) {
   const target = event.currentTarget as HTMLElement | null

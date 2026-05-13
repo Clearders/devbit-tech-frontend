@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
-import { createError, getCookie, getHeader } from 'h3'
+import { createError, deleteCookie, getCookie, getHeader } from 'h3'
 import type { H3Event } from 'h3'
 import type {
   ForumBootstrap,
@@ -76,7 +76,9 @@ export interface ForumDatabase {
 }
 
 const DB_FILE = resolve(process.cwd(), 'server/data/forum-db.json')
-const SIX_HOURS_MS = 6 * 60 * 60 * 1000
+export const AUTH_COOKIE_NAME = 'auth_token'
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
+const SESSION_MAX_AGE_MS = SESSION_MAX_AGE_SECONDS * 1000
 
 function isoOffset(daysAgo: number, extraMs = 0) {
   return new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000 + extraMs).toISOString()
@@ -400,9 +402,13 @@ export function createSession(database: ForumDatabase, userId: number) {
   database.sessions.push({
     token,
     userId,
-    expiresAt: new Date(Date.now() + SIX_HOURS_MS).toISOString()
+    expiresAt: new Date(Date.now() + SESSION_MAX_AGE_MS).toISOString()
   })
   return token
+}
+
+export function destroySession(database: ForumDatabase, token: string) {
+  database.sessions = database.sessions.filter((session) => session.token !== token)
 }
 
 export function generateVerificationCode(database: ForumDatabase, email: string) {
@@ -465,7 +471,15 @@ export function getTokenFromEvent(event: H3Event) {
   if (authHeader?.startsWith('Bearer ')) {
     return authHeader.slice('Bearer '.length).trim()
   }
-  return getCookie(event, 'auth_token') ?? null
+  return getCookie(event, AUTH_COOKIE_NAME) ?? null
+}
+
+export function clearAuthCookie(event: H3Event) {
+  deleteCookie(event, AUTH_COOKIE_NAME, {
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production'
+  })
 }
 
 export async function getOptionalAuthUser(event: H3Event) {
@@ -479,10 +493,12 @@ export async function getOptionalAuthUser(event: H3Event) {
       entry.token === token && new Date(entry.expiresAt).getTime() > Date.now()
   )
   if (!session) {
+    clearAuthCookie(event)
     return null
   }
   const user = database.users.find((entry) => entry.id === session.userId)
   if (!user) {
+    clearAuthCookie(event)
     return null
   }
   return sanitizeAuthUser(user)
@@ -500,11 +516,13 @@ export async function requireAuthUser(event: H3Event) {
       entry.token === token && new Date(entry.expiresAt).getTime() > Date.now()
   )
   if (!session) {
+    clearAuthCookie(event)
     throw createError({ statusCode: 401, statusMessage: 'Session expired. Please sign in again.' })
   }
 
   const user = database.users.find((entry) => entry.id === session.userId)
   if (!user) {
+    clearAuthCookie(event)
     throw createError({ statusCode: 401, statusMessage: 'User not found for the current session.' })
   }
 

@@ -49,18 +49,7 @@
       "isAdmin": false
     }
   ],
-  "sessions": [
-    {
-      "token": "f333b7be-42a1-4820-ba32-bebea42b4292",
-      "userId": 1,
-      "expiresAt": "2026-05-05T20:00:27.268Z"
-    },
-    {
-      "token": "a9090bc1-5c3a-4b3f-958f-17159f174351",
-      "userId": 1,
-      "expiresAt": "2026-05-05T20:01:39.685Z"
-    }
-  ],
+  "sessions": [],
   "verificationCodes": [],
   "posts": [
     {

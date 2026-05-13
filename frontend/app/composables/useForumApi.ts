@@ -8,28 +8,30 @@ import type {
   SendMessagePayload
 } from '~~/shared/forum'
 
+type ApiOptions = Parameters<typeof $fetch>[1]
+
 export const useForumApi = () => {
   const config = useRuntimeConfig()
-  const token = useCookie<string | null>('auth_token', {
-    default: () => null,
-    sameSite: 'lax'
-  })
 
-  const forumApi = $fetch.create({
-    baseURL: config.public.apiBase as string,
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json'
-    },
-    timeout: 10000,
-    retry: 0,
-    onRequest({ options }) {
-      if (token.value) {
-        options.headers = new Headers(options.headers as HeadersInit)
-        options.headers.set('authorization', `Bearer ${token.value}`)
-      }
+  const forumApi = <T>(path: string, options: ApiOptions = {}) => {
+    const headers = new Headers(options.headers as HeadersInit | undefined)
+    if (!headers.has('accept')) {
+      headers.set('accept', 'application/json')
     }
-  })
+    if (!headers.has('content-type')) {
+      headers.set('content-type', 'application/json')
+    }
+
+    const requestFetch = import.meta.server ? useRequestFetch() : $fetch
+    return requestFetch<T>(path, {
+      ...options,
+      baseURL: config.public.apiBase as string,
+      credentials: 'same-origin',
+      headers,
+      timeout: 10000,
+      retry: 0
+    })
+  }
 
   return {
     fetchBootstrap(): Promise<ForumBootstrap> {

@@ -1,5 +1,7 @@
 import type { LoginResponse } from '../../shared/auth'
 import {
+  AUTH_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
   createSession,
   readDatabase,
   sanitizeAuthUser,
@@ -26,15 +28,15 @@ export default defineEventHandler(async (event): Promise<LoginResponse> => {
 
   const token = createSession(database, user.id)
   await writeDatabase(database)
-  setCookie(event, 'auth_token', token, {
-    httpOnly: false,
+  setCookie(event, AUTH_COOKIE_NAME, token, {
+    httpOnly: true,
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 6
+    maxAge: SESSION_MAX_AGE_SECONDS,
+    secure: process.env.NODE_ENV === 'production'
   })
 
   return {
-    token,
     user: sanitizeAuthUser(user)
   }
 })
