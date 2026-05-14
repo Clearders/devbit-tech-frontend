@@ -50,6 +50,7 @@ export interface ForumMessage {
 export interface ForumBootstrap {
   users: ForumUser[]
   posts: ForumPost[]
+  comments: ForumComment[]
   messages: ForumMessage[]
 }
 
@@ -78,37 +79,37 @@ export const FORUM_CATEGORIES: {
   {
     value: 'general',
     label: 'General',
-    icon: 'Chat',
+    icon: '💬',
     desc: 'Open discussion for the community.'
   },
   {
     value: 'tech',
     label: 'Tech',
-    icon: 'Code',
+    icon: '⌘',
     desc: 'Deep technical discussion and engineering practice.'
   },
   {
     value: 'devbit',
     label: 'DevBit',
-    icon: 'Brand',
+    icon: '◆',
     desc: 'Product updates and engineering notes from DevBit Tech.'
   },
   {
     value: 'help',
     label: 'Help',
-    icon: 'Help',
+    icon: '?',
     desc: 'Ask questions and get help from other members.'
   },
   {
     value: 'showcase',
     label: 'Showcase',
-    icon: 'Launch',
+    icon: '★',
     desc: 'Show the projects and experiments you are building.'
   },
   {
     value: 'announcement',
     label: 'Announcement',
-    icon: 'News',
+    icon: '!',
     desc: 'Official announcements and important notices.'
   }
 ]

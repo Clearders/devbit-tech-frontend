@@ -493,6 +493,12 @@ export function buildBootstrap(
     database.posts.map((post) => serializePost(database, post, viewerUserId))
   )
   const users = database.users.map(sanitizeForumUser)
+  const comments = database.comments
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    )
+    .map((comment) => serializeComment(database, comment))
   const messages = viewerUserId
     ? database.messages
         .filter(
@@ -509,6 +515,7 @@ export function buildBootstrap(
   return {
     users,
     posts,
+    comments,
     messages
   }
 }

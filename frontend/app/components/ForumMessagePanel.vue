@@ -1,5 +1,5 @@
 <template>
-  <div class="message-panel" :class="{ 'message-panel--open': isOpen }">
+  <div v-if="isAuthenticated" class="message-panel" :class="{ 'message-panel--open': isOpen }">
     <button class="message-panel__toggle" @click="toggle" :title="isOpen ? '关闭消息' : '打开消息'">
       <span class="message-panel__toggle-icon">💬</span>
       <span v-if="unreadCount > 0" class="message-panel__badge">{{ unreadCount }}</span>
@@ -76,8 +76,15 @@ import type { ForumMessage } from '~/composables/useForum'
 import { useForum } from '~/composables/useForum'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
-const { user } = useAuth()
-const { formatRelativeTime, getConversations, sendMessage, markConversationAsRead } = useForum()
+const { user, isAuthenticated } = useAuth()
+const {
+  formatRelativeTime,
+  getConversations,
+  getUnreadMessageCount,
+  sendMessage,
+  markConversationAsRead,
+  messages
+} = useForum()
 
 const isOpen = ref(false)
 const activePartner = ref<number | null>(null)
@@ -87,10 +94,7 @@ const sending = ref(false)
 const actionError = ref('')
 
 const conversations = computed(() => getConversations())
-const unreadCount = computed(() => {
-  const { getUnreadMessageCount } = useForum()
-  return getUnreadMessageCount()
-})
+const unreadCount = computed(() => getUnreadMessageCount())
 
 const currentUserId = computed(() => user.value?.id ?? 0)
 
@@ -101,7 +105,6 @@ const activePartnerName = computed(() => {
 
 const activeMessages = computed(() => {
   if (!activePartner.value) return [] as ForumMessage[]
-  const { messages } = useForum()
   return messages.value
     .filter(m =>
       (m.sender.id === currentUserId.value && m.recipient.id === activePartner.value) ||

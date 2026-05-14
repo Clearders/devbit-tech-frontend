@@ -1,5 +1,18 @@
 <template>
-  <div class="forum-detail" v-if="post">
+  <div v-if="isLoadingPost" class="forum-detail forum-detail--loading">
+    <section class="page-header">
+      <div class="container">
+        <NuxtLink to="/forum" class="forum-detail__back">← 返回论坛</NuxtLink>
+        <div class="forum-empty">
+          <div class="forum-empty__icon">⌛</div>
+          <h1 class="forum-empty__title">正在加载帖子</h1>
+          <p class="forum-empty__desc">正在获取帖子详情和评论。</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="forum-detail" v-else-if="post">
     <!-- Header -->
     <section class="page-header">
       <div class="container">
@@ -123,10 +136,10 @@
                     <span class="forum-detail__comment-hint">Ctrl + Enter 发送</span>
                     <button
                       class="btn btn--primary btn--sm"
-                      :disabled="!newComment.trim()"
+                      :disabled="submittingComment || !newComment.trim()"
                       @click="handleAddComment"
                     >
-                      发表评论
+                      {{ submittingComment ? '发表中...' : '发表评论' }}
                     </button>
                   </div>
                 </div>
@@ -186,7 +199,7 @@
     <section class="page-header">
       <div class="container" style="text-align: center;">
         <h1 class="page-header__title">😕 帖子未找到</h1>
-        <p class="page-header__subtitle">该帖子可能已被删除或不存在。</p>
+        <p class="page-header__subtitle">{{ actionError || '该帖子可能已被删除或不存在。' }}</p>
         <NuxtLink to="/forum" class="btn btn--primary" style="margin-top: 1.5rem;">← 返回论坛</NuxtLink>
       </div>
     </section>
@@ -228,6 +241,8 @@ const post = computed(() => getPostById(postId.value))
 const postComments = computed(() => getCommentsByPostId(postId.value))
 const newComment = ref('')
 const actionError = ref('')
+const isLoadingPost = ref(true)
+const submittingComment = ref(false)
 
 // Update SEO title dynamically
 watchEffect(() => {
@@ -251,17 +266,29 @@ const canDeletePost = computed(() => {
   return user.value.id === post.value.author.id || user.value.isAdmin
 })
 
-// Load from API on mount and when postId changes
-onMounted(() => {
-  ensureInit()
-    .then(() => loadPost(postId.value))
-    .then(() => loadCommentsForPost(postId.value))
-})
+async function loadCurrentPost(id: number) {
+  actionError.value = ''
+  if (!Number.isFinite(id) || id < 1) {
+    isLoadingPost.value = false
+    actionError.value = '帖子地址无效。'
+    return
+  }
+
+  isLoadingPost.value = true
+  try {
+    await ensureInit()
+    await loadPost(id)
+    await loadCommentsForPost(id)
+  } catch (error: unknown) {
+    actionError.value = extractApiErrorMessage(error, '帖子加载失败，请稍后重试。')
+  } finally {
+    isLoadingPost.value = false
+  }
+}
+
 watch(postId, (newId) => {
-  if (!newId) return
-  void loadPost(newId)
-  void loadCommentsForPost(newId)
-})
+  void loadCurrentPost(newId)
+}, { immediate: true })
 
 function canDeleteComment(comment: { author: { id: number } }) {
   if (!user.value) return false
@@ -287,11 +314,13 @@ async function runAction(action: () => Promise<unknown>, fallback: string) {
 
 async function handleAddComment() {
   const text = newComment.value.trim()
-  if (!text) return
+  if (!text || submittingComment.value) return
+  submittingComment.value = true
   await runAction(async () => {
     await addComment(postId.value, text)
     newComment.value = ''
   }, '发表评论失败，请稍后重试。')
+  submittingComment.value = false
 }
 
 function handleDeleteComment(commentId: number) {

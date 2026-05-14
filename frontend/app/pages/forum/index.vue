@@ -30,6 +30,15 @@
 
           <!-- Actions -->
           <div class="forum-toolbar__actions">
+            <label class="forum-toolbar__sort" for="forum-sort">
+              <span>排序</span>
+              <select id="forum-sort" v-model="sortMode" class="form-control forum-toolbar__sort-select">
+                <option value="latest">最新发布</option>
+                <option value="active">讨论最多</option>
+                <option value="views">浏览最多</option>
+                <option value="likes">点赞最多</option>
+              </select>
+            </label>
             <button v-if="isAuthenticated" class="btn btn--primary" @click="showCreateModal = true">
               ✏️ 发布帖子
             </button>
@@ -55,7 +64,7 @@
           >
             <span class="forum-categories__tab-icon">{{ cat.icon }}</span>
             <span class="forum-categories__tab-label">{{ cat.label }}</span>
-            <span v-if="cat.value === 'all'" class="forum-categories__tab-count">{{ totalPostCount }}</span>
+            <span class="forum-categories__tab-count">{{ getCategoryCount(cat.value) }}</span>
           </button>
         </div>
       </div>
@@ -70,8 +79,24 @@
             <!-- Admin Panel -->
             <ForumAdminPanel v-if="showAdminPanel && isAdmin" />
 
+            <div v-if="loadError" class="forum-status forum-status--error">
+              <span>{{ loadError }}</span>
+              <button class="btn btn--outline btn--sm" @click="loadForum(true)">重试</button>
+            </div>
+
+            <div class="forum-results-bar">
+              <span>{{ resultSummary }}</span>
+              <NuxtLink v-if="!isAuthenticated" to="/login" class="forum-results-bar__link">登录后发帖和评论</NuxtLink>
+            </div>
+
+            <div v-if="isLoadingForum" class="forum-empty">
+              <div class="forum-empty__icon">⌛</div>
+              <h3 class="forum-empty__title">正在加载论坛</h3>
+              <p class="forum-empty__desc">正在获取最新帖子和社区数据。</p>
+            </div>
+
             <!-- Empty state -->
-            <div v-if="filteredPosts.length === 0" class="forum-empty">
+            <div v-else-if="displayedPosts.length === 0" class="forum-empty">
               <div class="forum-empty__icon">{{ searchQuery ? '🔍' : '📝' }}</div>
               <h3 class="forum-empty__title">
                 {{ searchQuery ? '未找到匹配的帖子' : '暂无帖子' }}
@@ -91,7 +116,7 @@
             <!-- Post list -->
             <div v-else class="forum-post-list">
               <ForumPostCard
-                v-for="post in filteredPosts"
+                v-for="post in displayedPosts"
                 :key="post.id"
                 :post="post"
               />
@@ -250,9 +275,23 @@ const {
   initFromApi,
 } = useForum()
 
-// Try to load from API on mount
+const isLoadingForum = ref(true)
+const loadError = ref('')
+
+async function loadForum(force = false) {
+  isLoadingForum.value = true
+  loadError.value = ''
+  try {
+    await initFromApi(force)
+  } catch (error: unknown) {
+    loadError.value = extractApiErrorMessage(error, '论坛数据加载失败，请稍后重试。')
+  } finally {
+    isLoadingForum.value = false
+  }
+}
+
 onMounted(() => {
-  initFromApi()
+  void loadForum()
 })
 
 // Category tabs (prepend "all")
@@ -269,6 +308,7 @@ const isAdmin = computed(() => !!user.value?.isAdmin)
 // Search & filter
 const searchQuery = ref('')
 const activeCategory = ref<ForumCategory | 'all'>('all')
+const sortMode = ref<'latest' | 'active' | 'views' | 'likes'>('latest')
 const showAdminPanel = ref(false)
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -288,6 +328,36 @@ const filteredPosts = computed(() => {
   }
   return getPostsByCategory(activeCategory.value === 'all' ? undefined : activeCategory.value)
 })
+
+const displayedPosts = computed(() => {
+  const sorted = [...filteredPosts.value]
+  return sorted.sort((a, b) => {
+    if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1
+    if (sortMode.value === 'active') return b.commentCount - a.commentCount || newestFirst(a, b)
+    if (sortMode.value === 'views') return b.viewCount - a.viewCount || newestFirst(a, b)
+    if (sortMode.value === 'likes') return b.likeCount - a.likeCount || newestFirst(a, b)
+    return newestFirst(a, b)
+  })
+})
+
+const resultSummary = computed(() => {
+  const scope = activeCategory.value === 'all'
+    ? '全部分类'
+    : categoryTabs.value.find(cat => cat.value === activeCategory.value)?.label ?? '当前分类'
+  const query = searchQuery.value.trim()
+  return query
+    ? `${scope}中找到 ${displayedPosts.value.length} 个匹配结果`
+    : `${scope}共 ${displayedPosts.value.length} 个帖子`
+})
+
+function newestFirst(a: { createdAt: string }, b: { createdAt: string }) {
+  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+}
+
+function getCategoryCount(category: ForumCategory | 'all') {
+  if (category === 'all') return totalPostCount.value
+  return posts.value.filter(post => post.category === category).length
+}
 
 function onSearchInput() {
   if (searchTimer) clearTimeout(searchTimer)
@@ -352,6 +422,7 @@ async function handleCreatePost() {
       tags,
     })
     closeCreateModal()
+    await navigateTo('/forum')
   } catch (error: unknown) {
     createApiError.value = extractApiErrorMessage(error, '发布失败，请稍后重试。')
   } finally {

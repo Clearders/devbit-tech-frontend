@@ -56,8 +56,10 @@ export const useForum = () => {
   const messages = useState<ForumMessage[]>('forum_messages', () => [])
   const users = useState<ForumUser[]>('forum_users', () => [])
   const initialized = useState<boolean>('forum_initialized', () => false)
-  const initPromise = useState<Promise<void> | null>('forum_init_promise', () => null)
+  const initPromise = ref<Promise<void> | null>(null)
   const apiReachable = useState<boolean>('forum_api_reachable', () => true)
+  const refreshWatcherBound = useState<boolean>('forum_auth_refresh_watcher_bound', () => false)
+  const authKey = computed(() => isAuthenticated.value ? `user:${user.value?.id ?? 'pending'}` : 'anonymous')
 
   const ensureInit = async (force = false) => {
     if (force) {
@@ -78,6 +80,7 @@ export const useForum = () => {
       const bootstrap = await api.fetchBootstrap()
       users.value = bootstrap.users
       posts.value = sortPosts(bootstrap.posts)
+      comments.value = bootstrap.comments
       messages.value = bootstrap.messages
       apiReachable.value = true
       initialized.value = true
@@ -93,8 +96,18 @@ export const useForum = () => {
     return initPromise.value
   }
 
-  const initFromApi = async () => {
-    await ensureInit()
+  const initFromApi = async (force = false) => {
+    await ensureInit(force)
+  }
+
+  if (import.meta.client && !refreshWatcherBound.value) {
+    refreshWatcherBound.value = true
+    watch(authKey, (_next, previous) => {
+      if (previous === undefined) return
+      void ensureInit(true).catch(() => {
+        apiReachable.value = false
+      })
+    })
   }
 
   const refreshUsers = async () => {

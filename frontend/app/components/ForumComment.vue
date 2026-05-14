@@ -11,8 +11,8 @@
       </div>
       <p class="comment__content">{{ comment.content }}</p>
       <div class="comment__actions" v-if="canDelete">
-        <button class="comment__delete-btn" @click="$emit('delete', comment.id)" title="删除评论">
-
+        <button class="comment__delete-btn" @click="$emit('delete', comment.id)" title="删除评论" aria-label="删除评论">
+          删除
         </button>
       </div>
     </div>

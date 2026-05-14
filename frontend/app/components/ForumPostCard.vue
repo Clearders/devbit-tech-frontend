@@ -30,9 +30,9 @@
         </span>
       </div>
       <div class="post-card__meta">
-        <span class="post-card__stat" title="浏览量"> {{ formatCount(post.viewCount) }}</span>
-        <span class="post-card__stat" title="点赞数"> {{ post.likeCount }}</span>
-        <span class="post-card__stat" title="评论数"> {{ post.commentCount }}</span>
+        <span class="post-card__stat" title="浏览量">👁 {{ formatCount(post.viewCount) }}</span>
+        <span class="post-card__stat" title="点赞数">👍 {{ post.likeCount }}</span>
+        <span class="post-card__stat" title="评论数">💬 {{ post.commentCount }}</span>
         <span class="post-card__time">{{ time }}</span>
       </div>
     </div>
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ForumPost, ForumCategory } from '~/composables/useForum'
+import type { ForumPost } from '~/composables/useForum'
 import { useForum } from '~/composables/useForum'
 
 const props = defineProps<{

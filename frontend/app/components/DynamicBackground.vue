@@ -44,6 +44,7 @@ onMounted(() => {
   const ctx2d = ctx
 
   let animId: number
+  let isVisible = true
   const particles: Particle[] = []
   const ripples: Ripple[] = []
   const mouse = {
@@ -54,19 +55,30 @@ onMounted(() => {
     active: false
   }
 
-  const PARTICLE_COUNT = 80
-  const PRIMARY = '99, 102, 241'   // --color-primary in RGB
-  const SECONDARY = '148, 163, 184' // --color-text-muted in RGB
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+  const PRIMARY = '34, 211, 238'
+  const SECONDARY = '167, 176, 189'
 
   function resize() {
-    canvasEl.width = canvasEl.offsetWidth
-    canvasEl.height = canvasEl.offsetHeight
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const width = Math.max(1, canvasEl.offsetWidth)
+    const height = Math.max(1, canvasEl.offsetHeight)
+    canvasEl.width = Math.floor(width * dpr)
+    canvasEl.height = Math.floor(height * dpr)
+    ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0)
+  }
+
+  function particleCount() {
+    if (prefersReducedMotion.matches) return 0
+    if (window.innerWidth < 640) return 28
+    if (window.innerWidth < 1024) return 48
+    return 72
   }
 
   function createParticle(): Particle {
     return {
-      x: Math.random() * canvasEl.width,
-      y: Math.random() * canvasEl.height,
+      x: Math.random() * canvasEl.offsetWidth,
+      y: Math.random() * canvasEl.offsetHeight,
       vx: (Math.random() - 0.5) * 0.4,
       vy: (Math.random() - 0.5) * 0.4,
       radius: Math.random() * 1.8 + 0.4,
@@ -80,7 +92,7 @@ onMounted(() => {
     if (props.layer !== 'base') return
 
     particles.length = 0
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
+    for (let i = 0; i < particleCount(); i++) {
       particles.push(createParticle())
     }
   }
@@ -119,7 +131,7 @@ onMounted(() => {
     const gradient = ctx2d.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 180)
     gradient.addColorStop(0, `rgba(${PRIMARY}, 0.26)`)
     gradient.addColorStop(0.45, `rgba(${PRIMARY}, 0.12)`)
-    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)')
+    gradient.addColorStop(1, 'rgba(34, 211, 238, 0)')
     ctx2d.fillStyle = gradient
     ctx2d.beginPath()
     ctx2d.arc(mouse.x, mouse.y, 180, 0, Math.PI * 2)
@@ -167,6 +179,7 @@ onMounted(() => {
   }
 
   function onClick(event: MouseEvent) {
+    if (prefersReducedMotion.matches) return
     const point = toCanvasPoint(event.clientX, event.clientY)
     if (!point.inside) return
 
@@ -180,7 +193,12 @@ onMounted(() => {
   }
 
   function tick() {
-    ctx2d.clearRect(0, 0, canvasEl.width, canvasEl.height)
+    if (!isVisible || prefersReducedMotion.matches) {
+      animId = requestAnimationFrame(tick)
+      return
+    }
+
+    ctx2d.clearRect(0, 0, canvasEl.offsetWidth, canvasEl.offsetHeight)
 
     if (props.layer === 'overlay') {
       drawMouseGlow()
@@ -198,10 +216,10 @@ onMounted(() => {
       if (p.alpha >= 0.6) p.alphaDir = -1
       if (p.alpha <= 0.05) p.alphaDir = 1
 
-      if (p.x < -5) p.x = canvasEl.width + 5
-      if (p.x > canvasEl.width + 5) p.x = -5
-      if (p.y < -5) p.y = canvasEl.height + 5
-      if (p.y > canvasEl.height + 5) p.y = -5
+      if (p.x < -5) p.x = canvasEl.offsetWidth + 5
+      if (p.x > canvasEl.offsetWidth + 5) p.x = -5
+      if (p.y < -5) p.y = canvasEl.offsetHeight + 5
+      if (p.y > canvasEl.offsetHeight + 5) p.y = -5
 
       ctx2d.beginPath()
       ctx2d.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
@@ -228,9 +246,24 @@ onMounted(() => {
   })
   ro.observe(canvasEl)
 
+  function onVisibilityChange() {
+    isVisible = document.visibilityState === 'visible'
+  }
+
+  function onMotionPreferenceChange() {
+    ripples.length = 0
+    resize()
+    initParticles()
+  }
+
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  prefersReducedMotion.addEventListener('change', onMotionPreferenceChange)
+
   onUnmounted(() => {
     cancelAnimationFrame(animId)
     ro.disconnect()
+    document.removeEventListener('visibilitychange', onVisibilityChange)
+    prefersReducedMotion.removeEventListener('change', onMotionPreferenceChange)
     if (props.layer === 'overlay') {
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerleave', onPointerLeave)

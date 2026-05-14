@@ -1,4 +1,5 @@
 import type { CreatePostPayload } from '../../../../shared/forum'
+import { FORUM_CATEGORIES } from '../../../../shared/forum'
 import {
   nextId,
   requireAuthUser,
@@ -18,6 +19,9 @@ export default defineEventHandler(async (event) => {
 
   if (!title || !content) {
     throw createError({ statusCode: 400, statusMessage: 'Title and content are required.' })
+  }
+  if (!FORUM_CATEGORIES.some((entry) => entry.value === category)) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid forum category.' })
   }
 
   const post = {
