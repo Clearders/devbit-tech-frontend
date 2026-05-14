@@ -70,13 +70,14 @@
       ],
       "createdAt": "2026-04-27T17:58:28.924Z",
       "updatedAt": "2026-05-05T14:02:09.829Z",
-      "viewCount": 1025,
+      "viewCount": 1028,
       "likeUserIds": [
         2,
         3,
         4,
         5,
-        6
+        6,
+        1
       ],
       "isPinned": false,
       "isLocked": false
@@ -105,13 +106,6 @@
     }
   ],
   "comments": [
-    {
-      "id": 1,
-      "postId": 1,
-      "authorId": 3,
-      "content": "Glad to see the forum live.",
-      "createdAt": "2026-04-28T17:58:28.925Z"
-    },
     {
       "id": 2,
       "postId": 1,

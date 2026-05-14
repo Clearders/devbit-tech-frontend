@@ -56,8 +56,8 @@ onMounted(() => {
   }
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-  const PRIMARY = '34, 211, 238'
-  const SECONDARY = '167, 176, 189'
+  const PRIMARY = '64, 224, 208' // Turquoise to be more visually appealing
+  const SECONDARY = '255, 105, 180' // HotPink for a better contrast and visual pop
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
@@ -131,7 +131,7 @@ onMounted(() => {
     const gradient = ctx2d.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 180)
     gradient.addColorStop(0, `rgba(${PRIMARY}, 0.26)`)
     gradient.addColorStop(0.45, `rgba(${PRIMARY}, 0.12)`)
-    gradient.addColorStop(1, 'rgba(34, 211, 238, 0)')
+    gradient.addColorStop(1, `rgba(${PRIMARY}, 0)`)
     ctx2d.fillStyle = gradient
     ctx2d.beginPath()
     ctx2d.arc(mouse.x, mouse.y, 180, 0, Math.PI * 2)
@@ -201,7 +201,6 @@ onMounted(() => {
     ctx2d.clearRect(0, 0, canvasEl.offsetWidth, canvasEl.offsetHeight)
 
     if (props.layer === 'overlay') {
-      drawMouseGlow()
       drawRipples()
       animId = requestAnimationFrame(tick)
       return
