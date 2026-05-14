@@ -17,8 +17,12 @@ export default defineEventHandler(async (event): Promise<SendCodeResponse> => {
   const code = generateVerificationCode(database, email)
   await writeDatabase(database)
 
+  const isProduction = process.env.NODE_ENV === 'production'
   return {
-    message: `Verification code generated for development: ${code}`,
-    expiresInSeconds: 600
+    message: isProduction
+      ? 'Verification code sent. Please check your email.'
+      : 'Verification code generated for development.',
+    expiresInSeconds: 600,
+    developmentCode: isProduction ? undefined : code
   }
 })

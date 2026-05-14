@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { randomUUID } from 'node:crypto'
+import { randomBytes, randomInt, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto'
 import { createError, deleteCookie, getCookie, getHeader } from 'h3'
 import type { H3Event } from 'h3'
 import type {
@@ -17,7 +17,8 @@ interface DbUser {
   id: number
   name: string
   email: string
-  password: string
+  password?: string
+  passwordHash: string
   avatar: string
   isAdmin: boolean
 }
@@ -79,6 +80,24 @@ const DB_FILE = resolve(process.cwd(), 'server/data/forum-db.json')
 export const AUTH_COOKIE_NAME = 'auth_token'
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 const SESSION_MAX_AGE_MS = SESSION_MAX_AGE_SECONDS * 1000
+const PASSWORD_HASH_PREFIX = 'scrypt'
+
+export function hashPassword(password: string) {
+  const salt = randomBytes(16).toString('base64url')
+  const hash = scryptSync(password, salt, 64).toString('base64url')
+  return `${PASSWORD_HASH_PREFIX}:${salt}:${hash}`
+}
+
+export function verifyPassword(password: string, storedHash: string) {
+  const [algorithm, salt, hash] = storedHash.split(':')
+  if (algorithm !== PASSWORD_HASH_PREFIX || !salt || !hash) {
+    return false
+  }
+
+  const actual = Buffer.from(hash, 'base64url')
+  const expected = scryptSync(password, salt, actual.length)
+  return actual.length === expected.length && timingSafeEqual(actual, expected)
+}
 
 function isoOffset(daysAgo: number, extraMs = 0) {
   return new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000 + extraMs).toISOString()
@@ -91,7 +110,7 @@ function createSeedDatabase(): ForumDatabase {
         id: 1,
         name: 'Clearders',
         email: 'clearders@devbit.tech',
-        password: 'Devbit123',
+        passwordHash: hashPassword('Devbit123'),
         avatar: 'CD',
         isAdmin: true
       },
@@ -99,7 +118,7 @@ function createSeedDatabase(): ForumDatabase {
         id: 2,
         name: 'EpsilonHunter',
         email: 'epsilon@devbit.tech',
-        password: 'Devbit123',
+        passwordHash: hashPassword('Devbit123'),
         avatar: 'EH',
         isAdmin: true
       },
@@ -107,7 +126,7 @@ function createSeedDatabase(): ForumDatabase {
         id: 3,
         name: 'CodeMaster',
         email: 'codemaster@example.com',
-        password: 'Devbit123',
+        passwordHash: hashPassword('Devbit123'),
         avatar: 'CM',
         isAdmin: false
       },
@@ -115,7 +134,7 @@ function createSeedDatabase(): ForumDatabase {
         id: 4,
         name: 'DebugQueen',
         email: 'debugqueen@example.com',
-        password: 'Devbit123',
+        passwordHash: hashPassword('Devbit123'),
         avatar: 'DQ',
         isAdmin: false
       },
@@ -123,7 +142,7 @@ function createSeedDatabase(): ForumDatabase {
         id: 5,
         name: 'PixelArtist',
         email: 'pixelartist@example.com',
-        password: 'Devbit123',
+        passwordHash: hashPassword('Devbit123'),
         avatar: 'PA',
         isAdmin: false
       },
@@ -131,7 +150,7 @@ function createSeedDatabase(): ForumDatabase {
         id: 6,
         name: 'StackOverflow',
         email: 'stack@example.com',
-        password: 'Devbit123',
+        passwordHash: hashPassword('Devbit123'),
         avatar: 'SO',
         isAdmin: false
       }
@@ -294,10 +313,37 @@ async function ensureDatabaseFile() {
   }
 }
 
+function normalizeDatabase(database: ForumDatabase) {
+  let changed = false
+
+  database.sessions ??= []
+  database.verificationCodes ??= []
+  database.posts ??= []
+  database.comments ??= []
+  database.messages ??= []
+
+  for (const user of database.users) {
+    if (!user.passwordHash && user.password) {
+      user.passwordHash = hashPassword(user.password)
+      changed = true
+    }
+    if (user.password) {
+      delete user.password
+      changed = true
+    }
+  }
+
+  return changed
+}
+
 export async function readDatabase() {
   await ensureDatabaseFile()
   const content = await readFile(DB_FILE, 'utf8')
-  return JSON.parse(content) as ForumDatabase
+  const database = JSON.parse(content) as ForumDatabase
+  if (normalizeDatabase(database)) {
+    await writeFile(DB_FILE, JSON.stringify(database, null, 2), 'utf8')
+  }
+  return database
 }
 
 export async function writeDatabase(database: ForumDatabase) {
@@ -319,7 +365,8 @@ export function sanitizeAuthUser(user: DbUser): AuthUser {
   return {
     id: user.id,
     name: user.name,
-    email: user.email
+    email: user.email,
+    isAdmin: user.isAdmin
   }
 }
 
@@ -412,7 +459,7 @@ export function destroySession(database: ForumDatabase, token: string) {
 }
 
 export function generateVerificationCode(database: ForumDatabase, email: string) {
-  const code = '123456'
+  const code = String(randomInt(0, 1_000_000)).padStart(6, '0')
   database.verificationCodes = database.verificationCodes.filter(
     (entry) => entry.email.toLowerCase() !== email.toLowerCase()
   )

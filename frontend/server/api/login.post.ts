@@ -5,6 +5,7 @@ import {
   createSession,
   readDatabase,
   sanitizeAuthUser,
+  verifyPassword,
   writeDatabase
 } from '../utils/forum-db'
 
@@ -19,7 +20,7 @@ export default defineEventHandler(async (event): Promise<LoginResponse> => {
 
   const database = await readDatabase()
   const user = database.users.find(
-    (entry) => entry.email.toLowerCase() === email && entry.password === password
+    (entry) => entry.email.toLowerCase() === email && verifyPassword(password, entry.passwordHash)
   )
 
   if (!user) {

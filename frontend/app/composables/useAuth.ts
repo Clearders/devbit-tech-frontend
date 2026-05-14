@@ -46,10 +46,10 @@ export const useAuth = () => {
     }
 
     status.value = 'loading'
-    pendingMe.value = apiFetch<AuthUser>('/me')
+    pendingMe.value = apiFetch<AuthUser | null>('/me')
       .then((me) => {
-        user.value = me
-        status.value = 'authenticated'
+        user.value = me ?? null
+        status.value = me ? 'authenticated' : 'anonymous'
         return me
       })
       .catch(() => {

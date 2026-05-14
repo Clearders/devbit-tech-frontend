@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import AppNavbar from "./components/AppNavbar.vue";
-import AppFooter from "./components/AppFooter.vue";
 import DynamicBackground from "./components/DynamicBackground.vue";
 </script>
 <template>
@@ -10,11 +8,9 @@ import DynamicBackground from "./components/DynamicBackground.vue";
       <DynamicBackground layer="base" />
     </div>
     <div class="app-shell__content">
-      <AppNavbar />
-      <main>
+      <NuxtLayout>
         <NuxtPage />
-      </main>
-      <AppFooter />
+      </NuxtLayout>
     </div>
     <div class="app-shell__overlay" aria-hidden="true">
       <DynamicBackground layer="overlay" />

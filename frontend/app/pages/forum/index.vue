@@ -157,6 +157,7 @@
             <button class="modal__close" @click="closeCreateModal">✕</button>
           </div>
           <form class="modal__body" @submit.prevent="handleCreatePost">
+            <div v-if="createApiError" class="form-error form-error--global">{{ createApiError }}</div>
             <div class="form-group">
               <label class="form-label" for="new-title">标题</label>
               <input
@@ -210,7 +211,9 @@
 
             <div class="modal__actions">
               <button type="button" class="btn btn--outline" @click="closeCreateModal">取消</button>
-              <button type="submit" class="btn btn--primary">发布</button>
+              <button type="submit" class="btn btn--primary" :disabled="creatingPost">
+                {{ creatingPost ? '发布中...' : '发布' }}
+              </button>
             </div>
           </form>
         </div>
@@ -228,6 +231,7 @@ import { useForum } from '~/composables/useForum'
 import ForumPostCard from '~/components/ForumPostCard.vue'
 import ForumAdminPanel from '~/components/ForumAdminPanel.vue'
 import ForumMessagePanel from '~/components/ForumMessagePanel.vue'
+import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
 useSeoMeta({
   title: '论坛 – DevBit Tech',
@@ -260,7 +264,7 @@ const categoryTabs = computed(() => [
 const totalPostCount = computed(() => posts.value.length)
 const totalCommentCount = computed(() => comments.value.length)
 
-const isAdmin = computed(() => user.value?.id === 1 || user.value?.id === 2) // Demo admin check
+const isAdmin = computed(() => !!user.value?.isAdmin)
 
 // Search & filter
 const searchQuery = ref('')
@@ -296,6 +300,8 @@ function clearSearch() {
 
 // Create post modal
 const showCreateModal = ref(false)
+const creatingPost = ref(false)
+const createApiError = ref('')
 const newPost = reactive({
   title: '',
   content: '',
@@ -312,11 +318,13 @@ function closeCreateModal() {
   newPost.tagsInput = ''
   createErrors.title = ''
   createErrors.content = ''
+  createApiError.value = ''
 }
 
-function handleCreatePost() {
+async function handleCreatePost() {
   createErrors.title = ''
   createErrors.content = ''
+  createApiError.value = ''
   let valid = true
 
   if (!newPost.title.trim()) {
@@ -335,13 +343,19 @@ function handleCreatePost() {
     .map(t => t.trim())
     .filter(Boolean)
 
-  createPost({
-    title: newPost.title.trim(),
-    content: newPost.content.trim(),
-    category: newPost.category,
-    tags,
-  })
-
-  closeCreateModal()
+  creatingPost.value = true
+  try {
+    await createPost({
+      title: newPost.title.trim(),
+      content: newPost.content.trim(),
+      category: newPost.category,
+      tags,
+    })
+    closeCreateModal()
+  } catch (error: unknown) {
+    createApiError.value = extractApiErrorMessage(error, '发布失败，请稍后重试。')
+  } finally {
+    creatingPost.value = false
+  }
 }
 </script>

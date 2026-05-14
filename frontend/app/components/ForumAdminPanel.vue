@@ -4,6 +4,7 @@
       <h2 class="admin-panel__title">🛡️ 管理面板</h2>
       <p class="admin-panel__subtitle">管理论坛内容与用户</p>
     </div>
+    <div v-if="actionError" class="form-error form-error--global">{{ actionError }}</div>
 
     <!-- Tabs -->
     <div class="admin-panel__tabs">
@@ -162,10 +163,12 @@
 <script setup lang="ts">
 import type { ForumCategory } from '~/composables/useForum'
 import { useForum } from '~/composables/useForum'
+import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
 const { posts, comments, FORUM_CATEGORIES, DEMO_USERS, deletePost, deleteComment, togglePinPost, toggleLockPost } = useForum()
 
 const activeTab = ref<'posts' | 'comments' | 'users'>('posts')
+const actionError = ref('')
 const tabs = [
   { key: 'posts' as const, label: '📝 帖子管理' },
   { key: 'comments' as const, label: '💬 评论管理' },
@@ -184,23 +187,32 @@ function getCategoryLabel(cat: ForumCategory) {
   return FORUM_CATEGORIES.find(c => c.value === cat)?.label ?? cat
 }
 
+async function runAction(action: () => Promise<unknown>, fallback: string) {
+  actionError.value = ''
+  try {
+    await action()
+  } catch (error: unknown) {
+    actionError.value = extractApiErrorMessage(error, fallback)
+  }
+}
+
 function handleDeletePost(id: number) {
   if (confirm('确定要删除该帖子吗？此操作不可撤销。')) {
-    deletePost(id)
+    void runAction(() => deletePost(id), '删除帖子失败，请稍后重试。')
   }
 }
 
 function handleDeleteComment(id: number) {
   if (confirm('确定要删除该评论吗？')) {
-    deleteComment(id)
+    void runAction(() => deleteComment(id), '删除评论失败，请稍后重试。')
   }
 }
 
 function handleTogglePin(id: number) {
-  togglePinPost(id)
+  void runAction(() => togglePinPost(id), '更新置顶状态失败，请稍后重试。')
 }
 
 function handleToggleLock(id: number) {
-  toggleLockPost(id)
+  void runAction(() => toggleLockPost(id), '更新锁定状态失败，请稍后重试。')
 }
 </script>

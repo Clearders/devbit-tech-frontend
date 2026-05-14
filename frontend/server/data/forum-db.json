@@ -4,52 +4,58 @@
       "id": 1,
       "name": "Clearders",
       "email": "clearders@devbit.tech",
-      "password": "Devbit123",
       "avatar": "CD",
-      "isAdmin": true
+      "isAdmin": true,
+      "passwordHash": "scrypt:7Ye--myRJG44u5dT7nul9A:J96sSl0peiHsUOz3xQW6TOPU-hwTodF1xE6c2RBljrAa69Z8tVLqzpESXGzt-VfbhzMsHqKSAWnoVWs1ftlkSQ"
     },
     {
       "id": 2,
       "name": "EpsilonHunter",
       "email": "epsilon@devbit.tech",
-      "password": "Devbit123",
       "avatar": "EH",
-      "isAdmin": true
+      "isAdmin": true,
+      "passwordHash": "scrypt:UdLiMUyn1VhEUH-OTCJgRg:ANebciVj9qw4zJDBdA0ObweLG0M2XQ-oIrYilrvT7F1_vfzaAgjUjjgHm2DZhT9spd8ADNg5Ul9d0YKowhJ5cg"
     },
     {
       "id": 3,
       "name": "CodeMaster",
       "email": "codemaster@example.com",
-      "password": "Devbit123",
       "avatar": "CM",
-      "isAdmin": false
+      "isAdmin": false,
+      "passwordHash": "scrypt:kOXLUCXtMSTxdMGGlztiFg:6Ea8AYc1FlSpSMw9js4Nv7LC9CIyeYUiD4ennir_mwRdY6uAzqK-ZchhvnBWKEe1MuhmGnTuHxXtWN_3vDCOEg"
     },
     {
       "id": 4,
       "name": "DebugQueen",
       "email": "debugqueen@example.com",
-      "password": "Devbit123",
       "avatar": "DQ",
-      "isAdmin": false
+      "isAdmin": false,
+      "passwordHash": "scrypt:aE45GR7SLiTqNtJL69Y6_Q:USOmdLiwJLAddPumPBUGVSg0LPyV9GTzFJ6T6ShAcuYjUxJEDzHawzJ3VDWWUpXUj9nXTHHh-T1q8_IZNATwVA"
     },
     {
       "id": 5,
       "name": "PixelArtist",
       "email": "pixelartist@example.com",
-      "password": "Devbit123",
       "avatar": "PA",
-      "isAdmin": false
+      "isAdmin": false,
+      "passwordHash": "scrypt:xHHk9ypcv5PUX7Hc53K2jQ:AjqVW5BLQVzuN-lzSPTCny-zXDoNxYr5W7dR1yYYE3DjICx6XJdrAJk-a7j3hqpU2B-qxzOMOCbmXaTP_6aAvw"
     },
     {
       "id": 6,
       "name": "StackOverflow",
       "email": "stack@example.com",
-      "password": "Devbit123",
       "avatar": "SO",
-      "isAdmin": false
+      "isAdmin": false,
+      "passwordHash": "scrypt:2B12gNTi5ki1OSQktxr3fw:R3dis5sWaRTIGlNgq95RVdroE_U3BEzbptc1hVfBl3p4hbaLLC7BBQs0V9AUxu8MPY8ANHDYV1OVaUf1OZGaVw"
     }
   ],
-  "sessions": [],
+  "sessions": [
+    {
+      "token": "8d55c3bb-4ec7-47f3-8f17-a94328d9c18b",
+      "userId": 1,
+      "expiresAt": "2026-05-21T06:28:46.103Z"
+    }
+  ],
   "verificationCodes": [],
   "posts": [
     {
@@ -64,7 +70,7 @@
       ],
       "createdAt": "2026-04-27T17:58:28.924Z",
       "updatedAt": "2026-05-05T14:02:09.829Z",
-      "viewCount": 1024,
+      "viewCount": 1025,
       "likeUserIds": [
         2,
         3,

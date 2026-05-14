@@ -34,8 +34,9 @@
           </div>
 
           <!-- Admin actions -->
-          <div v-if="canManage" class="forum-detail__admin-actions">
+          <div v-if="canDeletePost || isAdmin" class="forum-detail__admin-actions">
             <button
+              v-if="isAdmin"
               class="btn btn--sm"
               :class="post.isPinned ? 'btn--warning' : 'btn--outline'"
               @click="handleTogglePin"
@@ -43,16 +44,18 @@
               {{ post.isPinned ? '📌 取消置顶' : '📌 置顶' }}
             </button>
             <button
+              v-if="isAdmin"
               class="btn btn--sm"
               :class="post.isLocked ? 'btn--warning' : 'btn--outline'"
               @click="handleToggleLock"
             >
               {{ post.isLocked ? '🔓 解锁' : '🔒 锁定' }}
             </button>
-            <button class="btn btn--sm btn--danger" @click="handleDeletePost">
+            <button v-if="canDeletePost" class="btn btn--sm btn--danger" @click="handleDeletePost">
               🗑️ 删除
             </button>
           </div>
+          <div v-if="actionError" class="form-error form-error--global">{{ actionError }}</div>
         </div>
       </div>
     </section>
@@ -193,6 +196,7 @@
 <script setup lang="ts">
 import ForumComment from '~/components/ForumComment.vue'
 import { useForum } from '~/composables/useForum'
+import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
 // Update title and description dynamically
 useSeoMeta({
@@ -223,6 +227,7 @@ const postId = computed(() => Number(route.params.id))
 const post = computed(() => getPostById(postId.value))
 const postComments = computed(() => getCommentsByPostId(postId.value))
 const newComment = ref('')
+const actionError = ref('')
 
 // Update SEO title dynamically
 watchEffect(() => {
@@ -240,9 +245,10 @@ const categoryInfo = computed(() =>
 
 const userAvatar = computed(() => '👤')
 
-const canManage = computed(() => {
+const isAdmin = computed(() => !!user.value?.isAdmin)
+const canDeletePost = computed(() => {
   if (!post.value || !user.value) return false
-  return user.value.id === post.value.author.id || user.value.id === 1 || user.value.id === 2
+  return user.value.id === post.value.author.id || user.value.isAdmin
 })
 
 // Load from API on mount and when postId changes
@@ -259,7 +265,7 @@ watch(postId, (newId) => {
 
 function canDeleteComment(comment: { author: { id: number } }) {
   if (!user.value) return false
-  return user.value.id === comment.author.id || user.value.id === 1 || user.value.id === 2
+  return user.value.id === comment.author.id || user.value.isAdmin
 }
 
 const relatedPosts = computed(() => {
@@ -270,37 +276,50 @@ const relatedPosts = computed(() => {
     .slice(0, 5)
 })
 
-function handleAddComment() {
+async function runAction(action: () => Promise<unknown>, fallback: string) {
+  actionError.value = ''
+  try {
+    await action()
+  } catch (error: unknown) {
+    actionError.value = extractApiErrorMessage(error, fallback)
+  }
+}
+
+async function handleAddComment() {
   const text = newComment.value.trim()
   if (!text) return
-  addComment(postId.value, text)
-  newComment.value = ''
+  await runAction(async () => {
+    await addComment(postId.value, text)
+    newComment.value = ''
+  }, '发表评论失败，请稍后重试。')
 }
 
 function handleDeleteComment(commentId: number) {
   if (confirm('确定要删除该评论吗？')) {
-    deleteComment(commentId)
+    void runAction(() => deleteComment(commentId), '删除评论失败，请稍后重试。')
   }
 }
 
 function handleTogglePin() {
-  togglePinPost(postId.value)
+  void runAction(() => togglePinPost(postId.value), '更新置顶状态失败，请稍后重试。')
 }
 
 function handleToggleLock() {
-  toggleLockPost(postId.value)
+  void runAction(() => toggleLockPost(postId.value), '更新锁定状态失败，请稍后重试。')
 }
 
 function handleDeletePost() {
   if (confirm('确定要删除该帖子吗？此操作不可撤销。')) {
-    deletePost(postId.value)
-    navigateTo('/forum')
+    void runAction(async () => {
+      await deletePost(postId.value)
+      await navigateTo('/forum')
+    }, '删除帖子失败，请稍后重试。')
   }
 }
 
 function handleLike() {
   if (!isAuthenticated.value) return
-  toggleLikePost(postId.value)
+  void runAction(() => toggleLikePost(postId.value), '点赞失败，请稍后重试。')
 }
 
 function formatCount(n: number): string {

@@ -5,10 +5,9 @@ import AppFooter from "../components/AppFooter.vue";
 
 <template>
   <div>
-    <NuxtRouteAnnouncer />
     <AppNavbar />
     <main>
-      <NuxtPage />
+      <slot />
     </main>
     <AppFooter />
   </div>

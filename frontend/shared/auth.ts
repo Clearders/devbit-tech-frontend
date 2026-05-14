@@ -2,6 +2,7 @@ export interface AuthUser {
   id: number
   name: string
   email: string
+  isAdmin: boolean
 }
 
 export interface LoginResponse {
@@ -19,4 +20,5 @@ export interface RegisterPayload {
 export interface SendCodeResponse {
   message: string
   expiresInSeconds: number
+  developmentCode?: string
 }

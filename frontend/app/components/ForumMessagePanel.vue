@@ -10,6 +10,7 @@
         <h3>私信</h3>
         <button class="message-panel__close" @click="isOpen = false">✕</button>
       </div>
+      <div v-if="actionError" class="form-error form-error--global">{{ actionError }}</div>
 
       <!-- Conversation list -->
       <div v-if="!activePartner" class="message-panel__conversations">
@@ -61,7 +62,9 @@
             placeholder="输入消息…"
             @keydown.enter="handleSend"
           />
-          <button class="btn btn--primary" @click="handleSend" :disabled="!newMessage.trim()">发送</button>
+          <button class="btn btn--primary" @click="handleSend" :disabled="sending || !newMessage.trim()">
+            {{ sending ? '发送中...' : '发送' }}
+          </button>
         </div>
       </div>
     </div>
@@ -71,6 +74,7 @@
 <script setup lang="ts">
 import type { ForumMessage } from '~/composables/useForum'
 import { useForum } from '~/composables/useForum'
+import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
 const { user } = useAuth()
 const { formatRelativeTime, getConversations, sendMessage, markConversationAsRead } = useForum()
@@ -79,6 +83,8 @@ const isOpen = ref(false)
 const activePartner = ref<number | null>(null)
 const newMessage = ref('')
 const chatMessagesRef = ref<HTMLElement | null>(null)
+const sending = ref(false)
+const actionError = ref('')
 
 const conversations = computed(() => getConversations())
 const unreadCount = computed(() => {
@@ -111,7 +117,9 @@ function toggle() {
 
 function openConversation(partnerId: number) {
   activePartner.value = partnerId
-  markConversationAsRead(partnerId)
+  markConversationAsRead(partnerId).catch((error: unknown) => {
+    actionError.value = extractApiErrorMessage(error, '标记已读失败，请稍后重试。')
+  })
   nextTick(() => {
     scrollToBottom()
   })
@@ -123,14 +131,21 @@ function scrollToBottom() {
   }
 }
 
-function handleSend() {
+async function handleSend() {
   const text = newMessage.value.trim()
-  if (!text || !activePartner.value) return
-  sendMessage(activePartner.value, text)
-  newMessage.value = ''
-  nextTick(() => {
+  if (!text || !activePartner.value || sending.value) return
+  actionError.value = ''
+  sending.value = true
+  try {
+    await sendMessage(activePartner.value, text)
+    newMessage.value = ''
+    await nextTick()
     scrollToBottom()
-  })
+  } catch (error: unknown) {
+    actionError.value = extractApiErrorMessage(error, '发送消息失败，请稍后重试。')
+  } finally {
+    sending.value = false
+  }
 }
 
 watch(activeMessages, () => {

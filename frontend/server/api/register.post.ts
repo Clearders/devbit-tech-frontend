@@ -1,6 +1,7 @@
 import type { AuthUser, RegisterPayload } from '../../shared/auth'
 import {
   consumeVerificationCode,
+  hashPassword,
   nextId,
   readDatabase,
   sanitizeAuthUser,
@@ -43,7 +44,7 @@ export default defineEventHandler(async (event): Promise<AuthUser> => {
     id: nextId(database.users),
     name,
     email,
-    password,
+    passwordHash: hashPassword(password),
     avatar: name.slice(0, 2).toUpperCase(),
     isAdmin: false
   }
