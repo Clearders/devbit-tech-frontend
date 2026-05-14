@@ -56,8 +56,8 @@ onMounted(() => {
   }
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-  const PRIMARY = '64, 224, 208' // Turquoise to be more visually appealing
-  const SECONDARY = '255, 105, 180' // HotPink for a better contrast and visual pop
+  const PRIMARY = '77, 166, 255' // Sky blue for primary particles
+  const SECONDARY = '124, 172, 255' // Periwinkle blue for secondary particles
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
