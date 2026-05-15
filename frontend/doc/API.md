@@ -1,6 +1,6 @@
 # DevBit Tech API
 
-最后更新：2026-05-05
+最后更新：2026-05-15
 
 本项目在 `frontend/server/api` 下内置了 Nitro API。前端在开发和生产环境中通过 `runtimeConfig.public.apiBase = '/api'` 调用它。
 
@@ -15,7 +15,7 @@
 - 前端将 Token 存储在 `auth_token` Cookie 中。
 - 已认证的请求同时发送 `Authorization: Bearer <token>`。
 - 两种方式（Cookie 或请求头）均可接受。
-- 会话有效期：6 小时。
+- 会话有效期：7 天。
 
 ## 开发账户
 
@@ -116,7 +116,7 @@ interface ForumMessage {
 
 ### `POST /api/login`
 
-使用邮箱和密码进行认证。成功后设置 `auth_token` Cookie。
+使用邮箱和密码进行认证。成功后通过 `Set-Cookie` 响应头设置 `auth_token` Cookie（HttpOnly, SameSite=Lax, 有效期 7 天）。
 
 - **认证：** 无需
 - **状态码：** 成功返回 `200`，失败返回 `400` / `401`
@@ -134,11 +134,11 @@ interface ForumMessage {
 
 ```json
 {
-  "token": "<uuid-v4-session-token>",
   "user": {
     "id": 1,
     "name": "Clearders",
-    "email": "clearders@devbit.tech"
+    "email": "clearders@devbit.tech",
+    "isAdmin": true
   }
 }
 ```
@@ -158,7 +158,25 @@ interface ForumMessage {
 {
   "id": 1,
   "name": "Clearders",
-  "email": "clearders@devbit.tech"
+  "email": "clearders@devbit.tech",
+  "isAdmin": true
+}
+```
+
+---
+
+### `POST /api/logout`
+
+清除当前会话并移除 `auth_token` Cookie。
+
+- **认证：** 可选
+- **状态码：** 始终返回 `200`
+
+**`200` 响应：**
+
+```json
+{
+  "success": true
 }
 ```
 
@@ -220,7 +238,8 @@ interface ForumMessage {
 {
   "id": 7,
   "name": "New User",
-  "email": "newuser@example.com"
+  "email": "newuser@example.com",
+  "isAdmin": false
 }
 ```
 
