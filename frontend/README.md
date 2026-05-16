@@ -5,7 +5,7 @@
 ## 项目特点
 
 - **Nuxt 3 + Vue 3**：使用最新的 Composition API 和 `<script setup>`
-- **内置 Nitro API**：`server/api/` 下提供完整的 RESTful API，使用 JSON 文件存储，可脱离后端独立运行
+- **后端 API**：前端统一调用 `/api`，开发和生产都代理到 Rust 后端服务
 - **TypeScript**：全链路类型安全，共享类型定义在 `shared/` 目录
 - **论坛系统**：帖子浏览/发布/搜索、评论、私信、点赞、置顶/锁定管理
 - **身份认证**：基于 Session Token（Cookie + Bearer Header），含注册/登录/验证码流程
@@ -40,16 +40,6 @@ frontend/
 │   │   └── forum/                 # 论坛页面
 │   ├── plugins/auth.ts            # 认证插件
 │   └── utils/                     # 工具函数
-├── server/
-│   ├── api/                       # Nitro API 路由
-│   │   ├── login.post.ts
-│   │   ├── logout.post.ts
-│   │   ├── me.get.ts
-│   │   ├── register.post.ts
-│   │   ├── register/send_code.post.ts
-│   │   └── forum/                 # 论坛 API（帖子/评论/私信/搜索等）
-│   ├── data/forum-db.json         # 运行时数据库（自动生成）
-│   └── utils/forum-db.ts          # 数据库读写、认证、序列化工具
 ├── shared/                        # 前后端共享类型
 │   ├── auth.ts
 │   └── forum.ts
@@ -90,7 +80,7 @@ npm run dev
 
 ## API 模式
 
-- **开发模式** (`npm run dev`)：使用内置 Nitro API（`server/api/`），数据存储在 `server/data/forum-db.json`
+- **开发模式** (`npm run dev`)：Nuxt 将 `/api/**` 代理到 Rust 后端服务（默认 `http://127.0.0.1:7878`）
 - **生产模式**：Nginx 将 `/api/` 请求代理到 Rust 后端服务，前端仅负责页面渲染
 
 API 详细文档请参阅 [doc/API.md](doc/API.md)。

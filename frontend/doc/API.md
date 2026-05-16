@@ -2,20 +2,20 @@
 
 最后更新：2026-05-15
 
-本项目在 `frontend/server/api` 下内置了 Nitro API。前端在开发和生产环境中通过 `runtimeConfig.public.apiBase = '/api'` 调用它。
+本项目的前端统一通过 `runtimeConfig.public.apiBase = '/api'` 调用后端 API。开发环境由 Nuxt route rules 将 `/api/**` 代理到 Rust 后端，生产环境由 Nginx 将 `/api/` 代理到同一个 Rust 服务。
 
 ## 基础 URL
 
-- 开发环境：`http://localhost:3000/api`
-- 生产预览：`/api`
+- 开发环境：`http://localhost:3000/api`（代理到 `NUXT_API_PROXY_TARGET`，默认 `http://127.0.0.1:7878`）
+- 生产环境：`/api`
 
 ## 身份认证
 
-- 认证基于 Token（UUID v4 会话令牌）。
-- 前端将 Token 存储在 `auth_token` Cookie 中。
-- 已认证的请求同时发送 `Authorization: Bearer <token>`。
+- 认证基于 JWT Token。
+- 后端通过 `Set-Cookie` 写入 `auth_token` HttpOnly Cookie。
+- 已认证的请求可通过 Cookie 或 `Authorization: Bearer <token>` 传递身份。
 - 两种方式（Cookie 或请求头）均可接受。
-- 会话有效期：7 天。
+- 会话有效期：24 小时。
 
 ## 开发账户
 
@@ -32,9 +32,8 @@
 
 ## 验证码
 
-`POST /api/register/send_code` 返回一条包含当前验证码的开发消息。
+`POST /api/register/send_code` 会生成 6 位验证码；未配置 SMTP 时，开发环境响应会包含 `developmentCode` 便于本地调试。
 
-- 当前生成的验证码：`123456`
 - 有效期：10 分钟
 
 ## 错误响应
@@ -116,7 +115,7 @@ interface ForumMessage {
 
 ### `POST /api/login`
 
-使用邮箱和密码进行认证。成功后通过 `Set-Cookie` 响应头设置 `auth_token` Cookie（HttpOnly, SameSite=Lax, 有效期 7 天）。
+使用邮箱和密码进行认证。成功后通过 `Set-Cookie` 响应头设置 `auth_token` Cookie（HttpOnly, SameSite=Lax, 有效期 24 小时）。
 
 - **认证：** 无需
 - **状态码：** 成功返回 `200`，失败返回 `400` / `401`
@@ -134,6 +133,7 @@ interface ForumMessage {
 
 ```json
 {
+  "token": "<jwt>",
   "user": {
     "id": 1,
     "name": "Clearders",
@@ -201,8 +201,9 @@ interface ForumMessage {
 
 ```json
 {
-  "message": "Verification code generated for development: 123456",
-  "expiresInSeconds": 600
+  "message": "Verification code generated for development.",
+  "expiresInSeconds": 600,
+  "developmentCode": "123456"
 }
 ```
 
@@ -215,7 +216,7 @@ interface ForumMessage {
 - **认证：** 无需
 - **状态码：** 成功返回 `200`，验证失败返回 `400`
 
-**验证规则：**
+**前端提交前验证规则：**
 - 密码至少 8 个字符，且必须同时包含字母和数字
 - `password` 和 `confirm_password` 必须一致
 - 邮箱必须唯一
@@ -238,8 +239,7 @@ interface ForumMessage {
 {
   "id": 7,
   "name": "New User",
-  "email": "newuser@example.com",
-  "isAdmin": false
+  "email": "newuser@example.com"
 }
 ```
 
@@ -512,7 +512,6 @@ interface ForumMessage {
 
 ## 数据持久化
 
-- **数据文件：** `frontend/server/data/forum-db.json`
-- 该文件在首次 API 访问时自动创建并填充种子数据。
-- 过期的会话和验证码在每次写入时被清理。
-- 持久化数据包括：用户、会话、验证码、帖子、评论、消息。
+- **数据源：** Rust 后端使用 PostgreSQL。
+- 后端启动时会自动创建缺失的数据表。
+- 持久化数据包括：用户、验证码、帖子、评论、消息、点赞关系。

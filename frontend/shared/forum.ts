@@ -78,38 +78,38 @@ export const FORUM_CATEGORIES: {
 }[] = [
   {
     value: 'general',
-    label: 'General',
+    label: '综合讨论',
     icon: '💬',
-    desc: 'Open discussion for the community.'
+    desc: '日常交流、想法碰撞与社区话题。'
   },
   {
     value: 'tech',
-    label: 'Tech',
-    icon: '⌘',
-    desc: 'Deep technical discussion and engineering practice.'
+    label: '技术实践',
+    icon: '⚡',
+    desc: '框架、工具链、工程经验与代码细节讨论。'
   },
   {
     value: 'devbit',
-    label: 'DevBit',
+    label: 'DevBit 动态',
     icon: '◆',
-    desc: 'Product updates and engineering notes from DevBit Tech.'
+    desc: 'DevBit Tech 的产品更新、版本进展与工程笔记。'
   },
   {
     value: 'help',
-    label: 'Help',
-    icon: '?',
-    desc: 'Ask questions and get help from other members.'
+    label: '求助问答',
+    icon: '🛟',
+    desc: '提出问题，和社区一起定位解决方案。'
   },
   {
     value: 'showcase',
-    label: 'Showcase',
+    label: '作品展示',
     icon: '★',
-    desc: 'Show the projects and experiments you are building.'
+    desc: '展示正在构建的项目、实验与灵感。'
   },
   {
     value: 'announcement',
-    label: 'Announcement',
-    icon: '!',
-    desc: 'Official announcements and important notices.'
+    label: '官方公告',
+    icon: '📣',
+    desc: '重要通知、社区规则与版本消息。'
   }
 ]
