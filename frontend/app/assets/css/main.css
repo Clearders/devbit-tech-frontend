@@ -925,7 +925,7 @@ a:hover {
 
 .forum-layout {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 260px);
   gap: 2rem;
   align-items: start;
 }
@@ -1398,7 +1398,7 @@ a:hover {
 
 .forum-detail__layout {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 260px);
   gap: 2rem;
   align-items: start;
 }
@@ -1411,9 +1411,9 @@ a:hover {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 0.75rem;
-  padding: 1.75rem;
-  font-size: 0.98rem;
-  line-height: 1.75;
+  padding: 2rem;
+  font-size: 1rem;
+  line-height: 1.8;
   white-space: pre-wrap;
   word-break: break-word;
   margin-bottom: 1rem;
@@ -1424,6 +1424,16 @@ a:hover {
   flex-wrap: wrap;
   gap: 0.375rem;
   margin-bottom: 2rem;
+}
+
+.forum-detail__actions {
+  text-align: center;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.forum-detail__like-btn {
+  min-width: 140px;
 }
 
 .forum-detail__tag {
@@ -2260,7 +2270,7 @@ select.form-control {
   }
 
   .page-header {
-    padding: 3rem 0 1.5rem;
+    padding: 2.5rem 0 1.25rem;
   }
 
   .page-header__title {
@@ -2288,11 +2298,34 @@ select.form-control {
     width: calc(100vw - 3rem);
     right: -0.75rem;
   }
+
+  /* Forum detail: sidebar below on tablet */
+  .forum-detail__sidebar {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+
+  .forum-detail__sidebar .forum-sidebar-card {
+    margin-bottom: 0;
+  }
+
+  .forum-detail__author-card {
+    flex-direction: row;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .forum-detail__author-card-avatar {
+    font-size: 2.25rem;
+  }
 }
 
 @media (max-width: 760px) {
   :root {
-    --navbar-height: 66px;
+    --navbar-height: 60px;
   }
 
   .navbar .container {
@@ -2449,7 +2482,31 @@ select.form-control {
   }
 
   .forum-detail__title {
-    font-size: 1.55rem;
+    font-size: 1.45rem;
+    line-height: 1.28;
+    margin-bottom: 0.625rem;
+  }
+
+  .forum-detail__text {
+    padding: 1rem 1.125rem;
+    font-size: 0.95rem;
+    line-height: 1.72;
+  }
+
+  .forum-detail__meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .forum-detail__stats {
+    font-size: 0.78rem;
+    gap: 0.55rem 0.875rem;
+  }
+
+  .forum-detail__back {
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
   }
 
   .forum-detail__add-comment,
@@ -2460,6 +2517,70 @@ select.form-control {
   .forum-detail__comment-avatar,
   .comment__avatar {
     font-size: 1.35rem;
+  }
+
+  .forum-detail__comments-title {
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+  }
+
+  .forum-detail__sidebar {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .forum-detail__sidebar .forum-sidebar-card {
+    padding: 1rem;
+    margin-bottom: 0;
+  }
+
+  .forum-detail__author-card {
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+  }
+
+  .forum-detail__author-card-avatar {
+    font-size: 2rem;
+  }
+
+  .forum-detail__author-card-name {
+    font-size: 0.88rem;
+  }
+
+  .forum-detail__actions {
+    margin-top: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .forum-detail__actions .btn {
+    width: 100%;
+    min-width: unset !important;
+  }
+
+  .forum-detail__tags {
+    margin-bottom: 1.25rem;
+    gap: 0.3rem;
+  }
+
+  .forum-detail__tag {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+  }
+
+  .forum-detail__no-comments {
+    padding: 1.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .forum-detail__locked-msg {
+    padding: 1rem;
+    font-size: 0.82rem;
+  }
+
+  .forum-detail__login-prompt {
+    padding: 1.25rem;
   }
 
   .modal-overlay {
@@ -2531,16 +2652,26 @@ select.form-control {
   }
 
   .page-header {
-    padding: 2.25rem 0 1.25rem;
+    padding: 1.75rem 0 1rem;
   }
 
   .page-header__title {
-    font-size: 1.75rem;
+    font-size: 1.55rem;
+  }
+
+  .page-header__subtitle {
+    font-size: 0.88rem;
+  }
+
+  .hero__badge {
+    font-size: 0.72rem;
+    padding: 0.22rem 0.8rem;
+    margin-bottom: 1rem;
   }
 
   .forum-content,
   .forum-detail-content {
-    padding: 1rem 0 2.75rem;
+    padding: 0.75rem 0 2.5rem;
   }
 
   .forum-layout,
@@ -2551,6 +2682,7 @@ select.form-control {
   .forum-layout__sidebar,
   .forum-detail__sidebar {
     grid-template-columns: 1fr;
+    gap: 0.625rem;
   }
 
   .admin-panel__stats {
@@ -2572,6 +2704,116 @@ select.form-control {
 
   .message-panel__chat-input .btn {
     width: 100%;
+  }
+
+  /* Forum detail: extra compact on tiny screens */
+  .forum-detail__back {
+    font-size: 0.8rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .forum-detail__title {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+
+  .forum-detail__text {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border-radius: 0.5rem;
+  }
+
+  .forum-detail__meta {
+    gap: 0.35rem;
+  }
+
+  .forum-detail__author-name {
+    font-size: 0.85rem;
+  }
+
+  .forum-detail__stats {
+    font-size: 0.72rem;
+    gap: 0.4rem 0.6rem;
+  }
+
+  .forum-detail__author-avatar {
+    font-size: 1.25rem;
+  }
+
+  .forum-detail__header-top {
+    gap: 0.4rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .forum-detail__category {
+    font-size: 0.72rem;
+  }
+
+  .forum-detail__badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+  }
+
+  .forum-detail__admin-actions {
+    gap: 0.35rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+  }
+
+  .forum-detail__admin-actions .btn {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+  }
+
+  .forum-detail__actions {
+    margin-top: 0.625rem !important;
+    margin-bottom: 0.625rem !important;
+  }
+
+  .forum-detail__comments-title {
+    font-size: 0.95rem;
+  }
+
+  .forum-detail__comment-list {
+    gap: 0.5rem;
+  }
+
+  .forum-detail__sidebar .forum-sidebar-card {
+    padding: 0.8rem 0.875rem;
+  }
+
+  .forum-detail__sidebar .forum-sidebar-card__title {
+    font-size: 0.82rem;
+    margin-bottom: 0.625rem;
+  }
+
+  .forum-detail__author-card {
+    padding: 0.25rem 0;
+  }
+
+  .forum-detail__author-card-avatar {
+    font-size: 1.6rem;
+  }
+
+  .comment {
+    padding: 0.75rem 0.875rem;
+  }
+
+  .comment__content {
+    font-size: 0.85rem;
+  }
+
+  .comment__author {
+    font-size: 0.82rem;
+  }
+
+  .forum-detail__add-comment {
+    gap: 0.5rem;
+  }
+
+  .forum-detail__comment-form .form-control--textarea {
+    font-size: 0.88rem;
   }
 }
 

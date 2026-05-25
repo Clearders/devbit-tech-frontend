@@ -87,14 +87,13 @@
             </div>
 
             <!-- Like action -->
-            <div class="forum-detail__actions mt-4 mb-4 text-center">
+            <div class="forum-detail__actions">
               <button
-                class="btn btn--lg"
+                class="btn btn--lg forum-detail__like-btn"
                 :class="post.likedByMe ? 'btn--primary' : 'btn--outline'"
                 @click="handleLike"
                 :disabled="!isAuthenticated"
                 :title="!isAuthenticated ? '请先登录' : ''"
-                style="min-width: 120px;"
               >
                 👍 点赞 ({{ post.likeCount }})
               </button>
