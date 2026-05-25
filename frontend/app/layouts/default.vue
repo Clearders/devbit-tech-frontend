@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import AppNavbar from "~/components/AppNavbar.vue"
+import AppFooter from "~/components/AppFooter.vue"
+import ForumMessagePanel from "~/components/ForumMessagePanel.vue"
 </script>
 
 <template>
@@ -8,5 +11,6 @@
       <slot />
     </main>
     <AppFooter />
+    <ForumMessagePanel />
   </div>
 </template>

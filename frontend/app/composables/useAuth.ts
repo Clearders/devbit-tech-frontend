@@ -92,13 +92,13 @@ export const useAuth = () => {
     }
   }
 
-  const register = async (payload: RegisterPayload) => {
+  const register = async (payload: { name: string; email: string; password: string; code: string; confirm_password?: string }) => {
+    const { confirm_password: _confirm, ...apiPayload } = payload
     const normalizedPayload: RegisterPayload = {
-      name: payload.name.trim(),
-      email: payload.email.trim(),
-      password: payload.password,
-      code: payload.code.trim(),
-      confirm_password: payload.confirm_password
+      name: apiPayload.name.trim(),
+      email: apiPayload.email.trim(),
+      password: apiPayload.password,
+      code: apiPayload.code.trim(),
     }
 
     try {

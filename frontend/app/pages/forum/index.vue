@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="forum-page">
     <!-- Header -->
     <section class="page-header">
@@ -22,10 +22,10 @@
               v-model="searchQuery"
               type="text"
               class="form-control forum-toolbar__search-input"
-              placeholder="搜索帖子标题、内容或标签…"
+              placeholder="搜索帖子标题、内容或标签"
               @input="onSearchInput"
             />
-            <button v-if="searchQuery" class="forum-toolbar__search-clear" @click="clearSearch">✕</button>
+            <button v-if="searchQuery" class="forum-toolbar__search-clear" @click="clearSearch">✖</button>
           </div>
 
           <!-- Actions -->
@@ -79,8 +79,7 @@
             <!-- Admin Panel -->
             <ForumAdminPanel v-if="showAdminPanel && isAdmin" />
 
-            <div v-if="loadError" class="forum-status forum-status--error">
-              <span>{{ loadError }}</span>
+            <div v-if="loadError" class="forum-status forum-status--error">        <span>{{ loadError }}</span>
               <button class="btn btn--outline btn--sm" @click="loadForum(true)">重试</button>
             </div>
 
@@ -90,7 +89,7 @@
             </div>
 
             <div v-if="isLoadingForum" class="forum-empty">
-              <div class="forum-empty__icon">⌛</div>
+              <div class="forum-empty__icon">⏳</div>
               <h3 class="forum-empty__title">正在加载论坛</h3>
               <p class="forum-empty__desc">正在获取最新帖子和社区数据。</p>
             </div>
@@ -179,7 +178,7 @@
         <div class="modal">
           <div class="modal__header">
             <h2 class="modal__title">✏️ 发布新帖子</h2>
-            <button class="modal__close" @click="closeCreateModal">✕</button>
+            <button class="modal__close" @click="closeCreateModal">✖</button>
           </div>
           <form class="modal__body" @submit.prevent="handleCreatePost">
             <div v-if="createApiError" class="form-error form-error--global">{{ createApiError }}</div>
@@ -191,7 +190,7 @@
                 type="text"
                 class="form-control"
                 :class="{ 'form-control--error': createErrors.title }"
-                placeholder="输入帖子标题…"
+                placeholder="输入帖子标题"
                 maxlength="100"
               />
               <span v-if="createErrors.title" class="form-error">{{ createErrors.title }}</span>
@@ -244,22 +243,19 @@
         </div>
       </div>
     </Teleport>
-
-    <!-- Message Panel (floating) -->
-    <ForumMessagePanel />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { ForumCategory } from '~/composables/useForum'
+import type { CreatePostPayload } from '~~/shared/forum'
 import { useForum } from '~/composables/useForum'
 import ForumPostCard from '~/components/ForumPostCard.vue'
 import ForumAdminPanel from '~/components/ForumAdminPanel.vue'
-import ForumMessagePanel from '~/components/ForumMessagePanel.vue'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
 useSeoMeta({
-  title: '论坛 – DevBit Tech',
+  title: '论坛 — DevBit Tech',
   description: '参与技术讨论，分享经验，提问解答。'
 })
 

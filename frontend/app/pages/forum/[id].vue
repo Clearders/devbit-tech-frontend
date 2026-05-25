@@ -163,6 +163,14 @@
                   {{ post.author.name }}
                   <span v-if="post.author.isAdmin" class="forum-detail__admin-tag">管理员</span>
                 </span>
+                <button
+                  v-if="isAuthenticated && user?.id !== post.author.id"
+                  class="btn btn--outline btn--sm"
+                  style="margin-top: 0.5rem; width: 100%;"
+                  @click="openMessagePanel(post.author.id)"
+                >
+                  💬 发送私信
+                </button>
               </div>
             </div>
 
@@ -234,6 +242,7 @@ const {
   ensureInit,
   loadPost,
   loadCommentsForPost,
+  openMessagePanel
 } = useForum()
 
 const postId = computed(() => Number(route.params.id))

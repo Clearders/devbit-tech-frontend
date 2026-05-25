@@ -15,7 +15,6 @@ export interface RegisterPayload {
   email: string
   password: string
   code: string
-  confirm_password: string
 }
 
 export interface SendCodeResponse {

@@ -57,8 +57,8 @@ export interface ForumBootstrap {
 export interface CreatePostPayload {
   title: string
   content: string
-  category: ForumCategory
-  tags: string[]
+  category?: ForumCategory
+  tags?: string[]
 }
 
 export interface CreateCommentPayload {

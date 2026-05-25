@@ -1,19 +1,19 @@
 <template>
-  <div v-if="isAuthenticated" class="message-panel" :class="{ 'message-panel--open': isOpen }">
-    <button class="message-panel__toggle" @click="toggle" :title="isOpen ? '关闭消息' : '打开消息'">
+  <div v-if="isAuthenticated" class="message-panel" :class="{ 'message-panel--open': isMessagePanelOpen }">
+    <button class="message-panel__toggle" @click="toggle" :title="isMessagePanelOpen ? '关闭消息' : '打开消息'">
       <span class="message-panel__toggle-icon">💬</span>
       <span v-if="unreadCount > 0" class="message-panel__badge">{{ unreadCount }}</span>
     </button>
 
-    <div v-if="isOpen" class="message-panel__body">
+    <div v-if="isMessagePanelOpen" class="message-panel__body">
       <div class="message-panel__header">
         <h3>私信</h3>
-        <button class="message-panel__close" @click="isOpen = false">✕</button>
+        <button class="message-panel__close" @click="isMessagePanelOpen = false">✕</button>
       </div>
       <div v-if="actionError" class="form-error form-error--global">{{ actionError }}</div>
 
       <!-- Conversation list -->
-      <div v-if="!activePartner" class="message-panel__conversations">
+      <div v-if="!activeMessagePartner" class="message-panel__conversations">
         <div v-if="conversations.length === 0" class="message-panel__empty">
           暂无消息
         </div>
@@ -39,7 +39,7 @@
       <!-- Chat view -->
       <div v-else class="message-panel__chat">
         <div class="message-panel__chat-header">
-          <button class="message-panel__back" @click="activePartner = null">← 返回</button>
+          <button class="message-panel__back" @click="activeMessagePartner = null">← 返回</button>
           <span class="message-panel__chat-partner">{{ activePartnerName }}</span>
         </div>
         <div class="message-panel__chat-messages" ref="chatMessagesRef">
@@ -83,11 +83,12 @@ const {
   getUnreadMessageCount,
   sendMessage,
   markConversationAsRead,
-  messages
+  messages,
+  isMessagePanelOpen,
+  activeMessagePartner,
+  openMessagePanel
 } = useForum()
 
-const isOpen = ref(false)
-const activePartner = ref<number | null>(null)
 const newMessage = ref('')
 const chatMessagesRef = ref<HTMLElement | null>(null)
 const sending = ref(false)
@@ -99,30 +100,31 @@ const unreadCount = computed(() => getUnreadMessageCount())
 const currentUserId = computed(() => user.value?.id ?? 0)
 
 const activePartnerName = computed(() => {
-  const conv = conversations.value.find(c => c.partner.id === activePartner.value)
+  const conv = conversations.value.find(c => c.partner.id === activeMessagePartner.value)
   return conv?.partner.name ?? ''
 })
 
 const activeMessages = computed(() => {
-  if (!activePartner.value) return [] as ForumMessage[]
+  if (!activeMessagePartner.value) return [] as ForumMessage[]
   return messages.value
     .filter(m =>
-      (m.sender.id === currentUserId.value && m.recipient.id === activePartner.value) ||
-      (m.sender.id === activePartner.value && m.recipient.id === currentUserId.value)
+      (m.sender.id === currentUserId.value && m.recipient.id === activeMessagePartner.value) ||
+      (m.sender.id === activeMessagePartner.value && m.recipient.id === currentUserId.value)
     )
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 })
 
 function toggle() {
-  isOpen.value = !isOpen.value
-  activePartner.value = null
+  if (isMessagePanelOpen.value) {
+    isMessagePanelOpen.value = false
+    activeMessagePartner.value = null
+  } else {
+    isMessagePanelOpen.value = true
+  }
 }
 
 function openConversation(partnerId: number) {
-  activePartner.value = partnerId
-  markConversationAsRead(partnerId).catch((error: unknown) => {
-    actionError.value = extractApiErrorMessage(error, '标记已读失败，请稍后重试。')
-  })
+  openMessagePanel(partnerId)
   nextTick(() => {
     scrollToBottom()
   })
@@ -136,11 +138,11 @@ function scrollToBottom() {
 
 async function handleSend() {
   const text = newMessage.value.trim()
-  if (!text || !activePartner.value || sending.value) return
+  if (!text || !activeMessagePartner.value || sending.value) return
   actionError.value = ''
   sending.value = true
   try {
-    await sendMessage(activePartner.value, text)
+    await sendMessage(activeMessagePartner.value, text)
     newMessage.value = ''
     await nextTick()
     scrollToBottom()

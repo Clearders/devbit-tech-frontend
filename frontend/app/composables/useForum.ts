@@ -61,6 +61,18 @@ export const useForum = () => {
   const refreshWatcherBound = useState<boolean>('forum_auth_refresh_watcher_bound', () => false)
   const authKey = computed(() => isAuthenticated.value ? `user:${user.value?.id ?? 'pending'}` : 'anonymous')
 
+  // Global ui state for message panel
+  const isMessagePanelOpen = useState<boolean>('forum_msg_panel_open', () => false)
+  const activeMessagePartner = useState<number | null>('forum_msg_active_partner', () => null)
+
+  const openMessagePanel = (partnerId?: number) => {
+    isMessagePanelOpen.value = true
+    if (partnerId) {
+      activeMessagePartner.value = partnerId
+      markConversationAsRead(partnerId).catch(() => {})
+    }
+  }
+
   const ensureInit = async (force = false) => {
     if (force) {
       initialized.value = false
@@ -321,6 +333,9 @@ export const useForum = () => {
     markAsRead,
     markConversationAsRead,
     searchPosts,
-    localSearchPosts
+    localSearchPosts,
+    isMessagePanelOpen,
+    activeMessagePartner,
+    openMessagePanel
   }
 }

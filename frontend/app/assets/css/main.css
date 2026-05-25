@@ -1607,25 +1607,39 @@ a:hover {
   margin-top: 0.5rem;
 }
 
-.comment__delete-btn {
-  background: rgba(251, 113, 133, 0.12);
-  border: 1px solid rgba(251, 113, 133, 0.28);
+.comment__action-btn {
+  background: rgba(35, 43, 53, 0.72);
+  border: 1px solid var(--color-border);
   border-radius: 0.35rem;
-  color: var(--color-danger);
+  color: var(--color-text-muted);
   cursor: pointer;
   font-size: 0.78rem;
   opacity: 0.85;
-  transition: opacity 0.15s, background-color 0.15s, border-color 0.15s;
+  transition: opacity 0.15s, background-color 0.15s, border-color 0.15s, color 0.15s;
   padding: 0.18rem 0.5rem;
 }
 
-.comment:hover .comment__delete-btn {
+.comment:hover .comment__action-btn {
   opacity: 1;
 }
 
-.comment__delete-btn:hover {
+.comment__action-btn:hover {
   opacity: 1 !important;
+  color: var(--color-text);
+  border-color: var(--color-primary);
+  background: rgba(77, 166, 255, 0.08);
+}
+
+.comment__action-btn--danger {
+  background: rgba(251, 113, 133, 0.12);
+  border: 1px solid rgba(251, 113, 133, 0.28);
+  color: var(--color-danger);
+}
+
+.comment__action-btn--danger:hover {
+  border-color: rgba(251, 113, 133, 0.4);
   background: rgba(251, 113, 133, 0.2);
+  color: #fb7185;
 }
 
 /* ========================================
