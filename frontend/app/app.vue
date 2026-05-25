@@ -1,5 +1,16 @@
 <script setup lang="ts">
-import DynamicBackground from "./components/DynamicBackground.vue";
+// Nuxt 4 global SEO: useHead for app-level meta overrides
+useHead({
+  htmlAttrs: { lang: 'zh-CN' },
+  link: [
+    { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+  ],
+  meta: [
+    { name: 'theme-color', content: '#090a0f' },
+    { name: 'color-scheme', content: 'dark' },
+    { property: 'og:site_name', content: 'DevBit Tech' },
+  ],
+})
 </script>
 <template>
   <div class="app-shell">

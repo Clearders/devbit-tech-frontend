@@ -62,6 +62,7 @@ useSeoMeta({
 })
 
 const { login } = useAuth()
+const { validateEmail, validatePassword } = useValidation()
 
 const form = reactive({ email: '', password: '' })
 const errors = reactive({ email: '', password: '' })
@@ -69,27 +70,9 @@ const apiError = ref('')
 const loading = ref(false)
 
 function validate() {
-  errors.email = ''
-  errors.password = ''
-  let valid = true
-
-  if (!form.email) {
-    errors.email = 'Email is required.'
-    valid = false
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-    errors.email = 'Please enter a valid email address.'
-    valid = false
-  }
-
-  if (!form.password) {
-    errors.password = 'Password is required.'
-    valid = false
-  } else if (!/^(?=.*[a-zA-Z])(?=.*\d).{8,}$/.test(form.password)) {
-    errors.password = 'Password must be at least 8 characters and include letters and numbers.'
-    valid = false
-  }
-
-  return valid
+  errors.email = validateEmail(form.email)
+  errors.password = validatePassword(form.password)
+  return !errors.email && !errors.password
 }
 
 async function handleSubmit() {

@@ -7,35 +7,14 @@ import type {
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'anonymous'
-type ApiOptions = Parameters<typeof $fetch>[1]
 
 export const useAuth = () => {
-  const config = useRuntimeConfig()
+  const { apiFetch } = useApiFetch()
   const user = useState<AuthUser | null>('auth_user', () => null)
   const status = useState<AuthStatus>('auth_status', () => 'idle')
   const pendingMe = useState<Promise<AuthUser | null> | null>('auth_me_pending', () => null)
   const isAuthenticated = computed(() => status.value === 'authenticated' && !!user.value)
   const isResolving = computed(() => status.value === 'idle' || status.value === 'loading')
-
-  const apiFetch = <T>(path: string, options: ApiOptions = {}) => {
-    const headers = new Headers(options.headers as HeadersInit | undefined)
-    if (!headers.has('accept')) {
-      headers.set('accept', 'application/json')
-    }
-    if (!headers.has('content-type')) {
-      headers.set('content-type', 'application/json')
-    }
-
-    const requestFetch = import.meta.server ? useRequestFetch() : $fetch
-    return requestFetch<T>(path, {
-      ...options,
-      baseURL: config.public.apiBase as string,
-      credentials: 'same-origin',
-      headers,
-      retry: 0,
-      timeout: 10000
-    })
-  }
 
   const syncCurrentUser = async (force = false) => {
     if (!force && status.value === 'authenticated' && user.value) {

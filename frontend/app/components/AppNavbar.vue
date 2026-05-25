@@ -35,7 +35,7 @@
               class="btn btn--outline navbar__logout navbar__magnetic"
               @pointermove="onMagnetMove"
               @pointerleave="resetMagnet"
-              @pointerdown="onButtonPointerDown"
+              @pointerdown="onPointerDown"
               @click="logout"
             >
               Logout
@@ -47,7 +47,7 @@
               class="btn btn--outline navbar__cta navbar__magnetic"
               @pointermove="onMagnetMove"
               @pointerleave="resetMagnet"
-              @pointerdown="onButtonPointerDown"
+              @pointerdown="onPointerDown"
             >
               Login
             </NuxtLink>
@@ -56,7 +56,7 @@
               class="btn btn--primary navbar__cta navbar__magnetic"
               @pointermove="onMagnetMove"
               @pointerleave="resetMagnet"
-              @pointerdown="onButtonPointerDown"
+              @pointerdown="onPointerDown"
             >
               Register
             </NuxtLink>
@@ -69,49 +69,37 @@
 
 <script setup lang="ts">
 const { isAuthenticated, isResolving, user, logout } = useAuth()
+const { isMobile } = useBreakpoint()
+const { onPointerDown, onMagnetMove, resetMagnet } = useMagneticButton()
 const isMenuOpen = ref(false)
+const route = useRoute()
+
+// Close menu on route change (mobile)
+watch(() => route.fullPath, () => {
+  isMenuOpen.value = false
+})
+
+// Close menu on window resize to desktop
+watch(isMobile, (mobile) => {
+  if (!mobile) {
+    isMenuOpen.value = false
+  }
+})
+
+// Lock body scroll when mobile menu is open
+watch(isMenuOpen, (open) => {
+  if (import.meta.client) {
+    document.body.style.overflow = open ? 'hidden' : ''
+  }
+})
+
+onBeforeUnmount(() => {
+  if (import.meta.client) {
+    document.body.style.overflow = ''
+  }
+})
 
 function closeMenu() {
   isMenuOpen.value = false
-}
-
-function onButtonPointerDown(event: PointerEvent) {
-  const target = event.currentTarget as HTMLElement | null
-  if (!target) return
-
-  const rect = target.getBoundingClientRect()
-  const x = event.clientX - rect.left
-  const y = event.clientY - rect.top
-
-  target.style.setProperty('--ripple-x', `${x}px`)
-  target.style.setProperty('--ripple-y', `${y}px`)
-  target.classList.remove('is-rippling')
-  void target.offsetWidth
-  target.classList.add('is-rippling')
-}
-
-function onMagnetMove(event: PointerEvent) {
-  const target = event.currentTarget as HTMLElement | null
-  if (!target) return
-
-  const rect = target.getBoundingClientRect()
-  const dx = event.clientX - (rect.left + rect.width / 2)
-  const dy = event.clientY - (rect.top + rect.height / 2)
-  const magnetStrength = 0.18
-  const maxOffset = 7
-
-  const x = Math.max(Math.min(dx * magnetStrength, maxOffset), -maxOffset)
-  const y = Math.max(Math.min(dy * magnetStrength, maxOffset), -maxOffset)
-
-  target.style.setProperty('--magnet-x', `${x}px`)
-  target.style.setProperty('--magnet-y', `${y}px`)
-}
-
-function resetMagnet(event: PointerEvent) {
-  const target = event.currentTarget as HTMLElement | null
-  if (!target) return
-
-  target.style.setProperty('--magnet-x', '0px')
-  target.style.setProperty('--magnet-y', '0px')
 }
 </script>

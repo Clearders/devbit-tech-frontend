@@ -1,14 +1,18 @@
 # DevBit Tech Frontend
 
-基于 [Nuxt 3](https://nuxt.com/) 构建的 DevBit Tech 社区论坛前端应用。
+基于 [Nuxt 4](https://nuxt.com/) 构建的 DevBit Tech 社区论坛前端应用。
 
 ## 项目特点
 
-- **Nuxt 3 + Vue 3**：使用最新的 Composition API 和 `<script setup>`
+- **Nuxt 4 + Vue 3**：使用最新的 Composition API 和 `<script setup>`，完整 Nuxt 4 目录结构
+- **多端适配**：480px / 768px / 1024px 三档响应式断点，移动端汉堡菜单、底部抽屉弹窗
 - **后端 API**：前端统一调用 `/api`，开发和生产都代理到 Rust 后端服务
 - **TypeScript**：全链路类型安全，共享类型定义在 `shared/` 目录
 - **论坛系统**：帖子浏览/发布/搜索、评论、私信、点赞、置顶/锁定管理
 - **身份认证**：基于 Session Token（Cookie + Bearer Header），含注册/登录/验证码流程
+- **Canvas 动态背景**：基于设备 DPR 自适应粒子密度，尊重 `prefers-reduced-motion`
+- **SEO 优化**：`useSeoMeta` + Open Graph + 结构化 Meta 标签
+- **安全区域适配**：支持 iPhone 刘海屏 / Dynamic Island (`safe-area-inset-*`)
 
 ## 项目结构
 
@@ -16,14 +20,17 @@
 frontend/
 ├── app/
 │   ├── app.vue                    # 根组件
-│   ├── assets/css/                # 全局样式
+│   ├── app.config.ts              # Nuxt 4 应用运行时配置
+│   ├── error.vue                  # 全局错误页面
+│   ├── assets/css/                # 全局样式（移动优先响应式）
 │   ├── components/                # Vue 组件
 │   │   ├── AppFooter.vue
-│   │   ├── AppNavbar.vue
-│   │   ├── DynamicBackground.vue
+│   │   ├── AppNavbar.vue          # 响应式导航栏（含汉堡菜单）
+│   │   ├── DynamicBackground.vue  # Canvas 粒子背景（性能自适应）
 │   │   ├── Forum*.vue             # 论坛相关组件
 │   ├── composables/               # 组合式函数（状态管理）
 │   │   ├── useAuth.ts             # 认证状态 & API
+│   │   ├── useBreakpoint.ts       # 响应式断点检测
 │   │   ├── useForum.ts            # 论坛状态 & 业务逻辑
 │   │   └── useForumApi.ts         # 论坛 API 封装
 │   ├── layouts/default.vue        # 默认布局

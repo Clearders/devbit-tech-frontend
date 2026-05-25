@@ -690,7 +690,10 @@ a:hover {
   gap: 0.5rem;
 }
 
-@media (max-width: 900px) {
+/* ========================================
+   Tablet Responsive (≤1024px)
+   ======================================== */
+@media (max-width: 1024px) {
   .navbar .container {
     flex-wrap: wrap;
   }
@@ -709,6 +712,50 @@ a:hover {
   .navbar__auth {
     min-width: auto;
     margin-left: auto;
+  }
+
+  .forum-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .forum-layout__sidebar {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+
+  .forum-sidebar-card {
+    margin-bottom: 0;
+  }
+
+  .forum-detail__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .forum-detail__sidebar {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+
+  .forum-toolbar__row {
+    flex-wrap: wrap;
+  }
+
+  .forum-toolbar__search {
+    max-width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .forum-toolbar__actions {
+    margin-left: 0;
+  }
+
+  .forum-detail__meta {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
@@ -2174,85 +2221,11 @@ select.form-control {
 }
 
 /* ========================================
-   Forum Responsive
+   Tablet Responsive (≤1024px) – cross-device
    ======================================== */
-
-@media (max-width: 900px) {
-  .forum-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .forum-layout__sidebar {
-    position: static;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1rem;
-  }
-
-  .forum-sidebar-card {
-    margin-bottom: 0;
-  }
-
-  .forum-detail__layout {
-    grid-template-columns: 1fr;
-  }
-
-  .forum-detail__sidebar {
-    position: static;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1rem;
-  }
-
-  .forum-toolbar__row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .forum-toolbar__search {
-    max-width: 100%;
-  }
-
-  .forum-toolbar__actions {
-    margin-left: 0;
-    justify-content: flex-end;
-  }
-
-  .forum-detail__meta {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .message-panel__body {
-    width: calc(100vw - 3rem);
-    right: -0.75rem;
-  }
-}
-
-@media (max-width: 600px) {
-  .post-card__footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .admin-panel__stats {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .admin-panel__table {
-    font-size: 0.75rem;
-  }
-
-  .admin-panel__table th,
-  .admin-panel__table td {
-    padding: 0.4rem 0.35rem;
-  }
-}
-
-/* Cross-device refinements */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   :root {
-    --navbar-height: 118px;
+    --navbar-height: 66px;
   }
 
   .container {
@@ -2260,26 +2233,12 @@ select.form-control {
   }
 
   .navbar {
-    padding: 0.75rem 0;
-  }
-
-  .navbar .container {
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .navbar__right {
-    align-items: flex-start;
-  }
-
-  .navbar__auth {
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    padding: 0.65rem 0;
   }
 
   .hero {
     min-height: auto;
-    padding: 4rem 0 4.5rem;
+    padding: 3.5rem 0 4rem;
   }
 
   .section {
@@ -2297,6 +2256,23 @@ select.form-control {
 
   .page-header__subtitle {
     font-size: 1rem;
+  }
+
+  .post-card__footer {
+    gap: 0.75rem;
+  }
+
+  .admin-panel__stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .admin-panel__table {
+    font-size: 0.78rem;
+  }
+
+  .message-panel__body {
+    width: calc(100vw - 3rem);
+    right: -0.75rem;
   }
 }
 
@@ -2596,6 +2572,164 @@ select.form-control {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .btn {
+    --lift: 0px;
+    --magnet-x: 0px;
+    --magnet-y: 0px;
+  }
+}
+
+/* ========================================
+   Nuxt 4 Page Transitions
+   ======================================== */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* ========================================
+   Touch Device Optimizations
+   ======================================== */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets */
+  .btn,
+  .navbar__links a,
+  .forum-categories__tab,
+  .navbar__menu-toggle,
+  .admin-panel__action-btn {
+    min-height: 44px;
+  }
+
+  .post-card__title a,
+  .forum-detail__back,
+  .admin-panel__post-link,
+  .forum-sidebar-card__hot-link {
+    padding: 0.25rem 0;
+  }
+
+  /* Replace hover with active states */
+  .quick-nav-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .quick-nav-card:active {
+    transform: scale(0.98);
+    border-color: var(--color-primary);
+  }
+
+  .post-card:hover {
+    border-color: var(--color-border);
+    box-shadow: none;
+  }
+
+  .post-card:active {
+    border-color: var(--color-primary);
+  }
+
+  .forum-categories__tab:hover {
+    border-color: var(--color-border);
+    color: var(--color-text-muted);
+  }
+
+  .forum-categories__tab:active {
+    border-color: var(--color-primary);
+  }
+}
+
+/* ========================================
+   Safe Area Insets (Notch / Dynamic Island)
+   ======================================== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .message-panel {
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
+  .message-panel__chat-input {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+
+  .site-layout {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .modal-overlay {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+@media print {
+  .navbar,
+  .footer,
+  .message-panel,
+  .app-shell__background,
+  .app-shell__overlay,
+  .modal-overlay {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+}
+
+/* ========================================
+   High Contrast / Forced Colors
+   ======================================== */
+@media (forced-colors: active) {
+  .btn {
+    border: 2px solid ButtonText;
+  }
+
+  .btn--primary {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .post-card,
+  .forum-sidebar-card,
+  .admin-panel,
+  .auth-card {
+    border: 2px solid ButtonText;
+  }
+}
+
+/* ========================================
+   Landscape Mobile Optimizations
+   ======================================== */
+@media (max-width: 920px) and (orientation: landscape) {
+  .hero {
+    min-height: auto;
+    padding: 1.5rem 0 2rem;
+  }
+
+  .modal {
+    max-height: 85dvh;
+  }
+
+  .message-panel__body {
+    max-height: 80dvh;
   }
 }
 

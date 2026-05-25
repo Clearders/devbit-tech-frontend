@@ -45,6 +45,7 @@ onMounted(() => {
 
   let animId: number
   let isVisible = true
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
   const particles: Particle[] = []
   const ripples: Ripple[] = []
   const mouse = {
@@ -70,9 +71,12 @@ onMounted(() => {
 
   function particleCount() {
     if (prefersReducedMotion.matches) return 0
-    if (window.innerWidth < 640) return 28
-    if (window.innerWidth < 1024) return 48
-    return 72
+    // Performance tiers based on device pixel ratio and screen size
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    if (window.innerWidth < 480) return Math.round(16 * dpr)
+    if (window.innerWidth < 768) return Math.round(24 * dpr)
+    if (window.innerWidth < 1024) return Math.round(36 * dpr)
+    return Math.round(56 * dpr)
   }
 
   function createParticle(): Particle {
@@ -233,7 +237,7 @@ onMounted(() => {
   initParticles()
   tick()
 
-  if (props.layer === 'overlay') {
+  if (props.layer === 'overlay' && !isTouchDevice) {
     window.addEventListener('pointermove', onPointerMove)
     window.addEventListener('pointerleave', onPointerLeave)
     window.addEventListener('click', onClick)
@@ -263,7 +267,7 @@ onMounted(() => {
     ro.disconnect()
     document.removeEventListener('visibilitychange', onVisibilityChange)
     prefersReducedMotion.removeEventListener('change', onMotionPreferenceChange)
-    if (props.layer === 'overlay') {
+    if (props.layer === 'overlay' && !isTouchDevice) {
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerleave', onPointerLeave)
       window.removeEventListener('click', onClick)

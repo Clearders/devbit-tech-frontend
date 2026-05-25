@@ -113,6 +113,8 @@ useSeoMeta({
 })
 
 const { register, sendVerificationCode } = useAuth()
+const { validateEmail, validatePassword, validateCode, isValidEmail } = useValidation()
+const { remaining: cooldown, start: startCooldown } = useCountdown()
 
 const form = reactive({ name: '', email: '', code: '', password: '', confirmPassword: '' })
 const errors = reactive({ name: '', email: '', code: '', password: '', confirmPassword: '' })
@@ -120,36 +122,6 @@ const apiError = ref('')
 const codeMessage = ref('')
 const loading = ref(false)
 const codeLoading = ref(false)
-const cooldown = ref(0)
-let cooldownTimer: ReturnType<typeof setInterval> | null = null
-
-function isValidEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-function stopCooldown() {
-  if (cooldownTimer) {
-    clearInterval(cooldownTimer)
-    cooldownTimer = null
-  }
-}
-
-function startCooldown(seconds = 60) {
-  stopCooldown()
-  cooldown.value = seconds
-  cooldownTimer = setInterval(() => {
-    if (cooldown.value <= 1) {
-      cooldown.value = 0
-      stopCooldown()
-      return
-    }
-    cooldown.value -= 1
-  }, 1000)
-}
-
-onBeforeUnmount(() => {
-  stopCooldown()
-})
 
 function validate() {
   errors.name = ''
@@ -164,29 +136,14 @@ function validate() {
     valid = false
   }
 
-  if (!form.email) {
-    errors.email = 'Email is required.'
-    valid = false
-  } else if (!isValidEmail(form.email)) {
-    errors.email = 'Please enter a valid email address.'
-    valid = false
-  }
+  errors.email = validateEmail(form.email)
+  if (errors.email) valid = false
 
-  if (!form.code.trim()) {
-    errors.code = 'Email verification code is required.'
-    valid = false
-  } else if (!/^\d{4,8}$/.test(form.code.trim())) {
-    errors.code = 'Please enter a valid verification code.'
-    valid = false
-  }
+  errors.code = validateCode(form.code)
+  if (errors.code) valid = false
 
-  if (!form.password) {
-    errors.password = 'Password is required.'
-    valid = false
-  } else if (!/^(?=.*[a-zA-Z])(?=.*\d).{8,}$/.test(form.password)) {
-    errors.password = 'Password must be at least 8 characters and include letters and numbers.'
-    valid = false
-  }
+  errors.password = validatePassword(form.password)
+  if (errors.password) valid = false
 
   if (!form.confirmPassword) {
     errors.confirmPassword = 'Please confirm your password.'
