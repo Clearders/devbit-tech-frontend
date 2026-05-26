@@ -9,7 +9,9 @@
         </span>
         <span class="comment__time">{{ time }}</span>
       </div>
-      <p class="comment__content">{{ comment.content }}</p>
+      <div class="comment__content">
+        <MarkdownRenderer :content="comment.content" />
+      </div>
       <div class="comment__actions">
         <button
           v-if="isAuthenticated && user?.id !== comment.author.id"

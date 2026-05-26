@@ -79,7 +79,9 @@
         <div class="forum-detail__layout">
           <!-- Post body -->
           <div class="forum-detail__body">
-            <div class="forum-detail__text">{{ post.content }}</div>
+            <div class="forum-detail__text">
+              <MarkdownRenderer :content="post.content" />
+            </div>
 
             <!-- Tags -->
             <div class="forum-detail__tags" v-if="post.tags.length">

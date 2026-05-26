@@ -49,7 +49,9 @@
             class="message-panel__msg"
             :class="{ 'message-panel__msg--mine': msg.sender.id === currentUserId }"
           >
-            <div class="message-panel__msg-content">{{ msg.content }}</div>
+            <div class="message-panel__msg-content">
+              <MarkdownRenderer :content="msg.content" inline />
+            </div>
             <div class="message-panel__msg-time">{{ formatRelativeTime(msg.createdAt) }}</div>
           </div>
           <div v-if="activeMessages.length === 0" class="message-panel__empty">暂无消息</div>
