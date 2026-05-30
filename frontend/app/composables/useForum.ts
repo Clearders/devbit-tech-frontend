@@ -4,13 +4,39 @@ import type {
   ForumComment,
   ForumMessage,
   ForumPost,
-  ForumUser
+  ForumUser,
+  FriendInfo
 } from '~~/shared/forum'
 import { FORUM_CATEGORIES } from '~~/shared/forum'
 import { useForumApi } from './useForumApi'
 
-export type { ForumCategory, ForumComment, ForumMessage, ForumPost, ForumUser }
+export type { ForumCategory, ForumComment, ForumMessage, ForumPost, ForumUser, FriendInfo }
 export { FORUM_CATEGORIES }
+
+// ---------- localStorage helpers for message persistence ----------
+const MESSAGES_STORAGE_KEY = 'devbit_messages'
+
+function loadMessagesFromStorage(): ForumMessage[] {
+  if (!import.meta.client) return []
+  try {
+    const raw = localStorage.getItem(MESSAGES_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) return parsed as ForumMessage[]
+    return []
+  } catch {
+    return []
+  }
+}
+
+function saveMessagesToStorage(messages: ForumMessage[]) {
+  if (!import.meta.client) return
+  try {
+    localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages))
+  } catch {
+    // storage full or unavailable — silently ignore
+  }
+}
 
 function formatRelativeTime(dateStr: string): string {
   const now = Date.now()
@@ -53,17 +79,29 @@ export const useForum = () => {
 
   const posts = useState<ForumPost[]>('forum_posts', () => [])
   const comments = useState<ForumComment[]>('forum_comments', () => [])
-  const messages = useState<ForumMessage[]>('forum_messages', () => [])
+  // Initialize messages from localStorage first for instant display
+  const messages = useState<ForumMessage[]>('forum_messages', () => loadMessagesFromStorage())
   const users = useState<ForumUser[]>('forum_users', () => [])
+  const friends = useState<FriendInfo[]>('forum_friends', () => [])
   const initialized = useState<boolean>('forum_initialized', () => false)
   const initPromise = ref<Promise<void> | null>(null)
   const apiReachable = useState<boolean>('forum_api_reachable', () => true)
   const refreshWatcherBound = useState<boolean>('forum_auth_refresh_watcher_bound', () => false)
+  const messagesPersistWatcherBound = useState<boolean>('forum_messages_persist_bound', () => false)
   const authKey = computed(() => isAuthenticated.value ? `user:${user.value?.id ?? 'pending'}` : 'anonymous')
 
   // Global ui state for message panel
   const isMessagePanelOpen = useState<boolean>('forum_msg_panel_open', () => false)
   const activeMessagePartner = useState<number | null>('forum_msg_active_partner', () => null)
+  const messagePanelTab = useState<'messages' | 'friends' | 'addFriend'>('forum_msg_panel_tab', () => 'messages')
+
+  // Persist messages to localStorage whenever they change (client only)
+  if (import.meta.client && !messagesPersistWatcherBound.value) {
+    messagesPersistWatcherBound.value = true
+    watch(messages, (newMessages) => {
+      saveMessagesToStorage(newMessages)
+    }, { deep: true })
+  }
 
   const openMessagePanel = (partnerId?: number) => {
     isMessagePanelOpen.value = true
@@ -93,8 +131,15 @@ export const useForum = () => {
       users.value = bootstrap.users
       posts.value = sortPosts(bootstrap.posts)
       comments.value = bootstrap.comments
+      // Merge API messages with locally persisted ones (API wins for same id)
       messages.value = bootstrap.messages
       apiReachable.value = true
+      // Fetch friends
+      try {
+        friends.value = await api.fetchFriends()
+      } catch {
+        // friends list non-critical
+      }
       initialized.value = true
     })()
       .catch((error) => {
@@ -283,6 +328,31 @@ export const useForum = () => {
     })
   }
 
+  // ---------- Friends ----------
+
+  const getFriends = () => friends.value
+
+  const isFriend = (userId: number) => friends.value.some((f) => f.user.id === userId)
+
+  const addFriend = async (friendId: number) => {
+    const info = await api.addFriend({ friendId })
+    if (!friends.value.some((f) => f.user.id === friendId)) {
+      friends.value = [...friends.value, info]
+    }
+    return info
+  }
+
+  const removeFriend = async (friendId: number) => {
+    await api.removeFriend(friendId)
+    friends.value = friends.value.filter((f) => f.user.id !== friendId)
+  }
+
+  const searchUsers = async (query: string) => {
+    return api.searchUsers(query)
+  }
+
+  // ---------- Search ----------
+
   const searchPosts = async (query: string) => {
     const q = query.trim()
     if (!q) {
@@ -334,8 +404,15 @@ export const useForum = () => {
     markConversationAsRead,
     searchPosts,
     localSearchPosts,
+    getFriends,
+    isFriend,
+    addFriend,
+    removeFriend,
+    searchUsers,
+    friends,
     isMessagePanelOpen,
     activeMessagePartner,
+    messagePanelTab,
     openMessagePanel
   }
 }

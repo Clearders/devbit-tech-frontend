@@ -1859,12 +1859,14 @@ a:hover {
   border-radius: 999px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
-  cursor: pointer;
+  cursor: grab;
   font-size: 1.3rem;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  user-select: none;
+  touch-action: none;
   transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
@@ -2111,6 +2113,100 @@ a:hover {
 .message-panel__chat-input .btn {
   padding: 0.4rem 0.875rem;
   font-size: 0.82rem;
+}
+
+/* Message panel tabs */
+.message-panel__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.message-panel__tab {
+  flex: 1;
+  padding: 0.55rem 0.5rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.message-panel__tab:hover {
+  color: var(--color-text);
+}
+
+.message-panel__tab--active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* Friend remove button */
+.message-panel__friend-remove {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.message-panel__friend-remove:hover {
+  color: var(--color-danger);
+}
+
+/* Add friend tab */
+.message-panel__add-friend {
+  display: flex;
+  flex-direction: column;
+}
+
+.message-panel__search-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.message-panel__search-row .form-control {
+  flex: 1;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.65rem;
+}
+
+.message-panel__search-row .btn {
+  padding: 0.4rem 0.875rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.message-panel__add-btn {
+  padding: 0.3rem 0.65rem !important;
+  font-size: 0.75rem !important;
+  flex-shrink: 0;
+}
+
+.message-panel__self-tag,
+.message-panel__already-friend {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.message-panel__already-friend {
+  color: var(--color-success);
+}
+
+/* Dragging states */
+.message-panel__toggle--dragging {
+  cursor: grabbing !important;
+  transform: scale(1.12) !important;
+  box-shadow: 0 8px 32px rgba(77, 166, 255, 0.35) !important;
+  transition: none !important;
 }
 
 /* ========================================

@@ -5,7 +5,9 @@ import type {
   ForumMessage,
   ForumPost,
   ForumUser,
-  SendMessagePayload
+  SendMessagePayload,
+  FriendInfo,
+  AddFriendPayload
 } from '~~/shared/forum'
 
 export const useForumApi = () => {
@@ -91,6 +93,27 @@ export const useForumApi = () => {
     markConversationRead(partnerId: number): Promise<void> {
       return forumApi(`/forum/messages/conversation/${partnerId}/read`, {
         method: 'PUT'
+      })
+    },
+
+    fetchFriends(): Promise<FriendInfo[]> {
+      return forumApi('/forum/friends')
+    },
+
+    addFriend(payload: AddFriendPayload): Promise<FriendInfo> {
+      return forumApi('/forum/friends', {
+        method: 'POST',
+        body: payload
+      })
+    },
+
+    removeFriend(friendId: number): Promise<void> {
+      return forumApi(`/forum/friends/${friendId}`, { method: 'DELETE' })
+    },
+
+    searchUsers(query: string): Promise<ForumUser[]> {
+      return forumApi('/forum/users/search', {
+        params: { q: query }
       })
     }
   }

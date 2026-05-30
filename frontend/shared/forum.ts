@@ -70,6 +70,15 @@ export interface SendMessagePayload {
   content: string
 }
 
+export interface FriendInfo {
+  user: ForumUser
+  createdAt: string
+}
+
+export interface AddFriendPayload {
+  friendId: number
+}
+
 export const FORUM_CATEGORIES: {
   value: ForumCategory
   label: string
