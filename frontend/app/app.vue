@@ -6,8 +6,8 @@ useHead({
     { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
   ],
   meta: [
-    { name: 'theme-color', content: '#090a0f' },
-    { name: 'color-scheme', content: 'dark' },
+    { name: 'theme-color', content: '#f7f5f2' },
+    { name: 'color-scheme', content: 'light' },
     { property: 'og:site_name', content: 'DevBit Tech' },
   ],
 })
