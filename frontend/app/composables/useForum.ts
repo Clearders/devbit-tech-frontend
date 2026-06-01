@@ -153,10 +153,6 @@ export const useForum = () => {
     return initPromise.value
   }
 
-  const initFromApi = async (force = false) => {
-    await ensureInit(force)
-  }
-
   if (import.meta.client && !refreshWatcherBound.value) {
     refreshWatcherBound.value = true
     watch(authKey, (_next, previous) => {
@@ -379,11 +375,9 @@ export const useForum = () => {
     comments,
     messages,
     users,
-    DEMO_USERS: users,
     FORUM_CATEGORIES,
     formatRelativeTime,
     apiReachable,
-    initFromApi,
     ensureInit,
     loadPost,
     loadCommentsForPost,

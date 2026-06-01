@@ -137,7 +137,7 @@
                   <span class="forum-sidebar-card__stat-label">评论</span>
                 </div>
                 <div class="forum-sidebar-card__stat">
-                  <span class="forum-sidebar-card__stat-value">{{ DEMO_USERS.length }}</span>
+                  <span class="forum-sidebar-card__stat-value">{{ users.length }}</span>
                   <span class="forum-sidebar-card__stat-label">用户</span>
                 </div>
               </div>
@@ -263,12 +263,12 @@ const { user, isAuthenticated } = useAuth()
 const {
   posts,
   comments,
+  users,
   FORUM_CATEGORIES,
-  DEMO_USERS,
   getPostsByCategory,
   localSearchPosts,
   createPost,
-  initFromApi,
+  ensureInit,
 } = useForum()
 
 const isLoadingForum = ref(true)
@@ -278,7 +278,7 @@ async function loadForum(force = false) {
   isLoadingForum.value = true
   loadError.value = ''
   try {
-    await initFromApi(force)
+    await ensureInit(force)
   } catch (error: unknown) {
     loadError.value = extractApiErrorMessage(error, '论坛数据加载失败，请稍后重试。')
   } finally {

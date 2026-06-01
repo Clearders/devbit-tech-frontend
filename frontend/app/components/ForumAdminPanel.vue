@@ -143,7 +143,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="u in DEMO_USERS" :key="u.id">
+          <tr v-for="u in users" :key="u.id">
             <td class="admin-panel__td-id">{{ u.id }}</td>
             <td><span class="admin-panel__user-avatar">{{ u.avatar }}</span></td>
             <td>{{ u.name }}</td>
@@ -165,7 +165,7 @@ import type { ForumCategory } from '~/composables/useForum'
 import { useForum } from '~/composables/useForum'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
-const { posts, comments, FORUM_CATEGORIES, DEMO_USERS, deletePost, deleteComment, togglePinPost, toggleLockPost } = useForum()
+const { posts, comments, FORUM_CATEGORIES, users, deletePost, deleteComment, togglePinPost, toggleLockPost } = useForum()
 
 const activeTab = ref<'posts' | 'comments' | 'users'>('posts')
 const actionError = ref('')

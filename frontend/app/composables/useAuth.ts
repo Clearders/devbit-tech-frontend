@@ -43,9 +43,7 @@ export const useAuth = () => {
     return pendingMe.value
   }
 
-  if (import.meta.client && status.value === 'idle') {
-    void syncCurrentUser()
-  }
+  // Note: initial auth check is handled by the auth plugin (plugins/auth.ts)
 
   const login = async (email: string, password: string) => {
     try {

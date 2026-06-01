@@ -13,7 +13,7 @@ const props = withDefaults(defineProps<{
   inline: false,
 })
 
-// Create a markdown-it instance with safe defaults
+// Create a single markdown-it instance at module level (shared across all component instances)
 // html: false prevents raw HTML injection
 // linkify: true auto-converts URLs to links
 // breaks: true converts \n to <br> (GFM style)

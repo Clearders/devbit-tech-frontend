@@ -45,6 +45,8 @@ onMounted(() => {
 
   let animId: number
   let isVisible = true
+  // Client-only check — useBreakpoint() composable cannot be called inside onMounted()
+  // because it would create a duplicate reactive instance; inline check is correct here.
   const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
   const particles: Particle[] = []
   const ripples: Ripple[] = []
