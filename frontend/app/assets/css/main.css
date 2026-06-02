@@ -1032,24 +1032,135 @@ select.form-control {
   margin-left: auto;
 }
 
-.forum-toolbar__sort {
+/* ============================================
+   Forum Sort — porcelain glow pills
+   ============================================ */
+.forum-sort {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  color: var(--color-text-muted);
-  font-size: 0.82rem;
-  white-space: nowrap;
-  background: rgba(91, 141, 239, 0.06);
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.5rem;
+  gap: 0.6rem;
 }
 
-.forum-toolbar__sort-select {
-  width: auto;
-  min-width: 8.5rem;
-  padding: 0.5rem 0.7rem;
-  font-size: 0.85rem;
+.forum-sort__label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding-right: 0.3rem;
+  border-right: 1.5px solid var(--color-border);
+}
+
+.forum-sort__label-icon {
+  font-size: 0.9rem;
+  transition: transform var(--duration-normal) var(--ease-spring);
+}
+
+.forum-sort__label-text {
+  opacity: 0.7;
+}
+
+.forum-sort__options {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem;
+  background: var(--color-bg-soft);
+  border-radius: 0.65rem;
+  border: 1px solid var(--color-border-light);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.forum-sort__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: var(--font-body), sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  isolation: isolate;
+  transition:
+    color var(--duration-normal) var(--ease-in-out),
+    background var(--duration-normal) var(--ease-in-out),
+    box-shadow var(--duration-normal) var(--ease-in-out),
+    transform var(--duration-normal) var(--ease-out-quint);
+}
+
+.forum-sort__btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-in-out);
+  z-index: -1;
+}
+
+.forum-sort__btn-icon {
+  font-size: 0.85rem;
+  transition: transform var(--duration-normal) var(--ease-spring);
+}
+
+.forum-sort__btn-text {
+  position: relative;
+}
+
+/* Hover — subtle lift + glow */
+.forum-sort__btn:hover {
+  color: var(--color-primary);
+  background: rgba(91, 141, 239, 0.07);
+  box-shadow: var(--shadow-sm), 0 0 12px rgba(91, 141, 239, 0.12);
+  transform: translateY(-1px);
+}
+
+.forum-sort__btn:hover .forum-sort__btn-icon {
+  transform: scale(1.15);
+}
+
+/* Active — gradient fill with glow */
+.forum-sort__btn--active {
+  color: #fff;
+  box-shadow: var(--shadow-sm), 0 0 20px rgba(91, 141, 239, 0.35), 0 2px 8px rgba(91, 141, 239, 0.25);
+  transform: translateY(-1px);
+}
+
+.forum-sort__btn--active::before {
+  opacity: 1;
+}
+
+.forum-sort__btn--active:hover {
+  color: #fff;
+  box-shadow: var(--shadow-md), 0 0 28px rgba(91, 141, 239, 0.45), 0 4px 12px rgba(91, 141, 239, 0.3);
+  transform: translateY(-2px);
+}
+
+.forum-sort__btn--active:hover .forum-sort__btn-icon {
+  transform: scale(1.1);
+}
+
+/* Active press */
+.forum-sort__btn:active {
+  transform: translateY(0) scale(0.97);
+  transition: transform 0.1s var(--ease-in-out);
+}
+
+/* Focus visible */
+.forum-sort__btn:focus-visible {
+  outline: 2px solid var(--color-primary-soft);
+  outline-offset: 2px;
 }
 
 /* Category Tabs */
@@ -2839,14 +2950,28 @@ select.form-control {
     flex: 1 1 100%;
   }
 
-  .forum-toolbar__sort {
-    align-items: stretch;
+  .forum-sort {
     flex-direction: column;
-    gap: 0.3rem;
+    align-items: stretch;
+    gap: 0.5rem;
   }
 
-  .forum-toolbar__sort-select {
-    width: 100%;
+  .forum-sort__label {
+    border-right: none;
+    border-bottom: 1.5px solid var(--color-border);
+    padding-right: 0;
+    padding-bottom: 0.4rem;
+  }
+
+  .forum-sort__options {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .forum-sort__btn {
+    flex: 0 0 auto;
+    font-size: 0.78rem;
+    padding: 0.38rem 0.65rem;
   }
 
   .forum-categories {

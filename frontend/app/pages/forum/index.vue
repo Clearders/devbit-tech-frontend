@@ -30,15 +30,24 @@
 
           <!-- Actions -->
           <div class="forum-toolbar__actions">
-            <label class="forum-toolbar__sort" for="forum-sort">
-              <span>排序</span>
-              <select id="forum-sort" v-model="sortMode" class="form-control forum-toolbar__sort-select">
-                <option value="latest">最新发布</option>
-                <option value="active">讨论最多</option>
-                <option value="views">浏览最多</option>
-                <option value="likes">点赞最多</option>
-              </select>
-            </label>
+            <div class="forum-sort">
+              <span class="forum-sort__label">
+                <span class="forum-sort__label-icon">↕</span>
+                <span class="forum-sort__label-text">排序</span>
+              </span>
+              <div class="forum-sort__options">
+                <button
+                  v-for="opt in sortOptions"
+                  :key="opt.value"
+                  class="forum-sort__btn"
+                  :class="{ 'forum-sort__btn--active': sortMode === opt.value }"
+                  @click="sortMode = opt.value"
+                >
+                  <span class="forum-sort__btn-icon">{{ opt.icon }}</span>
+                  <span class="forum-sort__btn-text">{{ opt.label }}</span>
+                </button>
+              </div>
+            </div>
             <button v-if="isAuthenticated" class="btn btn--primary" @click="showCreateModal = true">
               ✏️ 发布帖子
             </button>
@@ -307,6 +316,13 @@ const activeCategory = ref<ForumCategory | 'all'>('all')
 const sortMode = ref<'latest' | 'active' | 'views' | 'likes'>('latest')
 const showAdminPanel = ref(false)
 let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+const sortOptions = [
+  { value: 'latest' as const, label: '最新发布', icon: '🕐' },
+  { value: 'active' as const, label: '讨论最多', icon: '💬' },
+  { value: 'views' as const, label: '浏览最多', icon: '👁' },
+  { value: 'likes' as const, label: '点赞最多', icon: '👍' },
+]
 
 const hotPosts = computed(() =>
   [...posts.value]
