@@ -958,7 +958,7 @@ select.form-control {
   position: sticky;
   top: var(--navbar-height);
   z-index: 50;
-  background: var(--color-bg);
+  background: transparent;
   padding: 1rem 0 0;
 }
 
@@ -990,7 +990,7 @@ select.form-control {
 .forum-toolbar__search-input {
   padding-left: 2.6rem;
   padding-right: 2.25rem;
-  background: transparent !important;
+  background: rgba(91, 141, 239, 0.06) !important;
   border: 1.5px solid var(--color-border);
   border-radius: 0.75rem;
   transition:
@@ -1001,7 +1001,7 @@ select.form-control {
 
 .forum-toolbar__search-input:focus {
   border-color: var(--color-primary);
-  background: var(--color-surface) !important;
+  background: rgba(91, 141, 239, 0.1) !important;
   box-shadow: 0 0 0 4px rgba(91, 141, 239, 0.1);
 }
 
@@ -1039,6 +1039,9 @@ select.form-control {
   color: var(--color-text-muted);
   font-size: 0.82rem;
   white-space: nowrap;
+  background: rgba(91, 141, 239, 0.06);
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.5rem;
 }
 
 .forum-toolbar__sort-select {
