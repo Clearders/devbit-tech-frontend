@@ -4,8 +4,8 @@
  *
  * Usage:
  *   const { onIdle } = useIdleLoad()
- *   onIdle(() => { /* heavy init here */ })
- */
+ *   onIdle(() => {  heavy init here })
+  */
 
 type IdleCallback = () => void
 

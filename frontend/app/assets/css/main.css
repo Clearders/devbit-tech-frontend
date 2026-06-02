@@ -958,7 +958,7 @@ select.form-control {
   position: sticky;
   top: var(--navbar-height);
   z-index: 50;
-  background: transparent;
+  background: var(--color-bg);
   padding: 1rem 0 0;
 }
 
@@ -1129,7 +1129,7 @@ select.form-control {
 
 .forum-layout__sidebar {
   position: sticky;
-  top: calc(var(--navbar-height) + 5.5rem);
+  top: calc(var(--navbar-height) + 8rem);
 }
 
 /* Forum Sidebar Cards */
