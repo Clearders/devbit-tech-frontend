@@ -27,6 +27,28 @@ export default defineNuxtConfig({
         'cache-control': 'public, max-age=31536000, immutable',
       },
     },
+    // Favicon & icon assets: cache for 7 days
+    '/favicon.ico': {
+      headers: { 'cache-control': 'public, max-age=604800' },
+    },
+    '/favicon.svg': {
+      headers: { 'cache-control': 'public, max-age=604800' },
+    },
+    '/favicon-96x96.png': {
+      headers: { 'cache-control': 'public, max-age=604800' },
+    },
+    '/apple-touch-icon.png': {
+      headers: { 'cache-control': 'public, max-age=604800' },
+    },
+    '/web-app-manifest-192x192.png': {
+      headers: { 'cache-control': 'public, max-age=604800' },
+    },
+    '/web-app-manifest-512x512.png': {
+      headers: { 'cache-control': 'public, max-age=604800' },
+    },
+    '/site.webmanifest': {
+      headers: { 'cache-control': 'public, max-age=604800' },
+    },
   },
 
   devtools: {
@@ -38,6 +60,8 @@ export default defineNuxtConfig({
   },
 
   // Nuxt 4 app configuration
+  // NOTE: favicon, font preconnect, theme-color, color-scheme, og:site_name
+  // are managed in app.vue via useHead() to avoid duplication.
   app: {
     head: {
       title: 'DevBit Tech',
@@ -46,19 +70,11 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
         { name: 'description', content: 'DevBit Tech 是一个面向开发者的 Beta 社区，汇集论坛讨论、小游戏、排行榜与团队介绍。' },
-        { name: 'theme-color', content: '#f7f5f2' },
-        { name: 'color-scheme', content: 'light' },
         { property: 'og:title', content: 'DevBit Tech' },
         { property: 'og:description', content: '面向开发者的 Beta 社区' },
         { property: 'og:type', content: 'website' },
+        { property: 'og:image', content: '/web-app-manifest-512x512.png?v=20260604' },
         { name: 'twitter:card', content: 'summary' },
-      ],
-      link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
-        // Async font loading — non-blocking, uses system font until loaded
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap', media: 'print', onload: 'this.onload=null;this.media="all"' },
       ],
     },
     pageTransition: { name: 'page', mode: 'default' },
