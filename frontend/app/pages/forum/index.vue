@@ -48,9 +48,9 @@
                 </button>
               </div>
             </div>
-            <button v-if="isAuthenticated" class="btn btn--primary" @click="showCreateModal = true">
+            <NuxtLink v-if="isAuthenticated" to="/forum/new" class="btn btn--primary">
               ✏️ 发布帖子
-            </button>
+            </NuxtLink>
             <button
               v-if="isAdmin"
               class="btn btn--outline"
@@ -112,13 +112,13 @@
               <p class="forum-empty__desc">
                 {{ searchQuery ? '尝试其他关键词或浏览不同分类' : '成为第一个发帖的人吧！' }}
               </p>
-              <button
+              <NuxtLink
                 v-if="!searchQuery && isAuthenticated"
+                to="/forum/new"
                 class="btn btn--primary"
-                @click="showCreateModal = true"
               >
                 发布第一个帖子
-              </button>
+              </NuxtLink>
             </div>
 
             <!-- Post list -->
@@ -181,83 +181,12 @@
       </div>
     </section>
 
-    <!-- Create Post Modal -->
-    <Teleport to="body">
-      <div v-if="showCreateModal" class="modal-overlay" @click.self="closeCreateModal">
-        <div class="modal">
-          <div class="modal__header">
-            <h2 class="modal__title">✏️ 发布新帖子</h2>
-            <button class="modal__close" @click="closeCreateModal">✖</button>
-          </div>
-          <form class="modal__body" @submit.prevent="handleCreatePost">
-            <div v-if="createApiError" class="form-error form-error--global">{{ createApiError }}</div>
-            <div class="form-group">
-              <label class="form-label" for="new-title">标题</label>
-              <input
-                id="new-title"
-                v-model="newPost.title"
-                type="text"
-                class="form-control"
-                :class="{ 'form-control--error': createErrors.title }"
-                placeholder="输入帖子标题"
-                maxlength="100"
-              />
-              <span v-if="createErrors.title" class="form-error">{{ createErrors.title }}</span>
-            </div>
 
-            <div class="form-group">
-              <label class="form-label" for="new-category">分类</label>
-              <select
-                id="new-category"
-                v-model="newPost.category"
-                class="form-control"
-              >
-                <option v-for="cat in FORUM_CATEGORIES" :key="cat.value" :value="cat.value">
-                  {{ cat.icon }} {{ cat.label }}
-                </option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="new-content">内容</label>
-              <textarea
-                id="new-content"
-                v-model="newPost.content"
-                class="form-control form-control--textarea"
-                :class="{ 'form-control--error': createErrors.content }"
-                placeholder="分享你的想法…（支持 Markdown）"
-                rows="8"
-              ></textarea>
-              <span v-if="createErrors.content" class="form-error">{{ createErrors.content }}</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="new-tags">标签（逗号分隔）</label>
-              <input
-                id="new-tags"
-                v-model="newPost.tagsInput"
-                type="text"
-                class="form-control"
-                placeholder="例如：Rust, 前端, 教程"
-              />
-            </div>
-
-            <div class="modal__actions">
-              <button type="button" class="btn btn--outline" @click="closeCreateModal">取消</button>
-              <button type="submit" class="btn btn--primary" :disabled="creatingPost">
-                {{ creatingPost ? '发布中...' : '发布' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { ForumCategory } from '~/composables/useForum'
-import type { CreatePostPayload } from '~~/shared/forum'
 import { useForum } from '~/composables/useForum'
 import ForumPostCard from '~/components/ForumPostCard.vue'
 import ForumAdminPanel from '~/components/ForumAdminPanel.vue'
@@ -276,7 +205,6 @@ const {
   FORUM_CATEGORIES,
   getPostsByCategory,
   localSearchPosts,
-  createPost,
   ensureInit,
 } = useForum()
 
@@ -380,65 +308,5 @@ function clearSearch() {
   searchQuery.value = ''
 }
 
-// Create post modal
-const showCreateModal = ref(false)
-const creatingPost = ref(false)
-const createApiError = ref('')
-const newPost = reactive({
-  title: '',
-  content: '',
-  category: 'general' as ForumCategory,
-  tagsInput: '',
-})
-const createErrors = reactive({ title: '', content: '' })
 
-function closeCreateModal() {
-  showCreateModal.value = false
-  newPost.title = ''
-  newPost.content = ''
-  newPost.category = 'general'
-  newPost.tagsInput = ''
-  createErrors.title = ''
-  createErrors.content = ''
-  createApiError.value = ''
-}
-
-async function handleCreatePost() {
-  createErrors.title = ''
-  createErrors.content = ''
-  createApiError.value = ''
-  let valid = true
-
-  if (!newPost.title.trim()) {
-    createErrors.title = '请输入标题'
-    valid = false
-  }
-  if (!newPost.content.trim()) {
-    createErrors.content = '请输入内容'
-    valid = false
-  }
-
-  if (!valid) return
-
-  const tags = newPost.tagsInput
-    .split(',')
-    .map(t => t.trim())
-    .filter(Boolean)
-
-  creatingPost.value = true
-  try {
-    await createPost({
-      title: newPost.title.trim(),
-      content: newPost.content.trim(),
-      category: newPost.category,
-      tags,
-    })
-    closeCreateModal()
-    await navigateTo('/forum')
-  } catch (error: unknown) {
-    createApiError.value = extractApiErrorMessage(error, '发布失败，请稍后重试。')
-  } finally {
-    creatingPost.value = false
-  }
-}
 </script>

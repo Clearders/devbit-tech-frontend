@@ -24,6 +24,51 @@ const md = new MarkdownIt({
   typographer: true,
 })
 
+// Custom plugin: underline via ++text++ → <u>text</u>
+md.use((mdInstance) => {
+  // Inline rule for ++text++
+  mdInstance.inline.ruler.before('emphasis', 'underline', (state, silent) => {
+    const max = state.posMax
+    const start = state.pos
+
+    if (state.src.charCodeAt(start) !== 0x2b /* + */) return false
+    if (state.src.charCodeAt(start + 1) !== 0x2b /* + */) return false
+
+    // Find closing ++
+    let end = start + 2
+    while (end < max) {
+      if (
+        state.src.charCodeAt(end) === 0x2b &&
+        end + 1 < max &&
+        state.src.charCodeAt(end + 1) === 0x2b
+      ) {
+        // Don't match empty: ++ ++
+        if (end === start + 2) {
+          end += 2
+          continue
+        }
+        break
+      }
+      end++
+    }
+
+    if (end >= max) return false
+
+    if (!silent) {
+      const token = state.push('underline_open', 'u', 1)
+      token.markup = '++'
+      const text = state.src.slice(start + 2, end)
+      const content = state.push('text', '', 0)
+      content.content = text
+      const tokenClose = state.push('underline_close', 'u', -1)
+      tokenClose.markup = '++'
+    }
+
+    state.pos = end + 2
+    return true
+  })
+})
+
 const renderedHtml = computed(() => {
   if (!props.content) return ''
   if (props.inline) {
