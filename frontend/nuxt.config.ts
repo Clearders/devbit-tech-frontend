@@ -106,11 +106,16 @@ export default defineNuxtConfig({
   // Performance
   nitro: {
     compressPublicAssets: {
-      // WASM is already a compact binary format — gzip/brotli compression
-      // of a 15-70 MB .wasm file is extremely slow for negligible gain
-      // (typically < 1% size reduction on already-optimized WASM).
-      // Exclude .wasm from pre-compression to keep build/dev fast.
-      exclude: ['/**/*.wasm'],
+      // Keep gzip (fast), disable brotli (extremely slow at quality=11).
+      // Brotli at build-time is 10-50x slower than gzip with negligible
+      // size improvement on already-minified JS/CSS. Nginx can handle
+      // brotli at the edge if needed.
+      brotli: false,
+      // Exclude file types that don't benefit from compression:
+      //  - .wasm: already compact binary, compression is pointless
+      //  - .png/.ico: already compressed image formats
+      //  - .d.ts: TypeScript declarations, not served to clients
+      exclude: ['/**/*.wasm', '/**/*.png', '/**/*.ico', '/**/*.d.ts'],
     },
     minify: true,
     prerender: {
