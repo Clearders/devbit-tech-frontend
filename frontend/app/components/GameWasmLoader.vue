@@ -24,8 +24,36 @@ const props = withDefaults(defineProps<Props>(), {
 
 type LoadState = 'idle' | 'loading' | 'running' | 'error'
 
-const state = ref<LoadState>('idle')
+// ── Module-level canvas persistence ─────────────────────────────
+// When the user navigates away from a WASM game page in the SPA,
+// JavaScript's dynamic import() cache keeps the WASM module alive,
+// and __wbg_init() returns early on re-entry because `wasm` is
+// already defined.  If we destroy the canvas on unmount, the
+// second visit has no rendering surface → black screen.
+//
+// Instead, we detach the canvas from the DOM on unmount and store
+// a reference here (module scope survives component teardown).
+// On remount we re-attach it, and the still-running Bevy app
+// resumes rendering immediately.
+let savedCanvas: HTMLCanvasElement | null = null
+
+// If we already have a live canvas from a previous mount, start
+// in 'running' state to avoid a loading flash.
+const state = ref<LoadState>(savedCanvas ? 'running' : 'idle')
 const errorMessage = ref('')
+
+function styleCanvas(canvas: HTMLCanvasElement): void {
+  canvas.style.position = 'fixed'
+  canvas.style.top = '0'
+  canvas.style.left = '0'
+  canvas.style.width = '100%'
+  canvas.style.height = '100%'
+  canvas.style.maxWidth = 'none'
+  canvas.style.maxHeight = 'none'
+  canvas.style.margin = '0'
+  canvas.style.display = 'block'
+  canvas.style.zIndex = '100'
+}
 
 async function loadWasm(): Promise<void> {
   if (state.value === 'running' || state.value === 'loading') return
@@ -51,16 +79,8 @@ async function loadWasm(): Promise<void> {
       requestAnimationFrame(() => {
         const canvas = document.querySelector('body > canvas') as HTMLCanvasElement | null
         if (canvas) {
-          canvas.style.position = 'fixed'
-          canvas.style.top = '0'
-          canvas.style.left = '0'
-          canvas.style.width = '100%'
-          canvas.style.height = '100%'
-          canvas.style.maxWidth = 'none'
-          canvas.style.maxHeight = 'none'
-          canvas.style.margin = '0'
-          canvas.style.display = 'block'
-          canvas.style.zIndex = '100'
+          styleCanvas(canvas)
+          savedCanvas = canvas
         }
       })
     })
@@ -72,18 +92,31 @@ async function loadWasm(): Promise<void> {
 }
 
 function retry(): void {
-  // Reload the page to fully reset WebGL/WASM context
+  // Clear saved state and reload the page to fully reset WebGL/WASM context
+  savedCanvas = null
   window.location.reload()
 }
 
 onMounted(() => {
+  if (savedCanvas) {
+    // ── Re-attach the preserved canvas from a previous visit ──────
+    // The WASM module is still running in the background; we just
+    // need to put its canvas back into the DOM.
+    document.body.appendChild(savedCanvas)
+    styleCanvas(savedCanvas)
+    state.value = 'running'
+    return
+  }
+
   loadWasm()
 })
 
 onUnmounted(() => {
-  // Remove the Bevy canvas from body when navigating away from the game page
+  // Detach the Bevy canvas from body (keep the JS reference alive
+  // so the WebGL context is not garbage-collected).
   const canvas = document.querySelector('body > canvas') as HTMLCanvasElement | null
   if (canvas) {
+    savedCanvas = canvas
     canvas.remove()
   }
 })
