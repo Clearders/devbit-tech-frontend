@@ -95,6 +95,46 @@ canvas {
   max-width: 100%;
 }
 
+/* ============================================
+   Game page: full-viewport WASM canvas
+   ============================================ */
+
+/* When a game layout is active, <html> gets class="is-game" */
+html.is-game,
+html.is-game body {
+  width: 100%;
+  height: 100%;
+  /* Override body background gradients — Bevy canvas handles the background */
+  background: #000;
+  background-image: none;
+  overflow: hidden;
+}
+
+/* The Bevy WASM canvas (appended to body) must fill the viewport.
+   Bevy sets inline width/height via JS, but CSS constraints can interfere. */
+html.is-game body > canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  display: block;
+  /* Ensure canvas sits between body background and game-layout (z-index: 200) */
+  z-index: 100;
+}
+
+/* Fallback: if the canvas ends up inside a wrapper (not direct body child),
+   remove size constraints while letting Bevy's JS manage actual dimensions. */
+html.is-game canvas {
+  max-width: none;
+  max-height: none;
+  display: block;
+  margin: 0;
+}
+
 a {
   color: var(--color-primary);
   text-decoration: none;

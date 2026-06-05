@@ -5,6 +5,14 @@
 -->
 <script setup lang="ts">
 const router = useRouter()
+
+// Add is-game class to <html> so CSS can enforce full-viewport canvas sizing
+// and suppress body background/overflow on game pages.
+useHead({
+  htmlAttrs: {
+    class: 'is-game',
+  },
+})
 </script>
 
 <template>
@@ -30,8 +38,12 @@ const router = useRouter()
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: #000;
+  /* Let the Bevy canvas (appended to document.body) show through.
+     The loading overlay (GameWasmLoader, z-index: 250) still provides
+     a black background during load. */
+  background: transparent;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .game-layout__back {
@@ -39,6 +51,7 @@ const router = useRouter()
   top: 1rem;
   left: 1rem;
   z-index: 300;
+  pointer-events: auto;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;

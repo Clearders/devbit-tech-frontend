@@ -42,6 +42,28 @@ async function loadWasm(): Promise<void> {
       throw new Error('WASM module does not export a default init function')
     }
     state.value = 'running'
+
+    // ── Enforce full-viewport canvas ──────────────────────────────
+    // Bevy creates its <canvas> inside module.default(). Give it a
+    // frame to appear, then override any size constraints so the game
+    // always fills the entire viewport.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const canvas = document.querySelector('body > canvas') as HTMLCanvasElement | null
+        if (canvas) {
+          canvas.style.position = 'fixed'
+          canvas.style.top = '0'
+          canvas.style.left = '0'
+          canvas.style.width = '100%'
+          canvas.style.height = '100%'
+          canvas.style.maxWidth = 'none'
+          canvas.style.maxHeight = 'none'
+          canvas.style.margin = '0'
+          canvas.style.display = 'block'
+          canvas.style.zIndex = '100'
+        }
+      })
+    })
   } catch (err: unknown) {
     console.error('Failed to load WASM game:', err)
     errorMessage.value = err instanceof Error ? err.message : 'Unknown error loading game'
@@ -56,6 +78,14 @@ function retry(): void {
 
 onMounted(() => {
   loadWasm()
+})
+
+onUnmounted(() => {
+  // Remove the Bevy canvas from body when navigating away from the game page
+  const canvas = document.querySelector('body > canvas') as HTMLCanvasElement | null
+  if (canvas) {
+    canvas.remove()
+  }
 })
 </script>
 
