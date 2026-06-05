@@ -99,19 +99,38 @@ canvas {
    Game page: full-viewport WASM canvas
    ============================================ */
 
-/* When a game layout is active, <html> gets class="is-game" */
+/*
+ * When the game layout is active, <html> gets class="is-game" (via useHead).
+ * All rules below are scoped to html.is-game to isolate game-page overrides
+ * from the rest of the site.
+ */
+
+/* ① Reset html & body to a clean black full-viewport slate.
+ *    This eliminates the porcelain-white html background and the body gradient
+ *    that would otherwise create a glaring white border around the game. */
 html.is-game,
 html.is-game body {
   width: 100%;
   height: 100%;
-  /* Override body background gradients — Bevy canvas handles the background */
+  margin: 0;
+  padding: 0;
   background: #000;
   background-image: none;
   overflow: hidden;
 }
 
-/* The Bevy WASM canvas (appended to body) must fill the viewport.
-   Bevy sets inline width/height via JS, but CSS constraints can interfere. */
+/* ② Hide the particle-background canvases rendered by DynamicBackground.
+ *    They sit in fixed layers covering the viewport and can bleed through
+ *    as a white haze / frame on the game page. */
+html.is-game .app-shell__background,
+html.is-game .app-shell__overlay {
+  display: none;
+}
+
+/* ③ The Bevy WASM canvas (appended to body by the engine).
+ *    Fixed positioning ensures it fills the exact viewport, regardless of
+ *    parent dimensions. z-index: 100 sits between body background (0) and
+ *    the game-layout UI overlay (200). */
 html.is-game body > canvas {
   position: fixed;
   top: 0;
@@ -121,18 +140,20 @@ html.is-game body > canvas {
   max-width: none;
   max-height: none;
   margin: 0;
+  padding: 0;
   display: block;
-  /* Ensure canvas sits between body background and game-layout (z-index: 200) */
+  outline: none;          /* suppress browser focus ring */
   z-index: 100;
 }
 
-/* Fallback: if the canvas ends up inside a wrapper (not direct body child),
-   remove size constraints while letting Bevy's JS manage actual dimensions. */
+/* ④ Fallback for any canvas on the game page: remove size constraints
+ *    and suppress focus outlines. */
 html.is-game canvas {
   max-width: none;
   max-height: none;
   display: block;
   margin: 0;
+  outline: none;
 }
 
 a {

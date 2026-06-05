@@ -6,12 +6,25 @@
 <script setup lang="ts">
 const router = useRouter()
 
-// Add is-game class to <html> so CSS can enforce full-viewport canvas sizing
-// and suppress body background/overflow on game pages.
+// ── Game page visual isolation ──────────────────────────────────
+// Add is-game class to <html> so CSS can:
+//   • Turn html/body fully black (kill the porcelain-white background)
+//   • Hide the DynamicBackground particle canvases
+//   • Enforce full-viewport canvas sizing
+//
+// useHead handles SSR; onMounted/onUnmounted guarantee client-side toggling.
 useHead({
   htmlAttrs: {
     class: 'is-game',
   },
+})
+
+onMounted(() => {
+  document.documentElement.classList.add('is-game')
+})
+
+onUnmounted(() => {
+  document.documentElement.classList.remove('is-game')
 })
 </script>
 
