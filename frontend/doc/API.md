@@ -1,8 +1,19 @@
 # DevBit Tech API
 
-最后更新：2026-05-15
+最后更新：2026-06-05
 
 本项目的前端统一通过 `runtimeConfig.public.apiBase = '/api'` 调用后端 API。开发环境由 Nuxt route rules 将 `/api/**` 代理到 Rust 后端，生产环境由 Nginx 将 `/api/` 代理到同一个 Rust 服务。
+
+---
+
+## API 版本
+
+| 版本 | 发布日期 | 说明 |
+|---|---|---|
+| **0.1.1** | 2026-06-05 | 新增好友系统、用户搜索接口；bootstrap 响应增加 `comments` 字段 |
+| **0.1** | 2026-05-15 | 初始版本：认证、论坛帖子、评论、私信 |
+
+---
 
 ## 基础 URL
 
@@ -108,6 +119,25 @@ interface ForumMessage {
   isRead: boolean
 }
 ```
+
+> **v0.1.1 新增模型：**
+
+```ts
+interface FriendInfo {
+  user: ForumUser
+  createdAt: string
+}
+
+interface AddFriendPayload {
+  friendId: number
+}
+```
+
+---
+
+# v0.1 API（2026-05-15）
+
+> 以下为 v0.1 版本的完整 API 文档。所有接口在 v0.1.1 中均保持兼容。
 
 ---
 
@@ -259,7 +289,7 @@ interface ForumMessage {
 - `users` — 所有论坛用户（已脱敏，不含密码）
 - `messages` — 已认证时：当前用户的所有私信（按时间顺序）；未认证时：空数组 `[]`
 
-**`200` 响应：**
+**v0.1 `200` 响应：**
 
 ```json
 {
@@ -510,8 +540,124 @@ interface ForumMessage {
 
 ---
 
-## 数据持久化
+## 数据持久化（v0.1）
 
 - **数据源：** Rust 后端使用 PostgreSQL。
 - 后端启动时会自动创建缺失的数据表。
 - 持久化数据包括：用户、验证码、帖子、评论、消息、点赞关系。
+
+---
+
+# v0.1.1 更新（2026-06-05）
+
+> v0.1.1 在 v0.1 基础上新增以下接口和变更，所有 v0.1 接口保持向后兼容。
+
+---
+
+## 变更：bootstrap 响应增加 `comments` 字段
+
+`GET /api/forum/bootstrap` 的响应体现在包含 `comments` 数组，前端无需再为每个帖子单独请求评论。
+
+- **认证：** 可选
+- **状态码：** `200`
+
+**v0.1.1 `200` 响应：**
+
+```json
+{
+  "users": [ /* ForumUser[] */ ],
+  "posts": [ /* ForumPost[]（已排序） */ ],
+  "comments": [ /* ForumComment[] */ ],
+  "messages": [ /* ForumMessage[] */ ]
+}
+```
+
+---
+
+## 新增：好友接口
+
+### `GET /api/forum/friends`
+
+返回当前用户的好友列表，按用户名升序排列。
+
+- **认证：** 必需
+- **状态码：** 成功返回 `200`，未登录返回 `401`
+
+**`200` 响应：** `FriendInfo[]`
+
+```json
+[
+  {
+    "user": { "id": 3, "name": "CodeMaster", "avatar": "CM", "isAdmin": false },
+    "createdAt": "2026-06-01T12:00:00+00:00"
+  }
+]
+```
+
+---
+
+### `POST /api/forum/friends`
+
+添加好友。
+
+- **认证：** 必需
+- **状态码：** 成功返回 `200`，失败返回 `400` / `401` / `404`
+
+**请求：**
+
+```json
+{
+  "friendId": 3
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `friendId` | `number` | ✅ | 要添加为好友的用户 ID，不能是当前用户自己 |
+
+**`200` 响应：** 创建的 `FriendInfo`
+
+> 重复添加同一好友是幂等的（`ON CONFLICT DO UPDATE`），不会报错，仅更新 `createdAt` 时间戳。
+
+---
+
+### `DELETE /api/forum/friends/:friendId`
+
+删除好友。
+
+- **认证：** 必需
+- **状态码：** 成功返回 `204`，失败返回 `401` / `404`
+
+**响应：** 空响应体，HTTP 204 No Content
+
+---
+
+## 新增：用户搜索接口
+
+### `GET /api/forum/users/search`
+
+按用户名搜索用户（模糊匹配），最多返回 20 条结果。
+
+- **认证：** 必需
+- **状态码：** 成功返回 `200`，未登录返回 `401`
+
+**查询参数：**
+
+| 参数 | 类型 | 说明 |
+|---|---|---|
+| `q` | `string` | 不区分大小写的搜索关键词。空查询返回 `[]`。 |
+
+**`200` 响应：** `ForumUser[]`（按用户名升序，最多 20 条）
+
+```json
+[
+  { "id": 3, "name": "CodeMaster", "avatar": "CM", "isAdmin": false }
+]
+```
+
+---
+
+## 数据持久化（v0.1.1 新增）
+
+- 新增数据表：`friends`（字段：`user_id`, `friend_id`, `created_at`；联合唯一约束 `(user_id, friend_id)`）
+- 后端启动时自动创建该表（如不存在）。
