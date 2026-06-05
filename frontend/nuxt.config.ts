@@ -122,10 +122,18 @@ export default defineNuxtConfig({
   // Build optimization
   vite: {
     build: {
+      // Use esbuild for JS minification — 10-100x faster than terser
+      minify: 'esbuild',
       // Enable CSS code splitting for faster initial load
       cssMinify: 'esbuild',
+      // Target modern browsers to skip expensive transpilation
+      target: 'es2022',
       // Reduce chunk size warning threshold
       chunkSizeWarningLimit: 500,
+      // Skip gzip/brotli size reporting — saves ~2-5s on large builds
+      reportCompressedSize: false,
+      // Inline small assets (< 4 KiB) to reduce HTTP requests
+      assetsInlineLimit: 4096,
       rollupOptions: {
         output: {
           // Manual chunk splitting for better caching
@@ -144,11 +152,18 @@ export default defineNuxtConfig({
     css: {
       devSourcemap: true,
     },
+    esbuild: {
+      // Strip legal comments (faster + smaller output)
+      legalComments: 'none',
+    },
   },
+
+  // Sourcemaps: disable in production for faster builds
+  sourcemap: false,
 
   // TypeScript strict
   typescript: {
     strict: true,
-    typeCheck: false, // set true for CI
+    typeCheck: false, // set true for CI (type-checking adds 10-30s)
   },
 })

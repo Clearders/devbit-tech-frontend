@@ -2,12 +2,16 @@
   "name": "frontend",
   "type": "module",
   "private": true,
+  "packageManager": "pnpm@10.15.1",
   "scripts": {
     "build": "nuxt build",
+    "build:fast": "NUXT_TELEMETRY_DISABLED=1 nuxt build --no-color",
+    "build:analyze": "nuxt build --analyze",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "clean": "nuxi cleanup"
   },
   "dependencies": {
     "@types/markdown-it": "^14.1.2",
