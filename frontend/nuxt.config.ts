@@ -105,7 +105,13 @@ export default defineNuxtConfig({
 
   // Performance
   nitro: {
-    compressPublicAssets: true,
+    compressPublicAssets: {
+      // WASM is already a compact binary format — gzip/brotli compression
+      // of a 15-70 MB .wasm file is extremely slow for negligible gain
+      // (typically < 1% size reduction on already-optimized WASM).
+      // Exclude .wasm from pre-compression to keep build/dev fast.
+      exclude: ['/**/*.wasm'],
+    },
     minify: true,
     prerender: {
       crawlLinks: true,
