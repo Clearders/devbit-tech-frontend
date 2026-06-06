@@ -12,11 +12,21 @@ const router = useRouter()
 //   • Hide the DynamicBackground particle canvases
 //   • Enforce full-viewport canvas sizing
 //
+// Also override the viewport meta for game pages:
+//   • user-scalable=no prevents pinch-zoom on the game canvas
+//   • viewport-fit=cover extends into the safe area on notched phones
+//
 // useHead handles SSR; onMounted/onUnmounted guarantee client-side toggling.
 useHead({
   htmlAttrs: {
     class: 'is-game',
   },
+  meta: [
+    {
+      name: 'viewport',
+      content: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover',
+    },
+  ],
 })
 
 onMounted(() => {

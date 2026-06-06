@@ -31,10 +31,14 @@ type LoadState = 'idle' | 'loading' | 'running' | 'error'
 // already defined.  If we destroy the canvas on unmount, the
 // second visit has no rendering surface → black screen.
 //
-// Instead, we detach the canvas from the DOM on unmount and store
-// a reference here (module scope survives component teardown).
-// On remount we re-attach it, and the still-running Bevy app
-// resumes rendering immediately.
+// Removing the canvas from the DOM (canvas.remove()) causes the
+// browser to disconnect the WebGL context's backing store from
+// the visible element.  On re-attach, isContextLost() returns
+// false but draw calls render to a dead buffer → black screen.
+//
+// Instead, we HIDE the canvas with display:none on unmount and
+// show it on remount.  The canvas never leaves the DOM, so the
+// GPU surface stays connected and Bevy renders uninterrupted.
 let savedCanvas: HTMLCanvasElement | null = null
 
 // If we already have a live canvas from a previous mount, start
@@ -44,15 +48,54 @@ const errorMessage = ref('')
 
 function styleCanvas(canvas: HTMLCanvasElement): void {
   canvas.style.position = 'fixed'
-  canvas.style.top = '0'
-  canvas.style.left = '0'
-  canvas.style.width = '100%'
-  canvas.style.height = '100%'
+  // inset: 0 is more reliable than width/height: 100% on mobile,
+  // especially iOS Safari where 100% can include hidden browser chrome.
+  canvas.style.inset = '0'
+  // dvh/dvw (dynamic viewport units) track the actual visible area
+  // and adapt when mobile browser chrome shows/hides.
+  canvas.style.width = '100dvw'
+  canvas.style.height = '100dvh'
   canvas.style.maxWidth = 'none'
   canvas.style.maxHeight = 'none'
   canvas.style.margin = '0'
   canvas.style.display = 'block'
   canvas.style.zIndex = '100'
+  // Prevent browser default touch gestures (pinch-zoom, double-tap)
+  // from interfering with the game on mobile.
+  canvas.style.touchAction = 'none'
+}
+
+// ── WebGL context health check ──────────────────────────────────
+// Only needed as a safety net for GPU resets / driver crashes.
+// The canvas is now kept in the DOM (hidden, not removed), so
+// DOM removal is no longer a cause of context loss.
+function isWebGLContextLost(canvas: HTMLCanvasElement): boolean {
+  try {
+    const gl = (canvas.getContext('webgl2') || canvas.getContext('webgl')) as
+      | (WebGL2RenderingContext & { isContextLost?: () => boolean })
+      | (WebGLRenderingContext & { isContextLost?: () => boolean })
+      | null
+
+    if (!gl) return true
+    return gl.isContextLost?.() ?? false
+  } catch {
+    return true
+  }
+}
+
+// ── WebGL context event handlers ────────────────────────────────
+// These fire when the browser detects GPU resets or driver crashes.
+// We prevent the default (which would mark the context as lost
+// permanently) to give the browser a chance to restore it.
+function onContextLost(event: Event): void {
+  event.preventDefault()
+  console.warn('[GameWasmLoader] WebGL context lost — awaiting restore')
+}
+
+function onContextRestored(_event: Event): void {
+  console.log('[GameWasmLoader] WebGL context restored')
+  // Bevy should pick up the restored context and resume rendering.
+  // If it doesn't, the user can use the "retry" button.
 }
 
 async function loadWasm(): Promise<void> {
@@ -81,6 +124,9 @@ async function loadWasm(): Promise<void> {
         if (canvas) {
           styleCanvas(canvas)
           savedCanvas = canvas
+          // Listen for GPU-triggered context loss (driver crash, etc.)
+          canvas.addEventListener('webglcontextlost', onContextLost)
+          canvas.addEventListener('webglcontextrestored', onContextRestored)
         }
       })
     })
@@ -97,12 +143,47 @@ function retry(): void {
   window.location.reload()
 }
 
+// ── Viewport resize handler ─────────────────────────────────────
+// On mobile, browser chrome (address bar) can appear/disappear
+// during scroll, and device orientation can change.  We re-apply
+// canvas styles so the game always fills the visible viewport.
+function handleViewportChange(): void {
+  if (savedCanvas && document.body.contains(savedCanvas)) {
+    styleCanvas(savedCanvas)
+  }
+}
+
 onMounted(() => {
+  window.addEventListener('resize', handleViewportChange)
+  window.addEventListener('orientationchange', handleViewportChange)
+
   if (savedCanvas) {
-    // ── Re-attach the preserved canvas from a previous visit ──────
-    // The WASM module is still running in the background; we just
-    // need to put its canvas back into the DOM.
-    document.body.appendChild(savedCanvas)
+    // ── Show the preserved canvas from a previous visit ───────────
+    // The canvas was hidden (display:none), not removed, so the
+    // WebGL context's backing store is still connected.  We just
+    // need to make it visible again — no re-attachment needed.
+    //
+    // Safety net: if the context was lost for other reasons
+    // (GPU reset, driver crash), reload the page for a fresh start.
+    if (isWebGLContextLost(savedCanvas)) {
+      console.warn('[GameWasmLoader] Saved canvas has lost its WebGL context — reloading page')
+      savedCanvas = null
+      state.value = 'error'
+      errorMessage.value = 'WebGL 上下文已丢失，正在重新加载...'
+      setTimeout(() => window.location.reload(), 800)
+      return
+    }
+
+    // Defensive: re-attach if the canvas was somehow detached
+    // (e.g. by a browser extension or hard-refresh edge case).
+    if (!document.body.contains(savedCanvas)) {
+      document.body.appendChild(savedCanvas)
+    }
+
+    savedCanvas.addEventListener('webglcontextlost', onContextLost)
+    savedCanvas.addEventListener('webglcontextrestored', onContextRestored)
+
+    savedCanvas.style.display = 'block'
     styleCanvas(savedCanvas)
     state.value = 'running'
     return
@@ -112,12 +193,20 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  // Detach the Bevy canvas from body (keep the JS reference alive
-  // so the WebGL context is not garbage-collected).
-  const canvas = document.querySelector('body > canvas') as HTMLCanvasElement | null
-  if (canvas) {
-    savedCanvas = canvas
-    canvas.remove()
+  window.removeEventListener('resize', handleViewportChange)
+  window.removeEventListener('orientationchange', handleViewportChange)
+
+  // Hide the Bevy canvas instead of removing it from the DOM.
+  // Removing the canvas (canvas.remove()) causes the browser to
+  // disconnect the WebGL context's backing store from the visible
+  // element.  On re-entry, draw calls render to a dead buffer
+  // even though isContextLost() returns false → black screen.
+  // By only hiding the canvas (display:none), the GPU surface
+  // stays connected and Bevy's render loop continues uninterrupted.
+  if (savedCanvas && document.body.contains(savedCanvas)) {
+    savedCanvas.removeEventListener('webglcontextlost', onContextLost)
+    savedCanvas.removeEventListener('webglcontextrestored', onContextRestored)
+    savedCanvas.style.display = 'none'
   }
 })
 </script>
