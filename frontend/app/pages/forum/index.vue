@@ -97,10 +97,23 @@
               <NuxtLink v-if="!isAuthenticated" to="/login" class="forum-results-bar__link">登录后发帖和评论</NuxtLink>
             </div>
 
-            <div v-if="isLoadingForum" class="forum-empty">
-              <div class="forum-empty__icon">⏳</div>
-              <h3 class="forum-empty__title">正在加载论坛</h3>
-              <p class="forum-empty__desc">正在获取最新帖子和社区数据。</p>
+            <div v-if="isLoadingForum" class="forum-post-list">
+              <!-- Skeleton loading cards -->
+              <div v-for="n in 5" :key="'skel-'+n" class="skeleton-card">
+                <div class="skeleton-card__header">
+                  <div class="skeleton skeleton--avatar"></div>
+                  <div class="skeleton skeleton--text-sm" style="width: 30%;"></div>
+                </div>
+                <div class="skeleton-card__body">
+                  <div class="skeleton skeleton--title" style="width: 70%;"></div>
+                  <div class="skeleton skeleton--text"></div>
+                  <div class="skeleton skeleton--text" style="width: 60%;"></div>
+                </div>
+                <div class="skeleton-card__footer">
+                  <div class="skeleton skeleton--text-sm" style="width: 25%;"></div>
+                  <div class="skeleton skeleton--text-sm" style="width: 20%;"></div>
+                </div>
+              </div>
             </div>
 
             <!-- Empty state -->

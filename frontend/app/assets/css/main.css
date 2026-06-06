@@ -17,10 +17,42 @@
   --color-primary-soft: #7ea8f4;
   --color-primary-dark: #4a7adf;
   --color-primary-glow: rgba(91, 141, 239, 0.25);
+  --color-primary-o03: rgba(91, 141, 239, 0.03);
+  --color-primary-o04: rgba(91, 141, 239, 0.04);
+  --color-primary-o05: rgba(91, 141, 239, 0.05);
+  --color-primary-o06: rgba(91, 141, 239, 0.06);
+  --color-primary-o07: rgba(91, 141, 239, 0.07);
+  --color-primary-o08: rgba(91, 141, 239, 0.08);
+  --color-primary-o10: rgba(91, 141, 239, 0.10);
+  --color-primary-o12: rgba(91, 141, 239, 0.12);
+  --color-primary-o15: rgba(91, 141, 239, 0.15);
+  --color-primary-o18: rgba(91, 141, 239, 0.18);
+  --color-primary-o22: rgba(91, 141, 239, 0.22);
+  --color-primary-o30: rgba(91, 141, 239, 0.30);
+  --color-primary-o35: rgba(91, 141, 239, 0.35);
+  --color-primary-o45: rgba(91, 141, 239, 0.45);
   --color-accent: #6c8ce0;
   --color-success: #4caf93;
   --color-danger: #e0737a;
+  --color-danger-text: #c05a60;
+  --color-danger-text-hover: #b04a50;
+  --color-danger-o06: rgba(224, 115, 122, 0.06);
+  --color-danger-o08: rgba(224, 115, 122, 0.08);
+  --color-danger-o10: rgba(224, 115, 122, 0.10);
+  --color-danger-o12: rgba(224, 115, 122, 0.12);
+  --color-danger-o14: rgba(224, 115, 122, 0.14);
+  --color-danger-o15: rgba(224, 115, 122, 0.15);
+  --color-danger-o16: rgba(224, 115, 122, 0.16);
+  --color-danger-o20: rgba(224, 115, 122, 0.20);
+  --color-danger-o22: rgba(224, 115, 122, 0.22);
+  --color-danger-o35: rgba(224, 115, 122, 0.35);
+  --color-danger-o70: rgba(224, 115, 122, 0.70);
   --color-warning: #e8a860;
+  --color-warning-text: #c78528;
+  --color-warning-text-hover: #b07520;
+  --color-warning-o10: rgba(232, 168, 96, 0.10);
+  --color-warning-o18: rgba(232, 168, 96, 0.18);
+  --color-warning-o25: rgba(232, 168, 96, 0.25);
 
   --color-bg: #f7f5f2;
   --color-bg-soft: #f0ede9;
@@ -44,6 +76,8 @@
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.07), 0 4px 8px rgba(0, 0, 0, 0.04);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.09), 0 6px 12px rgba(0, 0, 0, 0.04);
   --shadow-glow: 0 4px 24px rgba(91, 141, 239, 0.18);
+  --shadow-primary-btn: 0 2px 8px rgba(91, 141, 239, 0.25);
+  --shadow-primary-btn-hover: 0 4px 16px rgba(91, 141, 239, 0.35);
 
   /* Typography */
   --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -320,12 +354,12 @@ a:hover {
 
 .navbar__links a:hover {
   color: var(--color-primary);
-  background: rgba(91, 141, 239, 0.06);
+  background: var(--color-primary-o06);
 }
 
 .navbar__links a.router-link-active {
   color: var(--color-primary);
-  background: rgba(91, 141, 239, 0.08);
+  background: var(--color-primary-o08);
   font-weight: 600;
 }
 
@@ -401,14 +435,14 @@ a:hover {
 
 .btn--primary {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  color: #fff;
+  color: var(--color-text-inverse);
   border: 1px solid transparent;
-  box-shadow: var(--shadow-sm), 0 2px 8px rgba(91, 141, 239, 0.25);
+  box-shadow: var(--shadow-sm), var(--shadow-primary-btn);
 }
 
 .btn--primary:hover {
-  color: #fff;
-  box-shadow: var(--shadow-md), 0 4px 16px rgba(91, 141, 239, 0.35);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-md), var(--shadow-primary-btn-hover);
 }
 
 .btn--primary:active {
@@ -426,12 +460,12 @@ a:hover {
 .btn--outline:hover {
   color: var(--color-primary);
   border-color: var(--color-primary);
-  background: rgba(91, 141, 239, 0.04);
+  background: var(--color-primary-o04);
   box-shadow: var(--shadow-sm), var(--shadow-glow);
 }
 
 .btn--outline:active {
-  background: rgba(91, 141, 239, 0.08);
+  background: var(--color-primary-o08);
 }
 
 .btn--lg {
@@ -452,31 +486,31 @@ a:hover {
 }
 
 .btn--warning {
-  background: rgba(232, 168, 96, 0.1);
-  color: #c78528;
-  border: 1px solid rgba(232, 168, 96, 0.25);
+  background: var(--color-warning-o10);
+  color: var(--color-warning-text);
+  border: 1px solid var(--color-warning-o25);
 }
 
 .btn--warning:hover {
-  background: rgba(232, 168, 96, 0.18);
-  color: #b07520;
+  background: var(--color-warning-o18);
+  color: var(--color-warning-text-hover);
 }
 
 .btn--danger {
-  background: rgba(224, 115, 122, 0.08);
-  color: #c05a60;
-  border: 1px solid rgba(224, 115, 122, 0.22);
+  background: var(--color-danger-o08);
+  color: var(--color-danger-text);
+  border: 1px solid var(--color-danger-o22);
 }
 
 .btn--danger:hover {
-  background: rgba(224, 115, 122, 0.16);
-  color: #b04a50;
+  background: var(--color-danger-o16);
+  color: var(--color-danger-text-hover);
 }
 
 .btn--active {
   border-color: var(--color-primary);
   color: var(--color-primary);
-  background: rgba(91, 141, 239, 0.08);
+  background: var(--color-primary-o08);
 }
 
 /* Ripple effect */
@@ -542,9 +576,9 @@ a:hover {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: rgba(91, 141, 239, 0.08);
+  background: var(--color-primary-o08);
   color: var(--color-primary);
-  border: 1px solid rgba(91, 141, 239, 0.18);
+  border: 1px solid var(--color-primary-o18);
   border-radius: 999px;
   padding: 0.35rem 1.1rem;
   font-size: 0.8rem;
@@ -635,7 +669,7 @@ a:hover {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(91, 141, 239, 0.04), transparent 70%);
+  background: linear-gradient(135deg, var(--color-primary-o04), transparent 70%);
   opacity: 0;
   transition: opacity var(--duration-normal) var(--ease-in-out);
   border-radius: inherit;
@@ -685,7 +719,7 @@ a:hover {
    Quick Navigation
    ============================================ */
 .quick-nav-section {
-  background: linear-gradient(180deg, transparent, rgba(91, 141, 239, 0.03) 50%, transparent);
+  background: linear-gradient(180deg, transparent, var(--color-primary-o03) 50%, transparent);
 }
 
 .quick-nav-grid {
@@ -716,7 +750,7 @@ a:hover {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(91, 141, 239, 0.06), transparent 60%);
+  background: linear-gradient(135deg, var(--color-primary-o06), transparent 60%);
   opacity: 0;
   transition: opacity var(--duration-normal) var(--ease-in-out);
   border-radius: inherit;
@@ -951,7 +985,7 @@ a:hover {
   outline: none;
   border-color: var(--color-primary);
   background: var(--color-surface);
-  box-shadow: 0 0 0 4px rgba(91, 141, 239, 0.1);
+  box-shadow: 0 0 0 4px var(--color-primary-o10);
 }
 
 .form-control--error {
@@ -959,7 +993,7 @@ a:hover {
 }
 
 .form-control--error:focus {
-  box-shadow: 0 0 0 4px rgba(224, 115, 122, 0.12);
+  box-shadow: 0 0 0 4px var(--color-danger-o12);
 }
 
 .form-control--textarea {
@@ -985,11 +1019,11 @@ select.form-control {
 }
 
 .form-error--global {
-  background: rgba(224, 115, 122, 0.06);
-  border: 1px solid rgba(224, 115, 122, 0.2);
+  background: var(--color-danger-o06);
+  border: 1px solid var(--color-danger-o20);
   border-radius: 0.625rem;
   padding: 0.7rem 0.925rem;
-  color: #b04a50;
+  color: var(--color-danger-text-hover);
 }
 
 .form-success {
@@ -1065,7 +1099,7 @@ select.form-control {
 .forum-toolbar__search-input {
   padding-left: 2.6rem;
   padding-right: 2.25rem;
-  background: rgba(91, 141, 239, 0.06) !important;
+  background: var(--color-primary-o06) !important;
   border: 1.5px solid var(--color-border);
   border-radius: 0.75rem;
   transition:
@@ -1076,8 +1110,8 @@ select.form-control {
 
 .forum-toolbar__search-input:focus {
   border-color: var(--color-primary);
-  background: rgba(91, 141, 239, 0.1) !important;
-  box-shadow: 0 0 0 4px rgba(91, 141, 239, 0.1);
+  background: var(--color-primary-o10) !important;
+  box-shadow: 0 0 0 4px var(--color-primary-o10);
 }
 
 .forum-toolbar__search-clear {
@@ -1195,8 +1229,8 @@ select.form-control {
 
 /* Active — gradient fill with glow */
 .forum-sort__btn--active {
-  color: #fff;
-  box-shadow: var(--shadow-sm), 0 0 20px rgba(91, 141, 239, 0.35), 0 2px 8px rgba(91, 141, 239, 0.25);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-sm), 0 0 20px var(--color-primary-o35), 0 2px 8px var(--color-primary-glow);
   transform: translateY(-1px);
 }
 
@@ -1208,8 +1242,8 @@ select.form-control {
 @media (hover: hover) and (pointer: fine) {
   .forum-sort__btn:hover {
     color: var(--color-primary);
-    background: rgba(91, 141, 239, 0.07);
-    box-shadow: var(--shadow-sm), 0 0 12px rgba(91, 141, 239, 0.12);
+    background: var(--color-primary-o07);
+    box-shadow: var(--shadow-sm), 0 0 12px var(--color-primary-o12);
     transform: translateY(-1px);
   }
 
@@ -1218,8 +1252,8 @@ select.form-control {
   }
 
   .forum-sort__btn--active:hover {
-    color: #fff;
-    box-shadow: var(--shadow-md), 0 0 28px rgba(91, 141, 239, 0.45), 0 4px 12px rgba(91, 141, 239, 0.3);
+    color: var(--color-text-inverse);
+    box-shadow: var(--shadow-md), 0 0 28px var(--color-primary-o45), 0 4px 12px var(--color-primary-o30);
     transform: translateY(-2px);
   }
 
@@ -1232,12 +1266,12 @@ select.form-control {
 @media (hover: none) and (pointer: coarse) {
   .forum-sort__btn:active {
     color: var(--color-primary);
-    background: rgba(91, 141, 239, 0.1);
+    background: var(--color-primary-o10);
   }
 
   .forum-sort__btn--active:active {
-    color: #fff;
-    box-shadow: var(--shadow-md), 0 0 24px rgba(91, 141, 239, 0.4);
+    color: var(--color-text-inverse);
+    box-shadow: var(--shadow-md), 0 0 24px var(--color-primary-o35);
   }
 }
 
@@ -1296,12 +1330,12 @@ select.form-control {
 .forum-categories__tab--active {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   border-color: transparent;
-  color: #fff;
-  box-shadow: var(--shadow-sm), 0 2px 8px rgba(91, 141, 239, 0.3);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-sm), 0 2px 8px var(--color-primary-o30);
 }
 
 .forum-categories__tab--active:hover {
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 .forum-categories__tab-icon {
@@ -1412,7 +1446,7 @@ select.form-control {
 
 .forum-sidebar-card__hot-link:hover {
   color: var(--color-primary);
-  background: rgba(91, 141, 239, 0.05);
+  background: var(--color-primary-o04);
 }
 
 .forum-sidebar-card__hot-title {
@@ -1489,8 +1523,8 @@ select.form-control {
 
 .forum-status--error {
   color: var(--color-danger);
-  background: rgba(224, 115, 122, 0.06);
-  border: 1px solid rgba(224, 115, 122, 0.2);
+  background: var(--color-danger-o06);
+  border: 1px solid var(--color-danger-o20);
 }
 
 .forum-results-bar {
@@ -1531,9 +1565,9 @@ select.form-control {
 }
 
 .post-card--pinned {
-  border-color: rgba(91, 141, 239, 0.25);
-  background: linear-gradient(135deg, rgba(91, 141, 239, 0.04), var(--color-surface));
-  box-shadow: var(--shadow-sm), 0 2px 12px rgba(91, 141, 239, 0.08);
+  border-color: var(--color-primary-glow);
+  background: linear-gradient(135deg, var(--color-primary-o04), var(--color-surface));
+  box-shadow: var(--shadow-sm), 0 2px 12px var(--color-primary-o08);
 }
 
 .post-card--locked {
@@ -1573,12 +1607,12 @@ select.form-control {
 }
 
 .post-card__badge--pin {
-  background: rgba(91, 141, 239, 0.1);
+  background: var(--color-primary-o10);
   color: var(--color-primary);
 }
 
 .post-card__badge--lock {
-  background: rgba(224, 115, 122, 0.08);
+  background: var(--color-danger-o08);
   color: var(--color-danger);
 }
 
@@ -1614,13 +1648,13 @@ select.form-control {
 }
 
 .post-card__tag {
-  background: rgba(91, 141, 239, 0.06);
+  background: var(--color-primary-o06);
   color: var(--color-primary);
   font-size: 0.72rem;
   padding: 0.22rem 0.65rem;
   border-radius: 999px;
   font-weight: 500;
-  border: 1px solid rgba(91, 141, 239, 0.12);
+  border: 1px solid var(--color-primary-o12);
 }
 
 .post-card__footer {
@@ -1700,6 +1734,103 @@ select.form-control {
 }
 
 /* ============================================
+   Loading Skeletons
+   ============================================ */
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-soft) 25%,
+    var(--color-border-light) 50%,
+    var(--color-bg-soft) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+.skeleton--text {
+  height: 1rem;
+  width: 80%;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton--text-sm {
+  height: 0.75rem;
+  width: 60%;
+}
+
+.skeleton--title {
+  height: 1.3rem;
+  width: 50%;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton--avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Skeleton card — mimics .post-card */
+.skeleton-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.skeleton-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.skeleton-card__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Skeleton comment — mimics .comment */
+.skeleton-comment {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-xs);
+}
+
+.skeleton-comment__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ============================================
    Forum Detail Page
    ============================================ */
 .forum-detail__back {
@@ -1747,12 +1878,12 @@ select.form-control {
 }
 
 .forum-detail__badge--pin {
-  background: rgba(91, 141, 239, 0.1);
+  background: var(--color-primary-o10);
   color: var(--color-primary);
 }
 
 .forum-detail__badge--lock {
-  background: rgba(224, 115, 122, 0.08);
+  background: var(--color-danger-o08);
   color: var(--color-danger);
 }
 
@@ -1871,13 +2002,13 @@ select.form-control {
 }
 
 .forum-detail__tag {
-  background: rgba(91, 141, 239, 0.06);
+  background: var(--color-primary-o06);
   color: var(--color-primary);
   font-size: 0.78rem;
   padding: 0.25rem 0.75rem;
   border-radius: 999px;
   font-weight: 500;
-  border: 1px solid rgba(91, 141, 239, 0.12);
+  border: 1px solid var(--color-primary-o12);
 }
 
 .forum-detail__sidebar {
@@ -1977,8 +2108,8 @@ select.form-control {
 .forum-detail__locked-msg {
   text-align: center;
   padding: 1.5rem;
-  background: rgba(224, 115, 122, 0.06);
-  border: 1px solid rgba(224, 115, 122, 0.15);
+  background: var(--color-danger-o06);
+  border: 1px solid var(--color-danger-o15);
   border-radius: 0.625rem;
   color: var(--color-danger);
   font-size: 0.9rem;
@@ -2091,19 +2222,19 @@ select.form-control {
   opacity: 1 !important;
   color: var(--color-primary);
   border-color: var(--color-primary);
-  background: rgba(91, 141, 239, 0.06);
+  background: var(--color-primary-o06);
 }
 
 .comment__action-btn--danger {
-  background: rgba(224, 115, 122, 0.06);
-  border: 1px solid rgba(224, 115, 122, 0.2);
+  background: var(--color-danger-o06);
+  border: 1px solid var(--color-danger-o20);
   color: var(--color-danger);
 }
 
 .comment__action-btn--danger:hover {
   border-color: var(--color-danger);
-  background: rgba(224, 115, 122, 0.14);
-  color: #b04a50;
+  background: var(--color-danger-o14);
+  color: var(--color-danger-text-hover);
 }
 
 /* ============================================
@@ -2159,12 +2290,12 @@ select.form-control {
 
 .admin-panel__tab:hover {
   color: var(--color-text);
-  background: rgba(91, 141, 239, 0.04);
+  background: var(--color-primary-o04);
 }
 
 .admin-panel__tab--active {
   color: var(--color-primary);
-  background: rgba(91, 141, 239, 0.08);
+  background: var(--color-primary-o08);
   font-weight: 600;
 }
 
@@ -2247,7 +2378,7 @@ select.form-control {
 }
 
 .admin-panel__cat {
-  background: rgba(91, 141, 239, 0.08);
+  background: var(--color-primary-o08);
   color: var(--color-primary);
   font-size: 0.7rem;
   padding: 0.18rem 0.55rem;
@@ -2277,12 +2408,12 @@ select.form-control {
 
 .admin-panel__action-btn:hover {
   border-color: var(--color-primary);
-  background: rgba(91, 141, 239, 0.06);
+  background: var(--color-primary-o06);
 }
 
 .admin-panel__action-btn--danger:hover {
   border-color: var(--color-danger);
-  background: rgba(224, 115, 122, 0.08);
+  background: var(--color-danger-o08);
 }
 
 .admin-panel__user-avatar {
@@ -2298,7 +2429,7 @@ select.form-control {
 }
 
 .admin-panel__role--admin {
-  background: rgba(91, 141, 239, 0.1);
+  background: var(--color-primary-o10);
   color: var(--color-primary);
 }
 
@@ -2366,7 +2497,7 @@ select.form-control {
   align-items: center;
   justify-content: center;
   padding: 0 0.3rem;
-  box-shadow: 0 2px 6px rgba(224, 115, 122, 0.35);
+  box-shadow: 0 2px 6px var(--color-danger-o35);
 }
 
 .message-panel__body {
@@ -2438,11 +2569,11 @@ select.form-control {
 }
 
 .message-panel__conv:hover {
-  background: rgba(91, 141, 239, 0.04);
+  background: var(--color-primary-o04);
 }
 
 .message-panel__conv--unread {
-  background: rgba(91, 141, 239, 0.05);
+  background: var(--color-primary-o05);
 }
 
 .message-panel__conv-avatar {
@@ -2810,7 +2941,7 @@ select.form-control {
 }
 
 .msg-window__titlebar-btn:hover {
-  background: rgba(91, 141, 239, 0.1);
+  background: var(--color-primary-o10);
   color: var(--color-text);
 }
 
@@ -2855,11 +2986,11 @@ select.form-control {
 }
 
 .msg-window__dock-item:hover {
-  background: rgba(91, 141, 239, 0.08);
+  background: var(--color-primary-o08);
 }
 
 .msg-window__dock-item--active {
-  background: rgba(91, 141, 239, 0.12);
+  background: var(--color-primary-o12);
   color: var(--color-primary);
   font-weight: 600;
 }
@@ -2941,11 +3072,11 @@ select.form-control {
 }
 
 .msg-window__conv:hover {
-  background: rgba(91, 141, 239, 0.04);
+  background: var(--color-primary-o04);
 }
 
 .msg-window__conv--unread {
-  background: rgba(91, 141, 239, 0.06);
+  background: var(--color-primary-o06);
 }
 
 .msg-window__conv-avatar {
@@ -3052,7 +3183,7 @@ select.form-control {
 }
 
 .msg-window__chat-action:hover {
-  background: rgba(224, 115, 122, 0.1);
+  background: var(--color-danger-o10);
   color: var(--color-danger);
 }
 
@@ -3145,7 +3276,7 @@ select.form-control {
 }
 
 .msg-window__msg-file:hover {
-  background: rgba(91, 141, 239, 0.08);
+  background: var(--color-primary-o08);
   border-color: var(--color-primary);
 }
 
@@ -3261,7 +3392,7 @@ select.form-control {
 }
 
 .msg-window__input-btn:hover {
-  background: rgba(91, 141, 239, 0.1);
+  background: var(--color-primary-o10);
 }
 
 .msg-window__textarea {
@@ -3339,11 +3470,11 @@ select.form-control {
 }
 
 .msg-window__emoji-cat-btn:hover {
-  background: rgba(91, 141, 239, 0.08);
+  background: var(--color-primary-o08);
 }
 
 .msg-window__emoji-cat-btn--active {
-  background: rgba(91, 141, 239, 0.15);
+  background: var(--color-primary-o15);
 }
 
 .msg-window__emoji-grid {
@@ -3370,7 +3501,7 @@ select.form-control {
 }
 
 .msg-window__emoji-item:hover {
-  background: rgba(91, 141, 239, 0.1);
+  background: var(--color-primary-o10);
   transform: scale(1.2);
 }
 
@@ -3566,7 +3697,7 @@ select.form-control {
   align-items: center;
   justify-content: center;
   padding: 0 0.3rem;
-  box-shadow: 0 2px 6px rgba(224, 115, 122, 0.35);
+  box-shadow: 0 2px 6px var(--color-danger-o35);
 }
 
 /* Image preview overlay */
@@ -3611,7 +3742,7 @@ select.form-control {
 }
 
 .msg-window__image-close:hover {
-  background: rgba(224, 115, 122, 0.7);
+  background: var(--color-danger-o70);
   border-color: rgba(255, 255, 255, 0.4);
 }
 
@@ -3742,7 +3873,7 @@ select.form-control {
 
 .markdown-renderer :deep(blockquote) {
   border-left: 3px solid var(--color-primary);
-  background: rgba(91, 141, 239, 0.04);
+  background: var(--color-primary-o04);
 }
 
 .markdown-renderer :deep(table) {
@@ -3786,7 +3917,7 @@ select.form-control {
 
 .md-editor:focus-within {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(91, 141, 239, 0.08), var(--shadow-md);
+  box-shadow: 0 0 0 4px var(--color-primary-o08), var(--shadow-md);
 }
 
 /* Toolbar */
@@ -4568,6 +4699,6 @@ select.form-control {
 
   /* Reduce glow on small screens (battery/performance friendly) */
   .forum-sort__btn--active {
-    box-shadow: var(--shadow-sm), 0 0 10px rgba(91, 141, 239, 0.22);
+    box-shadow: var(--shadow-sm), 0 0 10px var(--color-primary-o22);
   }
 }

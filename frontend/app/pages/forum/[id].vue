@@ -3,10 +3,28 @@
     <section class="page-header">
       <div class="container">
         <NuxtLink to="/forum" class="forum-detail__back">← 返回论坛</NuxtLink>
-        <div class="forum-empty">
-          <div class="forum-empty__icon">⌛</div>
-          <h1 class="forum-empty__title">正在加载帖子</h1>
-          <p class="forum-empty__desc">正在获取帖子详情和评论。</p>
+        <!-- Skeleton detail view -->
+        <div class="skeleton skeleton--title" style="width: 35%; margin-bottom: 1rem;"></div>
+        <div class="skeleton skeleton--title" style="width: 75%; height: 2rem; margin-bottom: 1.5rem;"></div>
+        <div class="skeleton skeleton--text" style="width: 50%; margin-bottom: 0.75rem;"></div>
+        <div class="skeleton-card" style="margin-top: 1rem;">
+          <div class="skeleton skeleton--text"></div>
+          <div class="skeleton skeleton--text" style="width: 90%;"></div>
+          <div class="skeleton skeleton--text" style="width: 70%;"></div>
+          <div class="skeleton skeleton--text" style="width: 85%;"></div>
+          <div class="skeleton skeleton--text" style="width: 50%;"></div>
+        </div>
+        <!-- Skeleton comments -->
+        <div style="margin-top: 2rem;">
+          <div class="skeleton skeleton--title" style="width: 25%; margin-bottom: 1rem;"></div>
+          <div v-for="n in 3" :key="'skel-c-'+n" class="skeleton-comment">
+            <div class="skeleton skeleton--avatar"></div>
+            <div class="skeleton-comment__body">
+              <div class="skeleton skeleton--text-sm" style="width: 20%;"></div>
+              <div class="skeleton skeleton--text"></div>
+              <div class="skeleton skeleton--text" style="width: 60%;"></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
