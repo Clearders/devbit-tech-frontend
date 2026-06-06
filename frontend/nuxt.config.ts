@@ -31,6 +31,27 @@ export default defineNuxtConfig({
     '/**/*.{ico,svg,png,webmanifest}': {
       headers: { 'cache-control': 'public, max-age=604800' },
     },
+    // ── Security headers for all routes ──────────────────────────────────────
+    '/**': {
+      headers: {
+        // Content-Security-Policy: wasm-unsafe-eval required for Bevy WASM games
+        'content-security-policy':
+          "default-src 'self'; " +
+          "script-src 'self' 'wasm-unsafe-eval'; " +
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+          "font-src 'self' https://fonts.gstatic.com; " +
+          "img-src 'self' data: blob:; " +
+          "connect-src 'self' ws: wss:; " +
+          "media-src 'self'; " +
+          "frame-ancestors 'none'; " +
+          "base-uri 'self'; " +
+          "form-action 'self'",
+        'x-content-type-options': 'nosniff',
+        'x-frame-options': 'DENY',
+        'referrer-policy': 'strict-origin-when-cross-origin',
+        'permissions-policy': 'camera=(), microphone=(), geolocation=()',
+      },
+    },
   },
 
   devtools: {

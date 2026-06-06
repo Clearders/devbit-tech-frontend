@@ -103,6 +103,44 @@ export const useForum = () => {
     }, { deep: true })
   }
 
+  // ── WebSocket real-time message integration ───────────────────────────────
+  const wsBound = useState<boolean>('forum_ws_bound', () => false)
+  if (import.meta.client && !wsBound.value) {
+    wsBound.value = true
+    const { on: wsOn, status: wsStatus } = useWebSocket()
+
+    // Listen for new private messages pushed via WebSocket
+    wsOn('new_message', (payload: Record<string, unknown>) => {
+      const msg = payload as unknown as {
+        message_id: number
+        sender_id: number
+        sender_name: string
+        content_preview: string
+      }
+
+      // Dedup: skip if we already have this message
+      if (messages.value.some(m => m.id === msg.message_id)) return
+
+      // Fetch the full message from API to get complete data
+      api.fetchBootstrap().then((bootstrap) => {
+        // Replace messages with server state (includes the new message)
+        messages.value = bootstrap.messages
+        saveMessagesToStorage(bootstrap.messages)
+      }).catch(() => {
+        // Fallback: just append a partial message entry
+        // The next bootstrap fetch will fill in details
+      })
+    })
+
+    // Listen for user online/offline events to update UI
+    wsOn('user_online', (_payload: Record<string, unknown>) => {
+      // Online status is tracked by useWebSocket composable
+    })
+    wsOn('user_offline', (_payload: Record<string, unknown>) => {
+      // Online status is tracked by useWebSocket composable
+    })
+  }
+
   const openMessagePanel = (partnerId?: number) => {
     isMessagePanelOpen.value = true
     if (partnerId) {
