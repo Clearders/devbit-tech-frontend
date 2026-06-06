@@ -145,7 +145,14 @@
         <tbody>
           <tr v-for="u in users" :key="u.id">
             <td class="admin-panel__td-id">{{ u.id }}</td>
-            <td><span class="admin-panel__user-avatar">{{ u.avatar }}</span></td>
+            <td>
+              <AvatarImage
+                :avatar-url="u.avatarUrl"
+                :avatar="u.avatar"
+                :name="u.name"
+                size="sm"
+              />
+            </td>
             <td>{{ u.name }}</td>
             <td>
               <span class="admin-panel__role" :class="{ 'admin-panel__role--admin': u.isAdmin }">
@@ -162,6 +169,7 @@
 
 <script setup lang="ts">
 import type { ForumCategory } from '~/composables/useForum'
+import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 

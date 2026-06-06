@@ -1,6 +1,13 @@
 <template>
   <div class="comment" :id="`comment-${comment.id}`">
-    <div class="comment__avatar">{{ comment.author.avatar }}</div>
+    <div class="comment__avatar">
+      <AvatarImage
+        :avatar-url="comment.author.avatarUrl"
+        :avatar="comment.author.avatar"
+        :name="comment.author.name"
+        size="sm"
+      />
+    </div>
     <div class="comment__body">
       <div class="comment__header">
         <span class="comment__author">
@@ -31,6 +38,7 @@
 
 <script setup lang="ts">
 import type { ForumComment } from '~/composables/useForum'
+import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
 
 const props = defineProps<{

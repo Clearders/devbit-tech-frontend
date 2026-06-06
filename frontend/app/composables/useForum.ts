@@ -272,6 +272,20 @@ export const useForum = () => {
     comments.value = comments.value.filter((comment) => comment.postId !== postId)
   }
 
+  const fetchMyPosts = async () => {
+    return api.fetchMyPosts()
+  }
+
+  const modifyPost = async (postId: number, content: string) => {
+    await api.modifyPost(postId, content)
+    // Update local post state
+    const post = posts.value.find((p) => p.id === postId)
+    if (post) {
+      post.content = content
+      post.updatedAt = new Date().toISOString()
+    }
+  }
+
   const deleteComment = async (commentId: number) => {
     await api.deleteComment(commentId)
     const comment = comments.value.find((item) => item.id === commentId)
@@ -390,6 +404,8 @@ export const useForum = () => {
     addComment,
     deletePost,
     deleteComment,
+    fetchMyPosts,
+    modifyPost,
     togglePinPost,
     toggleLockPost,
     toggleLikePost,

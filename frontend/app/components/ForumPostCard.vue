@@ -23,7 +23,12 @@
 
     <div class="post-card__footer">
       <div class="post-card__author">
-        <span class="post-card__avatar">{{ post.author.avatar }}</span>
+        <AvatarImage
+          :avatar-url="post.author.avatarUrl"
+          :avatar="post.author.avatar"
+          :name="post.author.name"
+          size="sm"
+        />
         <span class="post-card__author-name">
           {{ post.author.name }}
           <span v-if="post.author.isAdmin" class="post-card__admin-badge">管理员</span>
@@ -41,6 +46,7 @@
 
 <script setup lang="ts">
 import type { ForumPost } from '~/composables/useForum'
+import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
 import { stripMarkdown } from '~/utils/stripMarkdown'
 

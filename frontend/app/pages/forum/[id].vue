@@ -47,7 +47,12 @@
           <h1 class="forum-detail__title">{{ post.title }}</h1>
           <div class="forum-detail__meta">
             <div class="forum-detail__author">
-              <span class="forum-detail__author-avatar">{{ post.author.avatar }}</span>
+              <AvatarImage
+                :avatar-url="post.author.avatarUrl"
+                :avatar="post.author.avatar"
+                :name="post.author.name"
+                size="md"
+              />
               <span class="forum-detail__author-name">
                 {{ post.author.name }}
                 <span v-if="post.author.isAdmin" class="forum-detail__admin-tag">管理员</span>
@@ -82,6 +87,9 @@
             >
               {{ post.isLocked ? '🔓 解锁' : '🔒 锁定' }}
             </button>
+            <NuxtLink v-if="canEditPost" :to="`/forum/edit/${post.id}`" class="btn btn--sm btn--outline">
+              ✏️ 编辑
+            </NuxtLink>
             <button v-if="canDeletePost" class="btn btn--sm btn--danger" @click="handleDeletePost">
               🗑️ 删除
             </button>
@@ -142,7 +150,14 @@
 
               <!-- Add comment -->
               <div v-if="!post.isLocked && isAuthenticated" class="forum-detail__add-comment">
-                <div class="forum-detail__comment-avatar">{{ userAvatar }}</div>
+                <div class="forum-detail__comment-avatar">
+                  <AvatarImage
+                    :avatar-url="user?.avatarUrl"
+                    :avatar="userAvatarFallback"
+                    :name="user?.name ?? ''"
+                    size="sm"
+                  />
+                </div>
                 <div class="forum-detail__comment-form">
                   <textarea
                     v-model="newComment"
@@ -177,7 +192,12 @@
             <div class="forum-sidebar-card">
               <h3 class="forum-sidebar-card__title">👤 作者</h3>
               <div class="forum-detail__author-card">
-                <span class="forum-detail__author-card-avatar">{{ post.author.avatar }}</span>
+                <AvatarImage
+                  :avatar-url="post.author.avatarUrl"
+                  :avatar="post.author.avatar"
+                  :name="post.author.name"
+                  size="md"
+                />
                 <span class="forum-detail__author-card-name">
                   {{ post.author.name }}
                   <span v-if="post.author.isAdmin" class="forum-detail__admin-tag">管理员</span>
@@ -235,6 +255,7 @@
 
 <script setup lang="ts">
 import ForumComment from '~/components/ForumComment.vue'
+import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
@@ -286,10 +307,23 @@ const categoryInfo = computed(() =>
   post.value ? FORUM_CATEGORIES.find(c => c.value === post.value!.category) : null
 )
 
-const userAvatar = computed(() => '👤')
+const userAvatarFallback = computed(() => {
+  const name = user.value?.name ?? ''
+  const upper = name.replace(/[^A-Z]/g, '').slice(0, 2)
+  if (upper.length >= 2) return upper
+  if (upper.length === 1) {
+    const lower = name.replace(/[^a-z]/g, '')
+    return upper + (lower[0]?.toUpperCase() ?? '')
+  }
+  return name.slice(0, 2).toUpperCase() || '👤'
+})
 
 const isAdmin = computed(() => !!user.value?.isAdmin)
 const canDeletePost = computed(() => {
+  if (!post.value || !user.value) return false
+  return user.value.id === post.value.author.id || user.value.isAdmin
+})
+const canEditPost = computed(() => {
   if (!post.value || !user.value) return false
   return user.value.id === post.value.author.id || user.value.isAdmin
 })

@@ -13,7 +13,9 @@ export const useApiFetch = () => {
     if (!headers.has('accept')) {
       headers.set('accept', 'application/json')
     }
-    if (!headers.has('content-type')) {
+    // Don't set content-type for FormData — browser sets it with boundary
+    const isFormData = options.body instanceof FormData
+    if (!isFormData && !headers.has('content-type')) {
       headers.set('content-type', 'application/json')
     }
 

@@ -42,6 +42,17 @@ export const useForumApi = () => {
       return forumApi(`/forum/posts/${id}`, { method: 'DELETE' })
     },
 
+    fetchMyPosts(): Promise<ForumPost[]> {
+      return forumApi('/forum/posts/myposts')
+    },
+
+    modifyPost(id: number, content: string): Promise<void> {
+      return forumApi(`/forum/posts/myposts/modify_post/${id}`, {
+        method: 'PUT',
+        body: { content }
+      })
+    },
+
     togglePin(id: number): Promise<ForumPost> {
       return forumApi(`/forum/posts/${id}/pin`, { method: 'PUT' })
     },

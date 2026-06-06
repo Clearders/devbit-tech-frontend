@@ -20,6 +20,7 @@
         <ul class="navbar__links">
           <li><NuxtLink to="/" @click="closeMenu">首页</NuxtLink></li>
           <li><NuxtLink to="/forum" @click="closeMenu">论坛</NuxtLink></li>
+          <li v-if="isAuthenticated"><NuxtLink to="/forum/myposts" @click="closeMenu">我的帖子</NuxtLink></li>
           <li><NuxtLink to="/games" @click="closeMenu">游戏</NuxtLink></li>
           <li><NuxtLink to="/leaderboard" @click="closeMenu">排行榜</NuxtLink></li>
           <li><NuxtLink to="/about" @click="closeMenu">团队介绍</NuxtLink></li>
@@ -30,7 +31,17 @@
             <span class="navbar__user">Checking session...</span>
           </template>
           <template v-else-if="isAuthenticated">
-            <span class="navbar__user">{{ user?.name }}</span>
+            <div class="navbar__user-area">
+              <NuxtLink to="/settings" class="navbar__avatar-link" title="账户设置">
+                <AvatarImage
+                  :avatar-url="user?.avatarUrl"
+                  :avatar="userInitials"
+                  :name="user?.name ?? ''"
+                  size="sm"
+                />
+              </NuxtLink>
+              <span class="navbar__user">{{ user?.name }}</span>
+            </div>
             <button
               class="btn btn--outline navbar__logout navbar__magnetic"
               @pointermove="onMagnetMove"
@@ -68,11 +79,24 @@
 </template>
 
 <script setup lang="ts">
+import AvatarImage from '~/components/AvatarImage.vue'
+
 const { isAuthenticated, isResolving, user, logout } = useAuth()
 const { isMobile } = useBreakpoint()
 const { onPointerDown, onMagnetMove, resetMagnet } = useMagneticButton()
 const isMenuOpen = ref(false)
 const route = useRoute()
+
+const userInitials = computed(() => {
+  const name = user.value?.name ?? ''
+  const upper = name.replace(/[^A-Z]/g, '').slice(0, 2)
+  if (upper.length >= 2) return upper
+  if (upper.length === 1) {
+    const lower = name.replace(/[^a-z]/g, '')
+    return upper + (lower[0]?.toUpperCase() ?? '')
+  }
+  return name.slice(0, 2).toUpperCase() || '??'
+})
 
 // Close menu on route change (mobile)
 watch(() => route.fullPath, () => {

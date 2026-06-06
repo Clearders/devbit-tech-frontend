@@ -10,6 +10,7 @@ export interface ForumUser {
   id: number
   name: string
   avatar: string
+  avatarUrl?: string
   isAdmin: boolean
 }
 

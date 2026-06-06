@@ -103,7 +103,14 @@
               :class="{ 'msg-window__conv--unread': conv.unread > 0 }"
               @click="openConversation(conv.partner.id)"
             >
-              <span class="msg-window__conv-avatar">{{ conv.partner.avatar }}</span>
+              <span class="msg-window__conv-avatar">
+                <AvatarImage
+                  :avatar-url="conv.partner.avatarUrl"
+                  :avatar="conv.partner.avatar"
+                  :name="conv.partner.name"
+                  size="sm"
+                />
+              </span>
               <div class="msg-window__conv-info">
                 <div class="msg-window__conv-name">
                   {{ conv.partner.name }}
@@ -274,7 +281,14 @@
               class="msg-window__conv"
               @click="openConversationFromFriend(friend.user.id)"
             >
-              <span class="msg-window__conv-avatar">{{ friend.user.avatar }}</span>
+              <span class="msg-window__conv-avatar">
+                <AvatarImage
+                  :avatar-url="friend.user.avatarUrl"
+                  :avatar="friend.user.avatar"
+                  :name="friend.user.name"
+                  size="sm"
+                />
+              </span>
               <div class="msg-window__conv-info">
                 <div class="msg-window__conv-name">{{ friend.user.name }}</div>
               </div>
@@ -314,7 +328,14 @@
                 :key="resultUser.id"
                 class="msg-window__conv"
               >
-                <span class="msg-window__conv-avatar">{{ resultUser.avatar }}</span>
+                <span class="msg-window__conv-avatar">
+                  <AvatarImage
+                    :avatar-url="resultUser.avatarUrl"
+                    :avatar="resultUser.avatar"
+                    :name="resultUser.name"
+                    size="sm"
+                  />
+                </span>
                 <div class="msg-window__conv-info">
                   <div class="msg-window__conv-name">{{ resultUser.name }}</div>
                 </div>
@@ -377,6 +398,7 @@
 
 <script setup lang="ts">
 import type { ForumMessage, ForumUser } from '~/composables/useForum'
+import AvatarImage from '~/components/AvatarImage.vue'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 import { useMessageWindow } from '~/composables/useMessageWindow'
 import { EMOJI_CATEGORIES, searchEmoji } from '~/utils/emojiData'

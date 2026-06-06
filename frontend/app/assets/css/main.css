@@ -378,6 +378,23 @@ a:hover {
   white-space: nowrap;
 }
 
+.navbar__user-area {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar__avatar-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.navbar__avatar-link:hover {
+  opacity: 0.85;
+}
+
 .navbar__logout {
   padding: 0.4rem 0.9rem;
   font-size: 0.85rem;
