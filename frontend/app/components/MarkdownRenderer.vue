@@ -4,6 +4,9 @@
 
 <script setup lang="ts">
 import MarkdownIt from 'markdown-it'
+import texmath from 'markdown-it-texmath'
+import katex from 'katex'
+import 'katex/dist/katex.min.css'
 
 const props = withDefaults(defineProps<{
   content: string
@@ -22,6 +25,18 @@ const md = new MarkdownIt({
   linkify: true,
   breaks: true,
   typographer: true,
+})
+
+// LaTeX math support via KaTeX
+// Supports $...$ for inline math and $$...$$ for display math
+md.use(texmath, {
+  engine: katex,
+  delimiters: ['dollars', 'brackets', 'doxygen', 'gitlab', 'julia', 'kramdown'],
+  katexOptions: {
+    macros: {},
+    throwOnError: false,
+    output: 'htmlAndMathml',
+  },
 })
 
 // Custom plugin: underline via ++text++ → <u>text</u>
@@ -242,5 +257,31 @@ const renderedHtml = computed(() => {
 .markdown-renderer :deep(img) {
   border-radius: 0.5rem;
   max-width: 100%;
+}
+
+/* === KaTeX / LaTeX math === */
+/* Inline math */
+.markdown-renderer :deep(.katex) {
+  font-size: 1.05em;
+}
+
+/* Display math block */
+.markdown-renderer :deep(.katex-display) {
+  margin: 1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+}
+
+/* Scrollable math on small screens */
+.markdown-renderer :deep(.katex-display > .katex) {
+  max-width: 100%;
+}
+
+/* Inline math in headings should not look oversized */
+.markdown-renderer :deep(h1 .katex),
+.markdown-renderer :deep(h2 .katex),
+.markdown-renderer :deep(h3 .katex) {
+  font-size: 1em;
 }
 </style>

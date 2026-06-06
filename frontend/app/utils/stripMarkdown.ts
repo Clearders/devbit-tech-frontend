@@ -4,6 +4,8 @@
  */
 export function stripMarkdown(text: string, maxLength = 120): string {
   let result = text
+    .replace(/\$\$[\s\S]*?\$\$/g, '')       // display math ($$...$$)
+    .replace(/\$([^$\n]+?)\$/g, '$1')        // inline math ($...$) — keep the inner text
     .replace(/^#{1,6}\s+/gm, '')        // headings
     .replace(/\*\*([^*]+)\*\*/g, '$1')   // bold
     .replace(/__([^_]+)__/g, '$1')       // bold

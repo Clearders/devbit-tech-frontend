@@ -71,6 +71,21 @@
           type="button"
         >🖼</button>
       </div>
+      <div class="md-editor__toolbar-divider" />
+      <div class="md-editor__toolbar-group">
+        <button
+          class="md-editor__btn"
+          title="行内公式 (inline LaTeX)"
+          @click="wrapSelection('$')"
+          type="button"
+        >𝑓ₓ</button>
+        <button
+          class="md-editor__btn"
+          title="块级公式 (display LaTeX)"
+          @click="insertDisplayMath"
+          type="button"
+        >∑∫</button>
+      </div>
       <div class="md-editor__toolbar-spacer" />
       <div class="md-editor__toolbar-group">
         <button
@@ -115,7 +130,7 @@
     <div class="md-editor__status">
       <span>{{ charCount }} 字</span>
       <span>{{ lineCount }} 行</span>
-      <span class="md-editor__status-hint">支持 Markdown 语法 · Ctrl+B 加粗 · Ctrl+I 斜体 · Ctrl+U 下划线</span>
+      <span class="md-editor__status-hint">支持 Markdown 语法 · LaTeX 公式 ($...$ / $$...$$) · Ctrl+B 加粗 · Ctrl+I 斜体 · Ctrl+U 下划线</span>
     </div>
   </div>
 </template>
@@ -223,7 +238,7 @@ function wrapSelection(syntax: string) {
       const word = val.substring(wordStart, wordEnd)
       replaceText(wordStart, wordEnd, syntax + word + syntax)
     } else {
-      const placeholder = syntax === '`' ? '代码' : syntax === '++' ? '下划线' : syntax === '~~' ? '删除线' : syntax === '**' ? '加粗' : '文本'
+      const placeholder = syntax === '`' ? '代码' : syntax === '++' ? '下划线' : syntax === '~~' ? '删除线' : syntax === '**' ? '加粗' : syntax === '$' ? '公式' : '文本'
       replaceText(sel.start, sel.end, syntax + placeholder + syntax)
       // Select placeholder for easy overwrite
       nextTick(() => {
@@ -332,6 +347,26 @@ function insertImage() {
       const ta = getTextarea()
       if (!ta) return
       ta.setSelectionRange(sel.start + 2, sel.start + 6)
+    })
+  }
+}
+
+function insertDisplayMath() {
+  const sel = getSelection()
+  if (!sel) return
+  const prefix = sel.start === 0 || props.modelValue.charAt(sel.start - 1) === '\n' ? '' : '\n'
+  const suffix = sel.end === props.modelValue.length || props.modelValue.charAt(sel.end) === '\n' ? '' : '\n'
+
+  if (sel.start !== sel.end) {
+    replaceText(sel.start, sel.end, prefix + '$$\n' + sel.text + '\n$$' + suffix)
+  } else {
+    replaceText(sel.start, sel.end, prefix + '$$\n' + 'E = mc^2' + '\n$$' + suffix)
+    nextTick(() => {
+      const ta = getTextarea()
+      if (!ta) return
+      const exprStart = sel.start + prefix.length + 3
+      const exprEnd = exprStart + 'E = mc^2'.length
+      ta.setSelectionRange(exprStart, exprEnd)
     })
   }
 }
