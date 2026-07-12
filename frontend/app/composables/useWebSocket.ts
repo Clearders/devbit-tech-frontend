@@ -5,11 +5,9 @@
  *  - Auto-reconnect with exponential backoff (1s → 30s max)
  *  - Heartbeat: responds to server pings, detects stale connections
  *  - Event system: on() / off() pattern for typed server messages
- *  - Auth: sends JWT token from cookie on connect
+ *  - Auth: uses the HttpOnly session cookie during the upgrade request
  *  - Connection state tracking via useState
  */
-
-import type { AuthUser } from '~~/shared/auth'
 
 // ── Server message types ────────────────────────────────────────────────────
 
@@ -38,7 +36,6 @@ type MessageHandler = (payload: Record<string, unknown>) => void
 // ── Singleton state ─────────────────────────────────────────────────────────
 
 const useWebSocketState = () => {
-  const config = useRuntimeConfig()
   const status = useState<WsConnectionStatus>('ws_status', () => 'disconnected')
   const onlineUsers = useState<Set<number>>('ws_online_users', () => new Set())
 
@@ -46,6 +43,7 @@ const useWebSocketState = () => {
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
   let reconnectAttempts = 0
+  let shouldConnect = false
   const maxReconnectDelay = 30000 // 30s max
   const handlers = new Map<string, Set<MessageHandler>>()
 
@@ -86,9 +84,10 @@ const useWebSocketState = () => {
   }
 
   function scheduleReconnect() {
-    if (reconnectTimer) return
+    if (!shouldConnect || reconnectTimer) return
     status.value = 'reconnecting'
     const delay = getReconnectDelay()
+    reconnectAttempts += 1
     reconnectTimer = setTimeout(() => {
       reconnectTimer = null
       connect()
@@ -97,6 +96,7 @@ const useWebSocketState = () => {
 
   function connect() {
     if (import.meta.server) return
+    shouldConnect = true
 
     // Don't reconnect if already connected or connecting
     if (socket?.readyState === WebSocket.OPEN || socket?.readyState === WebSocket.CONNECTING) {
@@ -112,19 +112,15 @@ const useWebSocketState = () => {
       return
     }
 
-    socket.onopen = () => {
-      reconnectAttempts = 0
-      status.value = 'connected'
-      startHeartbeat()
+    const currentSocket = socket
 
-      // Authenticate: read token from cookie
-      const token = getAuthTokenFromCookie()
-      if (token) {
-        socket!.send(JSON.stringify({ type: 'auth', token }))
-      }
+    currentSocket.onopen = () => {
+      if (socket !== currentSocket || !shouldConnect) return
+      startHeartbeat()
     }
 
-    socket.onmessage = (event) => {
+    currentSocket.onmessage = (event) => {
+      if (socket !== currentSocket || !shouldConnect) return
       try {
         const msg: WsServerMessage = JSON.parse(event.data)
         const { type, ...payload } = msg
@@ -134,6 +130,8 @@ const useWebSocketState = () => {
             // Heartbeat response — connection is healthy
             break
           case 'auth_ok':
+            reconnectAttempts = 0
+            status.value = 'connected'
             emit('auth_ok', payload)
             break
           case 'auth_error':
@@ -164,30 +162,30 @@ const useWebSocketState = () => {
       }
     }
 
-    socket.onclose = (event) => {
+    currentSocket.onclose = () => {
+      if (socket !== currentSocket) return
+      socket = null
       stopHeartbeat()
       status.value = 'disconnected'
-
-      // Don't reconnect if closed cleanly by client
-      if (event.code === 1000) return
-
       scheduleReconnect()
     }
 
-    socket.onerror = () => {
+    currentSocket.onerror = () => {
       // onclose will fire after onerror, handle reconnection there
     }
   }
 
   function disconnect() {
+    shouldConnect = false
     stopHeartbeat()
     if (reconnectTimer) {
       clearTimeout(reconnectTimer)
       reconnectTimer = null
     }
     if (socket) {
-      socket.close(1000, 'Client disconnect')
+      const currentSocket = socket
       socket = null
+      currentSocket.close(1000, 'Client disconnect')
     }
     status.value = 'disconnected'
   }
@@ -223,14 +221,6 @@ const useWebSocketState = () => {
     on,
     off,
   }
-}
-
-// ── Helper: read auth_token from document cookies ───────────────────────────
-
-function getAuthTokenFromCookie(): string | null {
-  if (!import.meta.client) return null
-  const match = document.cookie.match(/(?:^|;\s*)auth_token=([^;]*)/)
-  return match ? match[1] : null
 }
 
 // ── Global singleton ────────────────────────────────────────────────────────

@@ -1,23 +1,18 @@
 /**
  * WebSocket initialization plugin.
- * Connects to the WebSocket server on client-side startup
- * and reconnects when the user logs in/out.
+ * Connects after authentication resolves and disconnects on logout.
  */
 export default defineNuxtPlugin(() => {
-  const { status: authStatus, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const { connect, disconnect } = useWebSocket()
 
-  // Connect on client startup
-  if (import.meta.client) {
-    connect()
-  }
-
-  // Reconnect when auth state changes (new token after login)
+  // Keep the socket alive only while the resolved session is authenticated.
+  // The browser supplies the HttpOnly cookie during the WebSocket upgrade.
   watch(isAuthenticated, (newVal) => {
     if (newVal) {
-      // Reconnect with fresh auth token
-      disconnect()
       nextTick(() => connect())
+    } else {
+      disconnect()
     }
-  })
+  }, { immediate: true })
 })

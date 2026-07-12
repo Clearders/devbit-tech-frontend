@@ -132,11 +132,6 @@ export default defineNuxtConfig({
       // size improvement on already-minified JS/CSS. Nginx can handle
       // brotli at the edge if needed.
       brotli: false,
-      // Exclude file types that don't benefit from compression:
-      //  - .wasm: already compact binary, compression is pointless
-      //  - .png/.ico: already compressed image formats
-      //  - .d.ts: TypeScript declarations, not served to clients
-      exclude: ['/**/*.wasm', '/**/*.png', '/**/*.ico', '/**/*.d.ts'],
     },
     minify: true,
     prerender: {

@@ -11,7 +11,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "clean": "nuxi cleanup"
+    "clean": "nuxi cleanup",
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
     "@types/markdown-it": "^14.1.2",
@@ -23,6 +24,14 @@
     "vue-router": "^5.0.4"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0"
+    "@types/node": "^25.6.0",
+    "typescript": "6.0.2",
+    "vue-tsc": "3.3.7"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild"
+    ]
   }
 }
