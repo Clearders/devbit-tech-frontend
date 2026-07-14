@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import AppNavbar from "~/components/AppNavbar.vue"
 import AppFooter from "~/components/AppFooter.vue"
-import ForumMessagePanel from "~/components/ForumMessagePanel.vue"
+
+const { isAuthenticated } = useAuth()
 </script>
 
 <template>
@@ -11,6 +12,8 @@ import ForumMessagePanel from "~/components/ForumMessagePanel.vue"
       <slot />
     </main>
     <AppFooter />
-    <ForumMessagePanel />
+    <ClientOnly>
+      <LazyForumMessagePanel v-if="isAuthenticated" />
+    </ClientOnly>
   </div>
 </template>

@@ -12,8 +12,8 @@ export function stripMarkdown(text: string, maxLength = 120): string {
     .replace(/\*([^*]+)\*/g, '$1')       // italic
     .replace(/_([^_]+)_/g, '$1')         // italic
     .replace(/`{1,3}[^`]*`{1,3}/g, '')  // inline code & code blocks
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // links
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1') // images
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // links
     .replace(/>\s/g, '')                 // blockquote
     .replace(/^[-*+]\s/gm, '')           // unordered lists
     .replace(/^\d+\.\s/gm, '')           // ordered lists

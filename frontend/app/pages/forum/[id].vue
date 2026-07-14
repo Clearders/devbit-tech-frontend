@@ -258,6 +258,7 @@ import ForumComment from '~/components/ForumComment.vue'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
+import { formatCount, formatRelativeTime, getForumCategory } from '~/utils/forum'
 
 // Update title and description dynamically
 useSeoMeta({
@@ -268,8 +269,6 @@ useSeoMeta({
 const route = useRoute()
 const { user, isAuthenticated } = useAuth()
 const {
-  FORUM_CATEGORIES,
-  formatRelativeTime,
   getPostById,
   getCommentsByPostId,
   addComment,
@@ -304,7 +303,7 @@ watchEffect(() => {
 })
 
 const categoryInfo = computed(() =>
-  post.value ? FORUM_CATEGORIES.find(c => c.value === post.value!.category) : null
+  post.value ? getForumCategory(post.value.category) : null
 )
 
 const userAvatarFallback = computed(() => {
@@ -413,9 +412,4 @@ function handleLike() {
   void runAction(() => toggleLikePost(postId.value), '点赞失败，请稍后重试。')
 }
 
-function formatCount(n: number): string {
-  if (n >= 10000) return (n / 10000).toFixed(1) + 'w'
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
-  return String(n)
-}
 </script>

@@ -104,8 +104,9 @@
 </template>
 
 <script setup lang="ts">
-import type { ForumCategory } from '~/composables/useForum'
-import { useForum, FORUM_CATEGORIES } from '~/composables/useForum'
+import type { ForumCategory } from '~~/shared/forum'
+import { FORUM_CATEGORIES } from '~~/shared/forum'
+import { useForum } from '~/composables/useForum'
 import MarkdownEditor from '~/components/MarkdownEditor.vue'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 

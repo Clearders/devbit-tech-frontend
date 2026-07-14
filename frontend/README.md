@@ -9,7 +9,7 @@
 - **后端 API**：前端统一调用 `/api`，开发和生产都代理到 Rust 后端服务
 - **TypeScript**：全链路类型安全，共享类型定义在 `shared/` 目录
 - **论坛系统**：帖子浏览/发布/搜索、评论、私信、点赞、置顶/锁定管理
-- **身份认证**：基于 Session Token（Cookie + Bearer Header），含注册/登录/验证码流程
+- **身份认证**：基于 JWT（HttpOnly Cookie），含注册、登录和验证码流程
 - **Canvas 动态背景**：基于设备 DPR 自适应粒子密度，尊重 `prefers-reduced-motion`
 - **SEO 优化**：`useSeoMeta` + Open Graph + 结构化 Meta 标签
 - **安全区域适配**：支持 iPhone 刘海屏 / Dynamic Island (`safe-area-inset-*`)
@@ -40,7 +40,7 @@ frontend/
 │   ├── pages/                     # 页面路由
 │   │   ├── index.vue              # 首页
 │   │   ├── about.vue              # 关于
-│   │   ├── games.vue              # 游戏
+│   │   ├── games/                 # 游戏页面
 │   │   ├── leaderboard.vue        # 排行榜
 │   │   ├── login.vue              # 登录
 │   │   ├── register.vue           # 注册
@@ -57,8 +57,8 @@ frontend/
 ## 快速开始
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 开发服务器将在 <http://localhost:3000> 启动。
@@ -67,27 +67,19 @@ npm run dev
 
 | 命令 | 说明 |
 |---|---|
-| `npm run dev` | 启动开发服务器 |
-| `npm run build` | 构建生产版本 |
-| `npm run generate` | 生成静态站点 |
-| `npm run preview` | 预览生产构建 |
+| `pnpm dev` | 启动开发服务器 |
+| `pnpm build` | 构建生产版本 |
+| `pnpm typecheck` | 运行 Nuxt / TypeScript 类型检查 |
+| `pnpm generate` | 生成静态站点 |
+| `pnpm preview` | 预览生产构建 |
 
-## 开发账户
+## 开发数据
 
-所有预置账户使用相同密码：`Devbit123`
-
-| 邮箱 | 用户名 | 管理员 |
-|---|---|---|
-| `clearders@devbit.tech` | Clearders | ✅ |
-| `epsilon@devbit.tech` | EpsilonHunter | ✅ |
-| `codemaster@example.com` | CodeMaster | ❌ |
-| `debugqueen@example.com` | DebugQueen | ❌ |
-| `pixelartist@example.com` | PixelArtist | ❌ |
-| `stack@example.com` | StackOverflow | ❌ |
+数据库迁移不会创建预置账户或共享密码。请通过注册流程创建本地账户；在 debug 开发环境中可不配置 SMTP，验证码会通过 `developmentCode` 返回。
 
 ## API 模式
 
-- **开发模式** (`npm run dev`)：Nuxt 将 `/api/**` 代理到 Rust 后端服务（默认 `http://127.0.0.1:7878`）
+- **开发模式** (`pnpm dev`)：Nuxt 将 HTTP `/api/**` 代理到 Rust 后端服务；WebSocket 直接连接同一后端（默认端口 `7878`），可用 `NUXT_PUBLIC_WS_URL` 覆盖
 - **生产模式**：Nginx 将 `/api/` 请求代理到 Rust 后端服务，前端仅负责页面渲染
 
 API 详细文档请参阅 [doc/API.md](doc/API.md)。

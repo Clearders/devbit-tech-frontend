@@ -199,7 +199,8 @@
 </template>
 
 <script setup lang="ts">
-import type { ForumCategory } from '~/composables/useForum'
+import type { ForumCategory } from '~~/shared/forum'
+import { FORUM_CATEGORIES } from '~~/shared/forum'
 import { useForum } from '~/composables/useForum'
 import ForumPostCard from '~/components/ForumPostCard.vue'
 import ForumAdminPanel from '~/components/ForumAdminPanel.vue'
@@ -215,7 +216,6 @@ const {
   posts,
   comments,
   users,
-  FORUM_CATEGORIES,
   getPostsByCategory,
   localSearchPosts,
   ensureInit,

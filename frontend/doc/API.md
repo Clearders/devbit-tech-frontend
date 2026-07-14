@@ -2,7 +2,7 @@
 
 最后更新：2026-06-05
 
-本项目的前端统一通过 `runtimeConfig.public.apiBase = '/api'` 调用后端 API。开发环境由 Nuxt route rules 将 `/api/**` 代理到 Rust 后端，生产环境由 Nginx 将 `/api/` 代理到同一个 Rust 服务。
+本项目的前端统一通过 `runtimeConfig.public.apiBase = '/api'` 调用 HTTP API。开发环境由 Nuxt route rules 将 `/api/**` 代理到 Rust 后端；开发 WebSocket 直接连接后端（可用 `NUXT_PUBLIC_WS_URL` 覆盖）。生产环境由 Nginx 代理 `/api/` 和 `/api/ws`。
 
 ---
 
@@ -30,16 +30,7 @@
 
 ## 开发账户
 
-所有预置账户使用相同的密码：`Devbit123`
-
-| 邮箱 | 用户名 | 管理员 |
-|---|---|---|
-| `clearders@devbit.tech` | Clearders | ✅ |
-| `epsilon@devbit.tech` | EpsilonHunter | ✅ |
-| `codemaster@example.com` | CodeMaster | ❌ |
-| `debugqueen@example.com` | DebugQueen | ❌ |
-| `pixelartist@example.com` | PixelArtist | ❌ |
-| `stack@example.com` | StackOverflow | ❌ |
+数据库迁移不创建预置账户。请通过注册接口创建本地账户，不要在文档或共享环境中使用固定密码。
 
 ## 验证码
 
@@ -154,8 +145,8 @@ interface AddFriendPayload {
 
 ```json
 {
-  "email": "clearders@devbit.tech",
-  "password": "Devbit123"
+  "email": "user@example.com",
+  "password": "your_password"
 }
 ```
 
@@ -166,9 +157,9 @@ interface AddFriendPayload {
   "token": "<jwt>",
   "user": {
     "id": 1,
-    "name": "Clearders",
-    "email": "clearders@devbit.tech",
-    "isAdmin": true
+    "name": "Example User",
+    "email": "user@example.com",
+    "isAdmin": false
   }
 }
 ```
@@ -187,9 +178,9 @@ interface AddFriendPayload {
 ```json
 {
   "id": 1,
-  "name": "Clearders",
-  "email": "clearders@devbit.tech",
-  "isAdmin": true
+  "name": "Example User",
+  "email": "user@example.com",
+  "isAdmin": false
 }
 ```
 
@@ -244,11 +235,11 @@ interface AddFriendPayload {
 注册新用户账户。需要从 `send_code` 获取的有效验证码。
 
 - **认证：** 无需
-- **状态码：** 成功返回 `200`，验证失败返回 `400`
+- **状态码：** 成功返回 `200`，输入无效返回 `400`，验证码错误返回 `401`
 
 **前端提交前验证规则：**
 - 密码至少 8 个字符，且必须同时包含字母和数字
-- `password` 和 `confirm_password` 必须一致
+- 前端确认密码必须与 `password` 一致；确认值仅用于界面校验，不发送给 API
 - 邮箱必须唯一
 
 **请求：**
@@ -257,8 +248,7 @@ interface AddFriendPayload {
 {
   "name": "New User",
   "email": "newuser@example.com",
-  "password": "Devbit123",
-  "confirm_password": "Devbit123",
+  "password": "your_password",
   "code": "123456"
 }
 ```

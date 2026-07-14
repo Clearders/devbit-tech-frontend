@@ -9,7 +9,7 @@
     @click="clickable && $emit('click')"
   >
     <img
-      v-if="avatarUrl"
+      v-if="avatarUrl && !imageFailed"
       :src="avatarUrl"
       :alt="`${name} 的头像`"
       class="avatar-image__img"
@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   avatarUrl?: string | null
   avatar: string
   name: string
@@ -35,13 +35,14 @@ defineEmits<{
   click: []
 }>()
 
-function onImageError(e: Event) {
-  const img = e.target as HTMLImageElement
-  img.style.display = 'none'
-  const fallback = img.nextElementSibling as HTMLElement | null
-  if (fallback) {
-    fallback.style.display = ''
-  }
+const imageFailed = ref(false)
+
+watch(() => props.avatarUrl, () => {
+  imageFailed.value = false
+})
+
+function onImageError() {
+  imageFailed.value = true
 }
 </script>
 

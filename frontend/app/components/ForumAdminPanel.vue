@@ -168,12 +168,13 @@
 </template>
 
 <script setup lang="ts">
-import type { ForumCategory } from '~/composables/useForum'
+import type { ForumCategory } from '~~/shared/forum'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
+import { getForumCategory } from '~/utils/forum'
 
-const { posts, comments, FORUM_CATEGORIES, users, deletePost, deleteComment, togglePinPost, toggleLockPost } = useForum()
+const { posts, comments, users, deletePost, deleteComment, togglePinPost, toggleLockPost } = useForum()
 
 const activeTab = ref<'posts' | 'comments' | 'users'>('posts')
 const actionError = ref('')
@@ -192,7 +193,7 @@ const allComments = computed(() =>
 )
 
 function getCategoryLabel(cat: ForumCategory) {
-  return FORUM_CATEGORIES.find(c => c.value === cat)?.label ?? cat
+  return getForumCategory(cat)?.label ?? cat
 }
 
 async function runAction(action: () => Promise<unknown>, fallback: string) {

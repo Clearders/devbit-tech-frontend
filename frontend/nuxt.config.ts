@@ -2,9 +2,17 @@ const apiProxyTarget = (
   process.env.NUXT_API_PROXY_TARGET ?? 'http://127.0.0.1:7878'
 ).replace(/\/$/, '')
 
+const apiProxyUrl = new URL(apiProxyTarget)
+apiProxyUrl.protocol = apiProxyUrl.protocol === 'https:' ? 'wss:' : 'ws:'
+apiProxyUrl.pathname = '/api/ws'
+apiProxyUrl.search = ''
+apiProxyUrl.hash = ''
+const developmentWsUrl = apiProxyUrl.toString()
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
+  telemetry: false,
 
   // Nuxt 4 defaults: enable directory-based auto-imports
   future: {
@@ -14,6 +22,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? '/api',
+      // Nitro's route-rule proxy is HTTP-only. In development the browser
+      // connects directly to Axum; production uses same-origin Nginx proxying.
+      wsUrl: process.env.NUXT_PUBLIC_WS_URL
+        ?? (process.env.NODE_ENV === 'production' ? '' : developmentWsUrl),
     },
   },
 
@@ -27,7 +39,7 @@ export default defineNuxtConfig({
         'cache-control': 'public, max-age=31536000, immutable',
       },
     },
-    // Icon & manifest assets: cache for 7 days (nginx also applies cache headers)
+    // Icon & manifest assets: cache for 7 days
     '/**/*.{ico,svg,png,webmanifest}': {
       headers: { 'cache-control': 'public, max-age=604800' },
     },
@@ -71,8 +83,8 @@ export default defineNuxtConfig({
         // Google Fonts: preconnect for faster font delivery
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
-        // Async font loading — non-blocking, falls back to system font
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap', media: 'print', onload: 'this.onload=null;this.media="all"' },
+        // A normal stylesheet link is compatible with the script-src CSP.
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap' },
         // PNG favicon (96x96)
         { rel: 'icon', type: 'image/png', sizes: '96x96', href: '/favicon-96x96.png?v=20260604' },
         // SVG favicon (dark mode fallback)
@@ -117,13 +129,6 @@ export default defineNuxtConfig({
     headNext: true,
   },
 
-  // Route prefetching: only prefetch links in viewport on idle
-  router: {
-    options: {
-      linkPrefetchedClass: 'nuxt-link-prefetched',
-    } as Record<string, unknown>,
-  },
-
   // Performance
   nitro: {
     compressPublicAssets: {
@@ -155,20 +160,6 @@ export default defineNuxtConfig({
       reportCompressedSize: false,
       // Inline small assets (< 4 KiB) to reduce HTTP requests
       assetsInlineLimit: 4096,
-      rollupOptions: {
-        output: {
-          // Manual chunk splitting for better caching
-          manualChunks(id: string) {
-            // Group vendor libs separately for better cache
-            if (id.includes('node_modules/markdown-it')) {
-              return 'vendor-markdown'
-            }
-            if (id.includes('node_modules')) {
-              return 'vendor'
-            }
-          },
-        },
-      },
     },
     css: {
       devSourcemap: true,

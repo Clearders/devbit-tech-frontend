@@ -198,7 +198,7 @@ async function handleSubmit() {
       email: form.email.trim(),
       password: form.password,
       code: form.code.trim(),
-      confirm_password: form.confirmPassword
+      confirmPassword: form.confirmPassword
     })
   } catch (err: unknown) {
     apiError.value = extractApiErrorMessage(err, 'Registration failed. Please try again.')

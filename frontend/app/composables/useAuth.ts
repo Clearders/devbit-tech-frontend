@@ -7,40 +7,76 @@ import type {
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'anonymous'
+type RegisterFormInput = RegisterPayload & { confirmPassword: string }
+
+// A Nuxt app is request-scoped during SSR and singleton-scoped in the browser.
+// Keeping the in-flight request here deduplicates callers without attempting to
+// serialize a Promise into the Nuxt payload.
+const pendingCurrentUserRequests = new WeakMap<object, Promise<AuthUser | null>>()
+
+const getHttpStatus = (error: unknown): number | undefined => {
+  if (!error || typeof error !== 'object') return undefined
+  const candidate = error as {
+    status?: number
+    statusCode?: number
+    response?: { status?: number }
+  }
+  return candidate.response?.status ?? candidate.statusCode ?? candidate.status
+}
 
 export const useAuth = () => {
+  const nuxtApp = useNuxtApp()
   const { apiFetch } = useApiFetch()
   const user = useState<AuthUser | null>('auth_user', () => null)
   const status = useState<AuthStatus>('auth_status', () => 'idle')
-  const pendingMe = useState<Promise<AuthUser | null> | null>('auth_me_pending', () => null)
   const isAuthenticated = computed(() => status.value === 'authenticated' && !!user.value)
   const isResolving = computed(() => status.value === 'idle' || status.value === 'loading')
 
   const syncCurrentUser = async (force = false) => {
-    if (!force && status.value === 'authenticated' && user.value) {
-      return user.value
+    if (!force) {
+      if (status.value === 'authenticated' && user.value) {
+        return user.value
+      }
+      if (status.value === 'anonymous') {
+        return null
+      }
     }
-    if (pendingMe.value) {
-      return pendingMe.value
+    const pendingRequest = pendingCurrentUserRequests.get(nuxtApp)
+    if (pendingRequest) {
+      return pendingRequest
     }
 
+    const previousUser = user.value
+    const previousStatus = status.value
     status.value = 'loading'
-    pendingMe.value = apiFetch<AuthUser | null>('/me')
+    const request = apiFetch<AuthUser | null>('/me')
       .then((me) => {
         user.value = me ?? null
         status.value = me ? 'authenticated' : 'anonymous'
         return me
       })
-      .catch(() => {
-        user.value = null
-        status.value = 'anonymous'
-        return null
-      })
-      .finally(() => {
-        pendingMe.value = null
+      .catch((error: unknown) => {
+        if (getHttpStatus(error) === 401) {
+          user.value = null
+          status.value = 'anonymous'
+          return null
+        }
+
+        user.value = previousUser
+        status.value = previousStatus === 'authenticated' && previousUser
+          ? 'authenticated'
+          : 'idle'
+        throw error
       })
 
-    return pendingMe.value
+    pendingCurrentUserRequests.set(nuxtApp, request)
+    const clearPendingRequest = () => {
+      if (pendingCurrentUserRequests.get(nuxtApp) === request) {
+        pendingCurrentUserRequests.delete(nuxtApp)
+      }
+    }
+    void request.then(clearPendingRequest, clearPendingRequest)
+    return request
   }
 
   // Note: initial auth check is handled by the auth plugin (plugins/auth.ts)
@@ -90,13 +126,19 @@ export const useAuth = () => {
     }
   }
 
-  const register = async (payload: { name: string; email: string; password: string; code: string; confirm_password?: string }) => {
-    const { confirm_password: _confirm, ...apiPayload } = payload
+  const register = async (payload: RegisterFormInput) => {
+    if (payload.password !== payload.confirmPassword) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Passwords do not match.'
+      })
+    }
+
     const normalizedPayload: RegisterPayload = {
-      name: apiPayload.name.trim(),
-      email: apiPayload.email.trim(),
-      password: apiPayload.password,
-      code: apiPayload.code.trim(),
+      name: payload.name.trim(),
+      email: payload.email.trim(),
+      password: payload.password,
+      code: payload.code.trim(),
     }
 
     try {

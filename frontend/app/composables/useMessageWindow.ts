@@ -281,9 +281,15 @@ export const useMessageWindow = () => {
     windowState.value = { ...state, x, y, width, height }
   }
 
-  if (import.meta.client) {
+  onMounted(() => {
     window.addEventListener('resize', onViewportResize)
-  }
+  })
+
+  onBeforeUnmount(() => {
+    window.removeEventListener('resize', onViewportResize)
+    onDragPointerUp()
+    onResizePointerUp()
+  })
 
   // ------------- DOCK ZONES (snap suggestions) -------------
   const dockZones = computed<{ position: DockPosition; label: string; icon: string }[]>(() => [

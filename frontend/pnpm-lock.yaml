@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@types/markdown-it':
-        specifier: ^14.1.2
-        version: 14.1.2
       katex:
         specifier: ^0.16.25
         version: 0.16.47
@@ -30,6 +27,9 @@ importers:
         specifier: ^5.0.4
         version: 5.1.0(@vue/compiler-sfc@3.5.39)(esbuild@0.28.1)(rollup@4.62.2)(vite@7.3.6(@types/node@25.9.5)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.0))(vue@3.5.39(typescript@6.0.2))
     devDependencies:
+      '@types/markdown-it':
+        specifier: ^14.1.2
+        version: 14.1.2
       '@types/node':
         specifier: ^25.6.0
         version: 25.9.5

@@ -37,9 +37,10 @@
 </template>
 
 <script setup lang="ts">
-import type { ForumComment } from '~/composables/useForum'
+import type { ForumComment } from '~~/shared/forum'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
+import { formatRelativeTime } from '~/utils/forum'
 
 const props = defineProps<{
   comment: ForumComment
@@ -51,7 +52,7 @@ defineEmits<{
 }>()
 
 const { user, isAuthenticated } = useAuth()
-const { formatRelativeTime, openMessagePanel } = useForum()
+const { openMessagePanel } = useForum()
 
 const time = computed(() => formatRelativeTime(props.comment.createdAt))
 </script>

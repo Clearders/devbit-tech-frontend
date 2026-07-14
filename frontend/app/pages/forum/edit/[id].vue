@@ -114,10 +114,11 @@
 </template>
 
 <script setup lang="ts">
-import type { ForumPost } from '~/composables/useForum'
-import { useForum, FORUM_CATEGORIES } from '~/composables/useForum'
+import type { ForumPost } from '~~/shared/forum'
+import { useForum } from '~/composables/useForum'
 import MarkdownEditor from '~/components/MarkdownEditor.vue'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
+import { getForumCategory } from '~/utils/forum'
 
 definePageMeta({
   middleware: ['auth'],
@@ -144,7 +145,7 @@ const editorRef = ref<InstanceType<typeof MarkdownEditor> | null>(null)
 
 const categoryLabel = computed(() => {
   if (!originalPost.value) return ''
-  const cat = FORUM_CATEGORIES.find(c => c.value === originalPost.value!.category)
+  const cat = getForumCategory(originalPost.value.category)
   return cat ? `${cat.icon} ${cat.label}` : originalPost.value.category
 })
 

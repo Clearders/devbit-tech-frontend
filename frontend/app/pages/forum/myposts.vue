@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ForumPost } from '~/composables/useForum'
+import type { ForumPost } from '~~/shared/forum'
 
 definePageMeta({
   middleware: ['auth'],

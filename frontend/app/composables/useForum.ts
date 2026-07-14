@@ -7,51 +7,37 @@ import type {
   ForumUser,
   FriendInfo
 } from '~~/shared/forum'
-import { FORUM_CATEGORIES } from '~~/shared/forum'
+import type { EffectScope } from 'vue'
 import { useForumApi } from './useForumApi'
 
-export type { ForumCategory, ForumComment, ForumMessage, ForumPost, ForumUser, FriendInfo }
-export { FORUM_CATEGORIES }
+// ---------- legacy localStorage cleanup ----------
+const MESSAGES_STORAGE_PREFIX = 'devbit_messages'
 
-// ---------- localStorage helpers for message persistence ----------
-const MESSAGES_STORAGE_KEY = 'devbit_messages'
-
-function loadMessagesFromStorage(): ForumMessage[] {
-  if (!import.meta.client) return []
-  try {
-    const raw = localStorage.getItem(MESSAGES_STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    if (Array.isArray(parsed)) return parsed as ForumMessage[]
-    return []
-  } catch {
-    return []
-  }
+interface ForumRuntime {
+  initPromise: Promise<void> | null
+  initUserId: number | null | undefined
+  bindingsReady: boolean
+  sessionGeneration: number
+  scope: EffectScope | null
 }
 
-function saveMessagesToStorage(messages: ForumMessage[]) {
-  if (!import.meta.client) return
-  try {
-    localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages))
-  } catch {
-    // storage full or unavailable — silently ignore
+// Nuxt apps are request-scoped during SSR and singleton-scoped in the browser.
+// Runtime-only coordination belongs here rather than in serializable useState.
+const forumRuntimes = new WeakMap<object, ForumRuntime>()
+
+function getForumRuntime(nuxtApp: object): ForumRuntime {
+  const existing = forumRuntimes.get(nuxtApp)
+  if (existing) return existing
+
+  const runtime: ForumRuntime = {
+    initPromise: null,
+    initUserId: undefined,
+    bindingsReady: false,
+    sessionGeneration: 0,
+    scope: null,
   }
-}
-
-function formatRelativeTime(dateStr: string): string {
-  const now = Date.now()
-  const date = new Date(dateStr).getTime()
-  const diff = now - date
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m ago`
-  if (hours < 24) return `${hours}h ago`
-  if (days < 7) return `${days}d ago`
-  if (days < 30) return `${Math.floor(days / 7)}w ago`
-  return new Date(dateStr).toLocaleDateString('en-US')
+  forumRuntimes.set(nuxtApp, runtime)
+  return runtime
 }
 
 function replacePost(posts: ForumPost[], post: ForumPost) {
@@ -74,73 +60,49 @@ function sortPosts(posts: ForumPost[]) {
 }
 
 export const useForum = () => {
-  const { user, isAuthenticated, syncCurrentUser } = useAuth()
+  const nuxtApp = useNuxtApp()
+  const runtime = getForumRuntime(nuxtApp)
+  const { user } = useAuth()
   const api = useForumApi()
 
   const posts = useState<ForumPost[]>('forum_posts', () => [])
   const comments = useState<ForumComment[]>('forum_comments', () => [])
-  // Initialize messages from localStorage first for instant display
-  const messages = useState<ForumMessage[]>('forum_messages', () => loadMessagesFromStorage())
+  const messages = useState<ForumMessage[]>('forum_messages', () => [])
   const users = useState<ForumUser[]>('forum_users', () => [])
   const friends = useState<FriendInfo[]>('forum_friends', () => [])
   const initialized = useState<boolean>('forum_initialized', () => false)
-  const initPromise = ref<Promise<void> | null>(null)
+  const initializedUserId = useState<number | null>('forum_initialized_user_id', () => null)
   const apiReachable = useState<boolean>('forum_api_reachable', () => true)
-  const refreshWatcherBound = useState<boolean>('forum_auth_refresh_watcher_bound', () => false)
-  const messagesPersistWatcherBound = useState<boolean>('forum_messages_persist_bound', () => false)
-  const authKey = computed(() => isAuthenticated.value ? `user:${user.value?.id ?? 'pending'}` : 'anonymous')
+  const authenticatedUserId = computed(() => user.value?.id ?? null)
 
   // Global ui state for message panel
   const isMessagePanelOpen = useState<boolean>('forum_msg_panel_open', () => false)
   const activeMessagePartner = useState<number | null>('forum_msg_active_partner', () => null)
   const messagePanelTab = useState<'messages' | 'friends' | 'addFriend'>('forum_msg_panel_tab', () => 'messages')
 
-  // Persist messages to localStorage whenever they change (client only)
-  if (import.meta.client && !messagesPersistWatcherBound.value) {
-    messagesPersistWatcherBound.value = true
-    watch(messages, (newMessages) => {
-      saveMessagesToStorage(newMessages)
-    }, { deep: true })
+  const switchMessageAccount = (preserveCurrent = false) => {
+    runtime.sessionGeneration += 1
+    const currentMessages = preserveCurrent ? messages.value : []
+    const currentFriends = preserveCurrent ? friends.value : []
+
+    messages.value = currentMessages
+    friends.value = currentFriends
+    isMessagePanelOpen.value = false
+    activeMessagePartner.value = null
+    messagePanelTab.value = 'messages'
+
   }
+
+  const captureSession = () => ({
+    userId: authenticatedUserId.value,
+    generation: runtime.sessionGeneration,
+  })
+
+  const isCurrentSession = (session: ReturnType<typeof captureSession>) =>
+    session.userId === authenticatedUserId.value
+    && session.generation === runtime.sessionGeneration
 
   // ── WebSocket real-time message integration ───────────────────────────────
-  const wsBound = useState<boolean>('forum_ws_bound', () => false)
-  if (import.meta.client && !wsBound.value) {
-    wsBound.value = true
-    const { on: wsOn, status: wsStatus } = useWebSocket()
-
-    // Listen for new private messages pushed via WebSocket
-    wsOn('new_message', (payload: Record<string, unknown>) => {
-      const msg = payload as unknown as {
-        message_id: number
-        sender_id: number
-        sender_name: string
-        content_preview: string
-      }
-
-      // Dedup: skip if we already have this message
-      if (messages.value.some(m => m.id === msg.message_id)) return
-
-      // Fetch the full message from API to get complete data
-      api.fetchBootstrap().then((bootstrap) => {
-        // Replace messages with server state (includes the new message)
-        messages.value = bootstrap.messages
-        saveMessagesToStorage(bootstrap.messages)
-      }).catch(() => {
-        // Fallback: just append a partial message entry
-        // The next bootstrap fetch will fill in details
-      })
-    })
-
-    // Listen for user online/offline events to update UI
-    wsOn('user_online', (_payload: Record<string, unknown>) => {
-      // Online status is tracked by useWebSocket composable
-    })
-    wsOn('user_offline', (_payload: Record<string, unknown>) => {
-      // Online status is tracked by useWebSocket composable
-    })
-  }
-
   const openMessagePanel = (partnerId?: number) => {
     isMessagePanelOpen.value = true
     if (partnerId) {
@@ -149,54 +111,102 @@ export const useForum = () => {
     }
   }
 
-  const ensureInit = async (force = false) => {
-    if (force) {
-      initialized.value = false
-      initPromise.value = null
+  const ensureInit = (force = false): Promise<void> => {
+    const requestedUserId = authenticatedUserId.value
+    const activeRequest = runtime.initPromise
+
+    if (activeRequest) {
+      if (runtime.initUserId === requestedUserId) return activeRequest
+      return activeRequest.catch(() => undefined).then(() => ensureInit(true))
     }
-    if (initialized.value && !force) {
-      return
-    }
-    if (initPromise.value) {
-      return initPromise.value
+    if (initialized.value && initializedUserId.value === requestedUserId && !force) {
+      return Promise.resolve()
     }
 
-    initPromise.value = (async () => {
-      if (isAuthenticated.value && !user.value) {
-        await syncCurrentUser()
-      }
+    if (force || initializedUserId.value !== requestedUserId) initialized.value = false
+    runtime.initUserId = requestedUserId
+    const requestGeneration = runtime.sessionGeneration
+
+    const request = (async () => {
       const bootstrap = await api.fetchBootstrap()
+
+      let fetchedFriends: FriendInfo[] | null = null
+      try {
+        fetchedFriends = await api.fetchFriends()
+      } catch {
+        // The friends list is non-critical and may be unavailable anonymously.
+      }
+
+      // Bootstrap posts contain viewer-specific fields such as likedByMe, so
+      // no part of a response may cross an account/session boundary.
+      if (
+        authenticatedUserId.value !== requestedUserId
+        || runtime.sessionGeneration !== requestGeneration
+      ) return
+
       users.value = bootstrap.users
       posts.value = sortPosts(bootstrap.posts)
       comments.value = bootstrap.comments
-      // Merge API messages with locally persisted ones (API wins for same id)
       messages.value = bootstrap.messages
-      apiReachable.value = true
-      // Fetch friends
-      try {
-        friends.value = await api.fetchFriends()
-      } catch {
-        // friends list non-critical
-      }
+      if (fetchedFriends) friends.value = fetchedFriends
+      initializedUserId.value = requestedUserId
       initialized.value = true
-    })()
-      .catch((error) => {
-        apiReachable.value = false
-        throw error
-      })
-      .finally(() => {
-        initPromise.value = null
-      })
+      apiReachable.value = true
+    })().catch((error) => {
+      apiReachable.value = false
+      throw error
+    })
 
-    return initPromise.value
+    runtime.initPromise = request
+    const clearRequest = () => {
+      if (runtime.initPromise === request) {
+        runtime.initPromise = null
+        runtime.initUserId = undefined
+      }
+    }
+    void request.then(clearRequest, clearRequest)
+    return request
   }
 
-  if (import.meta.client && !refreshWatcherBound.value) {
-    refreshWatcherBound.value = true
-    watch(authKey, (_next, previous) => {
-      if (previous === undefined) return
-      void ensureInit(true).catch(() => {
-        apiReachable.value = false
+  if (import.meta.client && !runtime.bindingsReady) {
+    runtime.bindingsReady = true
+    runtime.scope = effectScope(true)
+    runtime.scope.run(() => {
+      // Private messages are server-owned. Remove caches written by older
+      // versions instead of treating predictable localStorage keys as isolation.
+      try {
+        for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+          const key = localStorage.key(index)
+          if (key === MESSAGES_STORAGE_PREFIX || key?.startsWith(`${MESSAGES_STORAGE_PREFIX}:`)) {
+            localStorage.removeItem(key)
+          }
+        }
+      } catch {
+        // Storage may be disabled by browser privacy settings.
+      }
+      const preserveHydratedState = initialized.value
+        && initializedUserId.value === authenticatedUserId.value
+      switchMessageAccount(preserveHydratedState)
+
+      const { on: wsOn } = useWebSocket()
+      wsOn('new_message', (message) => {
+        if (messages.value.some(item => item.id === message.message_id)) return
+
+        const receivingUserId = authenticatedUserId.value
+        void api.fetchBootstrap().then((bootstrap) => {
+          if (authenticatedUserId.value === receivingUserId) {
+            messages.value = bootstrap.messages
+          }
+        }).catch(() => {
+          // A later bootstrap will reconcile the message list.
+        })
+      })
+
+      watch(authenticatedUserId, () => {
+        switchMessageAccount()
+        void ensureInit(true).catch(() => {
+          apiReachable.value = false
+        })
       })
     })
   }
@@ -206,7 +216,14 @@ export const useForum = () => {
   }
 
   const loadPost = async (postId: number) => {
+    const session = captureSession()
     const post = await api.fetchPost(postId)
+    if (!isCurrentSession(session)) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Authentication changed while loading the post.'
+      })
+    }
     posts.value = sortPosts(replacePost(posts.value, post))
     return post
   }
@@ -286,7 +303,9 @@ export const useForum = () => {
   }
 
   const createPost = async (data: CreatePostPayload) => {
+    const session = captureSession()
     const post = await api.createPost(data)
+    if (!isCurrentSession(session)) return post
     posts.value = sortPosts([post, ...posts.value.filter((item) => item.id !== post.id)])
     if (!users.value.some((entry) => entry.id === post.author.id)) {
       await refreshUsers()
@@ -295,7 +314,9 @@ export const useForum = () => {
   }
 
   const addComment = async (postId: number, content: string) => {
+    const session = captureSession()
     const comment = await api.createComment(postId, content)
+    if (!isCurrentSession(session)) return comment
     comments.value = [...comments.value, comment]
     const post = posts.value.find((entry) => entry.id === postId)
     if (post) {
@@ -305,17 +326,24 @@ export const useForum = () => {
   }
 
   const deletePost = async (postId: number) => {
+    const session = captureSession()
     await api.deletePost(postId)
+    if (!isCurrentSession(session)) return
     posts.value = posts.value.filter((post) => post.id !== postId)
     comments.value = comments.value.filter((comment) => comment.postId !== postId)
   }
 
   const fetchMyPosts = async () => {
-    return api.fetchMyPosts()
+    const session = captureSession()
+    const ownPosts = await api.fetchMyPosts()
+    if (!isCurrentSession(session)) return []
+    return ownPosts
   }
 
   const modifyPost = async (postId: number, content: string) => {
+    const session = captureSession()
     await api.modifyPost(postId, content)
+    if (!isCurrentSession(session)) return
     // Update local post state
     const post = posts.value.find((p) => p.id === postId)
     if (post) {
@@ -325,7 +353,9 @@ export const useForum = () => {
   }
 
   const deleteComment = async (commentId: number) => {
+    const session = captureSession()
     await api.deleteComment(commentId)
+    if (!isCurrentSession(session)) return
     const comment = comments.value.find((item) => item.id === commentId)
     comments.value = comments.value.filter((item) => item.id !== commentId)
     if (comment) {
@@ -341,25 +371,41 @@ export const useForum = () => {
   }
 
   const togglePinPost = async (postId: number) => {
-    updatePost(await api.togglePin(postId))
+    const session = captureSession()
+    const updated = await api.togglePin(postId)
+    if (!isCurrentSession(session)) return
+    const current = posts.value.find((post) => post.id === postId)
+    if (current) {
+      current.isPinned = updated.isPinned
+      posts.value = sortPosts(posts.value)
+    }
   }
 
   const toggleLockPost = async (postId: number) => {
-    updatePost(await api.toggleLock(postId))
+    const session = captureSession()
+    const updated = await api.toggleLock(postId)
+    if (!isCurrentSession(session)) return
+    const current = posts.value.find((post) => post.id === postId)
+    if (current) current.isLocked = updated.isLocked
   }
 
   const toggleLikePost = async (postId: number) => {
-    updatePost(await api.toggleLike(postId))
+    const session = captureSession()
+    const updated = await api.toggleLike(postId)
+    if (isCurrentSession(session)) updatePost(updated)
   }
 
   const sendMessage = async (recipientId: number, content: string) => {
+    const session = captureSession()
     const message = await api.sendMessage({ recipientId, content })
-    messages.value = [...messages.value, message]
+    if (isCurrentSession(session)) messages.value = [...messages.value, message]
     return message
   }
 
   const markAsRead = async (messageId: number) => {
+    const session = captureSession()
     await api.markMessageRead(messageId)
+    if (!isCurrentSession(session)) return
     const message = messages.value.find((item) => item.id === messageId)
     if (message) {
       message.isRead = true
@@ -367,8 +413,10 @@ export const useForum = () => {
   }
 
   const markConversationAsRead = async (partnerId: number) => {
+    const session = captureSession()
     await api.markConversationRead(partnerId)
-    const currentUserId = user.value?.id ?? 0
+    if (!isCurrentSession(session)) return
+    const currentUserId = session.userId ?? 0
     messages.value.forEach((message) => {
       if (message.sender.id === partnerId && message.recipient.id === currentUserId) {
         message.isRead = true
@@ -383,16 +431,20 @@ export const useForum = () => {
   const isFriend = (userId: number) => friends.value.some((f) => f.user.id === userId)
 
   const addFriend = async (friendId: number) => {
+    const session = captureSession()
     const info = await api.addFriend({ friendId })
-    if (!friends.value.some((f) => f.user.id === friendId)) {
+    if (isCurrentSession(session) && !friends.value.some((f) => f.user.id === friendId)) {
       friends.value = [...friends.value, info]
     }
     return info
   }
 
   const removeFriend = async (friendId: number) => {
+    const session = captureSession()
     await api.removeFriend(friendId)
-    friends.value = friends.value.filter((f) => f.user.id !== friendId)
+    if (isCurrentSession(session)) {
+      friends.value = friends.value.filter((f) => f.user.id !== friendId)
+    }
   }
 
   const searchUsers = async (query: string) => {
@@ -427,8 +479,6 @@ export const useForum = () => {
     comments,
     messages,
     users,
-    FORUM_CATEGORIES,
-    formatRelativeTime,
     apiReachable,
     ensureInit,
     loadPost,

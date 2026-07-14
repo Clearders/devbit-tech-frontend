@@ -397,15 +397,15 @@
 </template>
 
 <script setup lang="ts">
-import type { ForumMessage, ForumUser } from '~/composables/useForum'
+import type { ForumMessage, ForumUser } from '~~/shared/forum'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
+import { formatRelativeTime } from '~/utils/forum'
 import { useMessageWindow } from '~/composables/useMessageWindow'
 import { EMOJI_CATEGORIES, searchEmoji } from '~/utils/emojiData'
 
 const { user, isAuthenticated } = useAuth()
 const {
-  formatRelativeTime,
   getConversations,
   getUnreadMessageCount,
   sendMessage,
@@ -419,6 +419,7 @@ const {
   addFriend,
   removeFriend,
   searchUsers,
+  ensureInit,
 } = useForum()
 
 const {
@@ -551,8 +552,10 @@ const toggleStyle = computed(() => {
 watch(isMessagePanelOpen, (open) => {
   if (open && !isWindowOpen.value) {
     openWindow()
+  } else if (!open && isWindowOpen.value) {
+    closeWindow()
   }
-})
+}, { immediate: true })
 
 watch(activeMessagePartner, (partnerId) => {
   if (partnerId && messagePanelTab.value !== 'messages') {
@@ -582,10 +585,15 @@ function onDocumentClick(e: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('click', onDocumentClick)
+  window.addEventListener('resize', onViewportResize)
+  void ensureInit().catch(() => {
+    // Other forum views surface API errors; the floating panel stays optional.
+  })
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', onDocumentClick)
+  window.removeEventListener('resize', onViewportResize)
   document.removeEventListener('pointermove', onTogglePointerMove)
   document.removeEventListener('pointerup', onTogglePointerUp)
 })
@@ -863,15 +871,13 @@ watch(activeMessages, () => {
 }, { deep: true })
 
 // Viewport resize handling
-if (import.meta.client) {
-  window.addEventListener('resize', () => {
-    if (togglePos.value.x === 0 && togglePos.value.y === 0) return
-    const btnWidth = toggleBtnRef.value?.offsetWidth ?? 52
-    const btnHeight = toggleBtnRef.value?.offsetHeight ?? 52
-    togglePos.value = {
-      x: Math.min(togglePos.value.x, window.innerWidth - btnWidth),
-      y: Math.min(togglePos.value.y, window.innerHeight - btnHeight),
-    }
-  })
+function onViewportResize() {
+  if (togglePos.value.x === 0 && togglePos.value.y === 0) return
+  const btnWidth = toggleBtnRef.value?.offsetWidth ?? 52
+  const btnHeight = toggleBtnRef.value?.offsetHeight ?? 52
+  togglePos.value = {
+    x: Math.min(togglePos.value.x, window.innerWidth - btnWidth),
+    y: Math.min(togglePos.value.y, window.innerHeight - btnHeight),
+  }
 }
 </script>

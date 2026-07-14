@@ -45,28 +45,20 @@
 </template>
 
 <script setup lang="ts">
-import type { ForumPost } from '~/composables/useForum'
+import type { ForumPost } from '~~/shared/forum'
 import AvatarImage from '~/components/AvatarImage.vue'
-import { useForum } from '~/composables/useForum'
+import { formatCount, formatRelativeTime, getForumCategory } from '~/utils/forum'
 import { stripMarkdown } from '~/utils/stripMarkdown'
 
 const props = defineProps<{
   post: ForumPost
 }>()
 
-const { FORUM_CATEGORIES, formatRelativeTime } = useForum()
-
 const categoryInfo = computed(() =>
-  FORUM_CATEGORIES.find(c => c.value === props.post.category)
+  getForumCategory(props.post.category)
 )
 
 const excerpt = computed(() => stripMarkdown(props.post.content))
 
 const time = computed(() => formatRelativeTime(props.post.createdAt))
-
-function formatCount(n: number): string {
-  if (n >= 10000) return (n / 10000).toFixed(1) + 'w'
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
-  return String(n)
-}
 </script>
