@@ -49,7 +49,7 @@ export default defineNuxtConfig({
         // Content-Security-Policy: wasm-unsafe-eval required for Bevy WASM games
         'content-security-policy':
           "default-src 'self'; " +
-          "script-src 'self' 'wasm-unsafe-eval'; " +
+          "script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; " +
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
           "font-src 'self' https://fonts.gstatic.com; " +
           "img-src 'self' data: blob:; " +
