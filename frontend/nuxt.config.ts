@@ -51,7 +51,7 @@ export default defineNuxtConfig({
           "default-src 'self'; " +
           "script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; " +
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-          "font-src 'self' https://fonts.gstatic.com; " +
+          "font-src 'self' data: https://fonts.gstatic.com; " +
           "img-src 'self' data: blob:; " +
           "connect-src 'self' ws: wss:; " +
           "media-src 'self'; " +
@@ -140,8 +140,10 @@ export default defineNuxtConfig({
     },
     minify: true,
     prerender: {
-      crawlLinks: true,
-      routes: ['/'],
+      // Session-aware pages need request-time cookies and runtime config.
+      // Crawling from / cached anonymous HTML and build-time WebSocket URLs.
+      crawlLinks: false,
+      routes: [],
     },
   },
 

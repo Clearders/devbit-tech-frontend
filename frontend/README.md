@@ -14,6 +14,13 @@
 - **SEO 优化**：`useSeoMeta` + Open Graph + 结构化 Meta 标签
 - **安全区域适配**：支持 iPhone 刘海屏 / Dynamic Island (`safe-area-inset-*`)
 
+## 生产运行
+
+生产环境使用 `pnpm build` 和 `node .output/server/index.mjs` 运行 SSR 服务。
+页面依赖会话 Cookie 与运行时配置，不在构建时爬取预渲染。
+通过 Nginx 部署时代理 `/api/ws`；直接启动本地生产预览时，可设置
+`NUXT_PUBLIC_WS_URL=ws://127.0.0.1:7878/api/ws` 连接本地后端。
+
 ## 项目结构
 
 ```
