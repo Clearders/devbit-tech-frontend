@@ -4,6 +4,7 @@
   "private": true,
   "packageManager": "pnpm@10.15.1",
   "scripts": {
+    "test": "node --test tests/*.test.mjs",
     "build": "nuxt build",
     "build:fast": "nuxt build --no-color",
     "build:analyze": "nuxt build --analyze",

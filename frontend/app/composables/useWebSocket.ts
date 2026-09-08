@@ -91,6 +91,8 @@ const useWebSocketState = () => {
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
   let reconnectAttempts = 0
   let shouldConnect = false
+  let lastMessageAt = 0
+  const heartbeatTimeout = 60000
   const maxReconnectDelay = 30000 // 30s max
   const handlers = new Map<WsEventType, Set<AnyMessageHandler>>()
 
@@ -126,9 +128,20 @@ const useWebSocketState = () => {
 
   function startHeartbeat() {
     stopHeartbeat()
-    // Send ping every 25 seconds (server timeout is 30s)
+    // The server allows 90s without a heartbeat. Detect silent network loss
+    // locally too: an OPEN socket does not guarantee the peer is reachable.
     heartbeatTimer = setInterval(() => {
       if (socket?.readyState === WebSocket.OPEN) {
+        if (Date.now() - lastMessageAt >= heartbeatTimeout) {
+          const staleSocket = socket
+          socket = null
+          stopHeartbeat()
+          onlineUsers.value = new Set()
+          staleSocket.close(4000, 'Heartbeat timeout')
+          // Do not wait for the close handshake on an unreachable network.
+          scheduleReconnect()
+          return
+        }
         socket.send(JSON.stringify({ type: 'ping' }))
       }
     }, 25000)
@@ -174,6 +187,7 @@ const useWebSocketState = () => {
 
     currentSocket.onopen = () => {
       if (socket !== currentSocket || !shouldConnect) return
+      lastMessageAt = Date.now()
       startHeartbeat()
     }
 
@@ -182,6 +196,7 @@ const useWebSocketState = () => {
       try {
         const parsed: unknown = JSON.parse(event.data)
         if (!isWsServerMessage(parsed)) return
+        lastMessageAt = Date.now()
         const msg = parsed
 
         switch (msg.type) {
