@@ -500,7 +500,8 @@ const windowTitle = computed(() => {
 
 const activePartnerName = computed(() => {
   const conv = conversations.value.find(c => c.partner.id === activeMessagePartner.value)
-  return conv?.partner.name ?? ''
+  const friend = friendsList.value.find(item => item.user.id === activeMessagePartner.value)
+  return conv?.partner.name ?? friend?.user.name ?? ''
 })
 
 const activeMessages = computed(() => {
