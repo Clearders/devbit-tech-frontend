@@ -4,24 +4,22 @@ import { test } from 'node:test'
 import { runInNewContext } from 'node:vm'
 import ts from 'typescript'
 
-const loaderSource = readFileSync(new URL('../app/components/StartupLoader.vue', import.meta.url), 'utf8')
-const script = loaderSource.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
-const compiled = ts.transpileModule(script, {
-  compilerOptions: { target: ts.ScriptTarget.ES2022 },
-}).outputText
-const pluginSource = readFileSync(new URL('../app/plugins/00.startup-loading.client.ts', import.meta.url), 'utf8')
-const compiledPlugin = ts.transpileModule(pluginSource, {
+const compile = path => ts.transpileModule(readFileSync(new URL(path, import.meta.url), 'utf8'), {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 }).outputText
+const compiled = compile('../app/utils/startupLoading.ts')
+const compiledPlugin = compile('../app/plugins/00.startup-loading.client.ts')
 
-function setup({ game = false, inert = false, reducedMotion = false } = {}) {
+function setup({ game = false, inert = false, reducedMotion = false, parse = true } = {}) {
   let now = 0
   let nextId = 0
+  let parsed = false
   const timers = new Map()
   const attributes = new Map()
   const styles = new Map()
   const trackAttributes = new Map()
   const events = new Map()
+  const documentEvents = new Map()
   const content = { inert }
   const root = {
     classList: { contains: name => game && name === 'is-game' },
@@ -50,25 +48,30 @@ function setup({ game = false, inert = false, reducedMotion = false } = {}) {
   const hooks = new Map()
   let plugin
   runInNewContext(compiledPlugin, {
-    exports: {},
-    window,
-    defineNuxtPlugin: definition => { plugin = definition },
+    exports: {}, window, defineNuxtPlugin: definition => { plugin = definition },
   })
-  runInNewContext(compiled, {
-    document: { documentElement: root, querySelector: selector => selector === '.startup-loader__track' ? track : content },
-    window,
-    onPrehydrate: callback => callback(),
-  })
-  plugin.setup({ hook: (name, callback) => hooks.set(name, callback) })
+  const exports = {}
+  const context = {
+    exports, window, performance: { now: () => now },
+    document: {
+      documentElement: root,
+      querySelector: selector => parsed ? selector === '.startup-loader__track' ? track : content : null,
+      addEventListener: (name, callback) => documentEvents.set(name, callback),
+      removeEventListener: name => documentEvents.delete(name),
+    },
+  }
+  runInNewContext(compiled, context)
+  exports.initializeStartupLoading(window, context.document, context.performance)
+  const parseBody = () => {
+    parsed = true
+    window.__devbitStartupLoading?.start()
+    documentEvents.get('DOMContentLoaded')?.()
+    plugin.setup({ hook: (name, callback) => hooks.set(name, callback) })
+  }
+  if (parse) parseBody()
 
   return {
-    plugin,
-    hooks,
-    window,
-    timers,
-    events,
-    content,
-    get visible() { return attributes.get('data-devbit-startup') === 'loading' },
+    plugin, hooks, window, timers, events, documentEvents, content, parseBody,
     get phase() { return attributes.get('data-devbit-startup') },
     get progress() { return trackAttributes.get('aria-valuenow') },
     get stage() { return attributes.get('data-devbit-startup-stage') },
@@ -91,189 +94,190 @@ function setup({ game = false, inert = false, reducedMotion = false } = {}) {
   }
 }
 
-test('fast hydration cancels the splash before the 200ms threshold', () => {
-  const app = setup()
-  app.advance(199)
-  assert.equal(app.visible, false)
-  assert.equal(app.content.inert, false)
-  app.ready()
-  app.advance(10_000)
-  assert.equal(app.visible, false)
-  assert.equal(app.timers.size, 0)
-  assert.equal(app.events.size, 0)
-})
-
-test('slow startup starts its exit as soon as hydration resolves and restores interaction after the curtain exit', () => {
-  const app = setup()
-  app.advance(200)
-  assert.equal(app.visible, true)
-  assert.equal(app.content.inert, true)
-  app.ready()
-  assert.equal(app.visible, false)
-  assert.equal(app.phase, 'leaving')
-  assert.equal(app.content.inert, true)
-  app.advance(419)
-  assert.equal(app.phase, 'leaving')
-  app.advance(1)
+function assertReleased(app, inert = false) {
   assert.equal(app.phase, undefined)
-  assert.equal(app.content.inert, false)
-  assert.equal(app.timers.size, 0)
-})
-
-test('blocked application scripts cannot leave the splash active beyond 10 seconds', () => {
-  const app = setup()
-  app.advance(9_999)
-  assert.equal(app.visible, true)
-  app.advance(1)
-  assert.equal(app.visible, false)
-  assert.equal(app.content.inert, false)
+  assert.equal(app.content.inert, inert)
   assert.equal(app.timers.size, 0)
   assert.equal(app.events.size, 0)
-  app.advance(10_000)
-  assert.equal(app.visible, false)
-})
-
-for (const event of ['app:error', 'vue:error', 'error', 'unhandledrejection']) {
-  test(`${event} dismisses startup and cancels outstanding timers`, () => {
-    const app = setup()
-    app.advance(200)
-    ;(app.hooks.get(event) ?? app.events.get(event))()
-    assert.equal(app.visible, false)
-    assert.equal(app.timers.size, 0)
-    app.advance(10_000)
-    assert.equal(app.visible, false)
-  })
+  assert.equal(app.documentEvents.size, 0)
+  assert.equal(app.fill, undefined)
 }
 
-test('initialization errors before 200ms prevent a later splash flash', () => {
-  const app = setup()
-  app.hooks.get('app:error')()
-  app.advance(200)
-  assert.equal(app.visible, false)
-})
-
-test('completion is idempotent when readiness and errors both arrive', () => {
-  const app = setup()
-  app.advance(200)
+test('head takes ownership before body parsing or application initialization', () => {
+  const app = setup({ parse: false })
+  assert.equal(app.phase, 'loading')
+  app.advance(1500)
+  app.parseBody()
   app.ready()
-  app.hooks.get('app:error')()
-  app.window.__devbitStartupLoading.finish()
-  assert.equal(app.visible, false)
-  assert.equal(app.phase, undefined)
-  assert.equal(app.timers.size, 0)
+  app.advance(1199)
+  assert.equal(app.phase, 'loading', 'head download time must not consume the visible splash')
+  app.advance(1)
+  assert.equal(app.phase, 'leaving')
+  app.advance(1120)
+  assertReleased(app)
 })
 
-test('game startup does not register splash timers or browser handlers', () => {
+test('fast hydration keeps a 1200ms splash and 1120ms coordinated transition', () => {
+  const app = setup()
+  assert.equal(app.phase, 'loading')
+  assert.equal(app.content.inert, true)
+  app.advance(10)
+  app.ready()
+  assert.equal(app.progress, '100')
+  app.advance(1189)
+  assert.equal(app.phase, 'loading')
+  app.advance(1)
+  assert.equal(app.phase, 'leaving')
+  assert.equal(app.content.inert, true)
+  app.advance(1119)
+  assert.equal(app.phase, 'leaving')
+  app.advance(1)
+  assertReleased(app)
+})
+
+test('slow startup waits only for the 200ms completion stroke, without another full splash', () => {
+  const app = setup()
+  app.advance(3000)
+  assert.equal(app.progress, '25')
+  app.ready()
+  app.advance(199)
+  assert.equal(app.phase, 'loading')
+  app.advance(1)
+  assert.equal(app.phase, 'leaving')
+  app.advance(1120)
+  assertReleased(app)
+})
+
+test('deferred bundle initialization cannot reset the body-close splash clock', () => {
+  const app = setup()
+  app.advance(2500)
+  app.window.__devbitStartupLoading.start()
+  app.ready()
+  app.advance(200)
+  assert.equal(app.phase, 'leaving')
+  app.advance(1120)
+  assertReleased(app)
+})
+
+test('readiness near the end of splash still lets the 100% stroke settle', () => {
+  const app = setup()
+  app.advance(1150)
+  app.ready()
+  app.advance(199)
+  assert.equal(app.phase, 'loading')
+  app.advance(1)
+  assert.equal(app.phase, 'leaving')
+})
+
+test('missing bundles and even an unparsed body cannot trap the first-paint gate', () => {
+  for (const parse of [true, false]) {
+    const app = setup({ parse })
+    app.advance(9999)
+    assert.equal(app.phase, 'loading')
+    app.advance(1)
+    assertReleased(app)
+    app.parseBody()
+    app.ready()
+    assertReleased(app)
+  }
+})
+
+for (const event of ['app:error', 'vue:error', 'error', 'unhandledrejection', 'pagehide']) {
+  for (const phase of ['splash', 'pending', 'leaving']) {
+    test(`${event} releases immediately during ${phase} and cancels all callbacks`, () => {
+      const app = setup()
+      if (phase !== 'splash') app.ready()
+      if (phase === 'leaving') app.advance(1200)
+      ;(app.hooks.get(event) ?? app.events.get(event))()
+      assertReleased(app)
+      app.advance(10_000)
+      assertReleased(app)
+    })
+  }
+}
+
+test('duplicate readiness cannot restart or extend either phase', () => {
+  const app = setup()
+  app.ready()
+  app.advance(1000)
+  app.ready()
+  app.advance(200)
+  assert.equal(app.phase, 'leaving')
+  app.ready()
+  app.advance(1120)
+  assertReleased(app)
+  app.ready()
+  assertReleased(app)
+})
+
+test('game startup has no gate, timers or browser handlers', () => {
   const app = setup({ game: true })
-  app.advance(10_000)
-  assert.equal(app.visible, false)
-  assert.equal(app.timers.size, 0)
-  assert.equal(app.events.size, 0)
+  assertReleased(app)
   assert.equal(app.window.__devbitStartupLoading, undefined)
   assert.doesNotThrow(() => app.ready())
 })
 
-test('readiness hooks run in an early plugin and wait for mounting and hydration', () => {
-  const app = setup()
-  assert.equal(app.plugin.enforce, 'pre')
-  assert.equal(app.hooks.has('app:suspense:resolve'), true)
-  assert.equal(app.hooks.has('app:mounted'), true)
-})
-
 test('dismissal preserves content that was already inert before startup', () => {
   const app = setup({ inert: true })
-  app.advance(200)
   app.ready()
-  app.advance(420)
-  assert.equal(app.content.inert, true)
+  app.advance(2320)
+  assertReleased(app, true)
 })
 
-test('reduced motion dismisses immediately without a page transition', () => {
+test('reduced motion uses a brief stable splash with no moving transition', () => {
   const app = setup({ reducedMotion: true })
-  app.advance(200)
   app.ready()
-  assert.equal(app.phase, undefined)
-  assert.equal(app.content.inert, false)
-  assert.equal(app.timers.size, 0)
+  app.advance(399)
+  assert.equal(app.phase, 'loading')
+  app.advance(1)
+  assertReleased(app)
 })
 
-test('readiness during the entrance does not enforce a minimum display time', () => {
-  const app = setup()
-  app.advance(210)
-  app.ready()
-  assert.equal(app.phase, 'leaving')
-  app.advance(420)
-  assert.equal(app.phase, undefined)
-  assert.equal(app.content.inert, false)
-})
-
-test('repeated readiness signals preserve a single exit timer', () => {
-  const app = setup()
-  app.advance(200)
-  app.ready()
-  app.ready()
-  assert.equal(app.timers.size, 1)
-  app.advance(420)
-  assert.equal(app.phase, undefined)
-  assert.equal(app.timers.size, 0)
-})
-
-test('real startup milestones advance the bar without time-based progress', () => {
+test('real milestones advance monotonically regardless of the animation clock', () => {
   const app = setup()
   assert.equal(app.progress, '25')
-  assert.equal(app.fill, '0.25')
-  app.advance(2_000)
+  app.advance(2000)
   assert.equal(app.progress, '25')
   app.hooks.get('app:created')()
   assert.equal(app.progress, '65')
   assert.equal(app.fill, '0.65')
-  app.advance(2_000)
-  assert.equal(app.progress, '65')
-  app.ready()
-  assert.equal(app.progress, '100')
-  assert.equal(app.fill, '1')
-  assert.equal(app.phase, 'leaving')
-  app.advance(420)
-  assert.equal(app.stage, undefined)
-  assert.equal(app.fill, undefined)
-})
-
-test('duplicate, invalid and out-of-order milestones cannot move the bar backwards or complete it', () => {
-  const app = setup()
-  app.window.__devbitStartupLoading.setProgress(65)
   for (const value of [25, 65, 100, 0, NaN, Infinity]) {
     app.window.__devbitStartupLoading.setProgress(value)
     assert.equal(app.progress, '65')
   }
-  assert.equal(app.phase, undefined)
+  app.advance(2000)
+  assert.equal(app.progress, '65')
+  app.ready()
+  assert.equal(app.progress, '100')
+  assert.equal(app.fill, '1')
+  app.advance(1320)
+  assertReleased(app)
 })
 
 for (const first of ['app:mounted', 'app:suspense:resolve']) {
-  test(`100% requires both mounting and hydration when ${first} arrives first`, () => {
+  test(`both readiness hooks are required when ${first} arrives first`, () => {
     const app = setup()
-    app.advance(200)
+    assert.equal(app.plugin.enforce, 'pre')
     app.hooks.get('app:created')()
     app.hooks.get(first)()
+    app.advance(2000)
     assert.equal(app.progress, '65')
     assert.equal(app.phase, 'loading')
     app.hooks.get(first === 'app:mounted' ? 'app:suspense:resolve' : 'app:mounted')()
     assert.equal(app.progress, '100')
+    app.advance(200)
     assert.equal(app.phase, 'leaving')
   })
 }
 
-test('failed or timed-out startup never reports successful completion or accepts late milestones', () => {
+test('error and timeout do not report success or accept late milestones', () => {
   for (const fail of [app => app.hooks.get('app:error')(), app => app.advance(10_000)]) {
     const app = setup()
-    app.advance(200)
     fail(app)
     app.hooks.get('app:created')()
     app.ready()
     assert.equal(app.progress, undefined)
     assert.equal(app.stage, undefined)
-    assert.equal(app.fill, undefined)
-    assert.equal(app.phase, undefined)
-    assert.equal(app.content.inert, false)
-    assert.equal(app.timers.size, 0)
+    assertReleased(app)
   }
 })
