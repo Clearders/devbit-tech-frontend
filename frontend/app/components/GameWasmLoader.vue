@@ -10,6 +10,11 @@
     title     — game title for the loading screen
     hint      — brief instruction shown during loading
 -->
+<script lang="ts">
+// Persist across component instances, including leaving during initialization.
+let savedCanvas: HTMLCanvasElement | null = null
+let pendingWasmLoad: Promise<void> | null = null
+</script>
 <script setup lang="ts">
 interface Props {
   wasmPath: string
@@ -39,7 +44,7 @@ type LoadState = 'idle' | 'loading' | 'running' | 'error'
 // Instead, we HIDE the canvas with display:none on unmount and
 // show it on remount.  The canvas never leaves the DOM, so the
 // GPU surface stays connected and Bevy renders uninterrupted.
-let savedCanvas: HTMLCanvasElement | null = null
+let mounted = false
 
 // If we already have a live canvas from a previous mount, start
 // in 'running' state to avoid a loading flash.
@@ -58,7 +63,9 @@ function styleCanvas(canvas: HTMLCanvasElement): void {
   canvas.style.maxWidth = 'none'
   canvas.style.maxHeight = 'none'
   canvas.style.margin = '0'
-  canvas.style.display = 'block'
+  canvas.style.display = document.documentElement.classList.contains('is-game')
+    ? 'block'
+    : 'none'
   canvas.style.zIndex = '100'
   // Prevent browser default touch gestures (pinch-zoom, double-tap)
   // from interfering with the game on mobile.
@@ -106,12 +113,17 @@ async function loadWasm(): Promise<void> {
 
   try {
     // Dynamic import of the wasm-bindgen generated module
-    const module = await import(/* @vite-ignore */ props.wasmPath)
-    if (typeof module.default === 'function') {
-      await module.default()
-    } else {
-      throw new Error('WASM module does not export a default init function')
+    if (!pendingWasmLoad) {
+      pendingWasmLoad = (async () => {
+        const module = await import(/* @vite-ignore */ props.wasmPath)
+        if (typeof module.default !== 'function')
+          throw new Error('WASM module does not export a default init function')
+        await module.default()
+      })().finally(() => {
+        pendingWasmLoad = null
+      })
     }
+    await pendingWasmLoad
     state.value = 'running'
 
     // ── Enforce full-viewport canvas ──────────────────────────────
@@ -120,19 +132,24 @@ async function loadWasm(): Promise<void> {
     // always fills the entire viewport.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const canvas = document.querySelector('body > canvas') as HTMLCanvasElement | null
+        const canvas = document.querySelector(
+          'body > canvas',
+        ) as HTMLCanvasElement | null
         if (canvas) {
           styleCanvas(canvas)
           savedCanvas = canvas
           // Listen for GPU-triggered context loss (driver crash, etc.)
-          canvas.addEventListener('webglcontextlost', onContextLost)
-          canvas.addEventListener('webglcontextrestored', onContextRestored)
+          if (mounted) {
+            canvas.addEventListener('webglcontextlost', onContextLost)
+            canvas.addEventListener('webglcontextrestored', onContextRestored)
+          }
         }
       })
     })
   } catch (err: unknown) {
     console.error('Failed to load WASM game:', err)
-    errorMessage.value = err instanceof Error ? err.message : 'Unknown error loading game'
+    errorMessage.value =
+      err instanceof Error ? err.message : 'Unknown error loading game'
     state.value = 'error'
   }
 }
@@ -154,6 +171,7 @@ function handleViewportChange(): void {
 }
 
 onMounted(() => {
+  mounted = true
   window.addEventListener('resize', handleViewportChange)
   window.addEventListener('orientationchange', handleViewportChange)
 
@@ -166,7 +184,9 @@ onMounted(() => {
     // Safety net: if the context was lost for other reasons
     // (GPU reset, driver crash), reload the page for a fresh start.
     if (isWebGLContextLost(savedCanvas)) {
-      console.warn('[GameWasmLoader] Saved canvas has lost its WebGL context — reloading page')
+      console.warn(
+        '[GameWasmLoader] Saved canvas has lost its WebGL context — reloading page',
+      )
       savedCanvas = null
       state.value = 'error'
       errorMessage.value = 'WebGL 上下文已丢失，正在重新加载...'
@@ -193,6 +213,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  mounted = false
   window.removeEventListener('resize', handleViewportChange)
   window.removeEventListener('orientationchange', handleViewportChange)
 
@@ -212,40 +233,43 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <ClientOnly>
-    <!-- Loading screen -->
-    <div v-if="state === 'idle' || state === 'loading'" class="wasm-loader">
-      <div class="wasm-loader__inner">
-        <div class="wasm-loader__spinner" />
-        <p class="wasm-loader__title">{{ title }}</p>
-        <p v-if="hint" class="wasm-loader__hint">{{ hint }}</p>
-        <p class="wasm-loader__status">
-          {{ state === 'idle' ? '准备中...' : '加载中...' }}
-        </p>
+  <div class="game-wasm-root">
+    <ClientOnly>
+      <!-- Loading screen -->
+      <div v-if="state === 'idle' || state === 'loading'" class="wasm-loader">
+        <div class="wasm-loader__inner">
+          <div class="wasm-loader__spinner" />
+          <p class="wasm-loader__title">{{ title }}</p>
+          <p v-if="hint" class="wasm-loader__hint">{{ hint }}</p>
+          <p class="wasm-loader__status">
+            {{ state === 'idle' ? '准备中...' : '加载中...' }}
+          </p>
+        </div>
       </div>
-    </div>
 
-    <!-- Error screen -->
-    <div v-else-if="state === 'error'" class="wasm-loader">
-      <div class="wasm-loader__inner">
-        <div class="wasm-loader__error-icon">⚠️</div>
-        <p class="wasm-loader__title">游戏加载失败</p>
-        <p class="wasm-loader__error">{{ errorMessage }}</p>
-        <button class="wasm-loader__retry btn btn--primary" @click="retry">
-          重试
-        </button>
+      <!-- Error screen -->
+      <div v-else-if="state === 'error'" class="wasm-loader">
+        <div class="wasm-loader__inner">
+          <div class="wasm-loader__error-icon">⚠️</div>
+          <p class="wasm-loader__title">游戏加载失败</p>
+          <p class="wasm-loader__error">{{ errorMessage }}</p>
+          <button class="wasm-loader__retry btn btn--primary" @click="retry">
+            重试
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- Running: Bevy canvas is appended to body — hide our loader -->
-    <template v-else>
-      <!-- Game is running — canvas is managed by Bevy -->
-    </template>
-  </ClientOnly>
+      <!-- Running: Bevy canvas is appended to body — hide our loader -->
+      <template v-else>
+        <!-- Game is running — canvas is managed by Bevy -->
+      </template>
+    </ClientOnly>
+  </div>
 </template>
 
 <style scoped>
 .wasm-loader {
+  pointer-events: auto;
   position: fixed;
   inset: 0;
   z-index: 250;
@@ -272,7 +296,9 @@ onUnmounted(() => {
 }
 
 @keyframes wasm-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .wasm-loader__title {

@@ -5,6 +5,7 @@
 -->
 <script setup lang="ts">
 const router = useRouter()
+const helpOpen = ref(false)
 
 // ── Game page visual isolation ──────────────────────────────────
 // Add is-game class to <html> so CSS can:
@@ -24,7 +25,8 @@ useHead({
   meta: [
     {
       name: 'viewport',
-      content: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover',
+      content:
+        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover',
     },
   ],
 })
@@ -51,12 +53,67 @@ onUnmounted(() => {
       <span class="game-layout__back-text">返回游戏列表</span>
     </button>
 
+    <aside class="game-help" aria-label="游戏操作帮助">
+      <button
+        type="button"
+        class="game-help__toggle"
+        :aria-expanded="helpOpen"
+        aria-controls="game-help-panel"
+        @click="helpOpen = !helpOpen"
+      >
+        {{ helpOpen ? '关闭操作说明 ×' : '操作说明 ?' }}
+      </button>
+      <div v-if="helpOpen" id="game-help-panel" class="game-help__panel">
+        <h2>操作说明</h2>
+        <GameControls />
+      </div>
+    </aside>
     <!-- Game slot -->
     <slot />
   </div>
 </template>
 
 <style scoped>
+.game-help {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 300;
+  max-width: calc(100vw - 2rem);
+  pointer-events: none;
+}
+.game-help__toggle {
+  display: block;
+  margin-left: auto;
+  padding: 0.5rem 1rem;
+  background: var(--color-primary);
+  color: white;
+  border: 1px solid var(--color-primary);
+  border-radius: 0.625rem;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.game-help__panel {
+  pointer-events: auto;
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 1rem;
+  margin-top: 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  width: min(380px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 6rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.game-help__panel h2 {
+  font-size: 1.05rem;
+}
+.game-help__toggle:focus-visible {
+  outline: 3px solid var(--color-primary-soft);
+  outline-offset: 3px;
+}
+
 .game-layout {
   position: fixed;
   inset: 0;

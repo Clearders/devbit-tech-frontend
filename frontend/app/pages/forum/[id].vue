@@ -1,28 +1,40 @@
 <template>
   <div v-if="isLoadingPost" class="forum-detail forum-detail--loading">
     <section class="page-header">
-      <div class="container">
+      <div class="container" data-transition-group="title">
         <NuxtLink to="/forum" class="forum-detail__back">← 返回论坛</NuxtLink>
         <!-- Skeleton detail view -->
-        <div class="skeleton skeleton--title" style="width: 35%; margin-bottom: 1rem;"></div>
-        <div class="skeleton skeleton--title" style="width: 75%; height: 2rem; margin-bottom: 1.5rem;"></div>
-        <div class="skeleton skeleton--text" style="width: 50%; margin-bottom: 0.75rem;"></div>
-        <div class="skeleton-card" style="margin-top: 1rem;">
+        <div
+          class="skeleton skeleton--title"
+          style="width: 35%; margin-bottom: 1rem"
+        ></div>
+        <div
+          class="skeleton skeleton--title"
+          style="width: 75%; height: 2rem; margin-bottom: 1.5rem"
+        ></div>
+        <div
+          class="skeleton skeleton--text"
+          style="width: 50%; margin-bottom: 0.75rem"
+        ></div>
+        <div class="skeleton-card" style="margin-top: 1rem" data-transition-group="card">
           <div class="skeleton skeleton--text"></div>
-          <div class="skeleton skeleton--text" style="width: 90%;"></div>
-          <div class="skeleton skeleton--text" style="width: 70%;"></div>
-          <div class="skeleton skeleton--text" style="width: 85%;"></div>
-          <div class="skeleton skeleton--text" style="width: 50%;"></div>
+          <div class="skeleton skeleton--text" style="width: 90%"></div>
+          <div class="skeleton skeleton--text" style="width: 70%"></div>
+          <div class="skeleton skeleton--text" style="width: 85%"></div>
+          <div class="skeleton skeleton--text" style="width: 50%"></div>
         </div>
         <!-- Skeleton comments -->
-        <div style="margin-top: 2rem;">
-          <div class="skeleton skeleton--title" style="width: 25%; margin-bottom: 1rem;"></div>
-          <div v-for="n in 3" :key="'skel-c-'+n" class="skeleton-comment">
+        <div style="margin-top: 2rem">
+          <div
+            class="skeleton skeleton--title"
+            style="width: 25%; margin-bottom: 1rem"
+          ></div>
+          <div v-for="n in 3" :key="'skel-c-' + n" class="skeleton-comment">
             <div class="skeleton skeleton--avatar"></div>
             <div class="skeleton-comment__body">
-              <div class="skeleton skeleton--text-sm" style="width: 20%;"></div>
+              <div class="skeleton skeleton--text-sm" style="width: 20%"></div>
               <div class="skeleton skeleton--text"></div>
-              <div class="skeleton skeleton--text" style="width: 60%;"></div>
+              <div class="skeleton skeleton--text" style="width: 60%"></div>
             </div>
           </div>
         </div>
@@ -33,7 +45,7 @@
   <div class="forum-detail" v-else-if="post">
     <!-- Header -->
     <section class="page-header">
-      <div class="container">
+      <div class="container" data-transition-group="title">
         <NuxtLink to="/forum" class="forum-detail__back">← 返回论坛</NuxtLink>
         <div class="forum-detail__header">
           <div class="forum-detail__header-top">
@@ -41,8 +53,16 @@
               <span>{{ categoryInfo?.icon }}</span>
               {{ categoryInfo?.label }}
             </span>
-            <span v-if="post.isPinned" class="forum-detail__badge forum-detail__badge--pin">📌 置顶</span>
-            <span v-if="post.isLocked" class="forum-detail__badge forum-detail__badge--lock">🔒 已锁定</span>
+            <span
+              v-if="post.isPinned"
+              class="forum-detail__badge forum-detail__badge--pin"
+              >📌 置顶</span
+            >
+            <span
+              v-if="post.isLocked"
+              class="forum-detail__badge forum-detail__badge--lock"
+              >🔒 已锁定</span
+            >
           </div>
           <h1 class="forum-detail__title">{{ post.title }}</h1>
           <div class="forum-detail__meta">
@@ -55,7 +75,9 @@
               />
               <span class="forum-detail__author-name">
                 {{ post.author.name }}
-                <span v-if="post.author.isAdmin" class="forum-detail__admin-tag">管理员</span>
+                <span v-if="post.author.isAdmin" class="forum-detail__admin-tag"
+                  >管理员</span
+                >
               </span>
             </div>
             <div class="forum-detail__stats">
@@ -70,7 +92,10 @@
           </div>
 
           <!-- Admin actions -->
-          <div v-if="canDeletePost || isAdmin" class="forum-detail__admin-actions">
+          <div
+            v-if="canDeletePost || isAdmin"
+            class="forum-detail__admin-actions"
+          >
             <button
               v-if="isAdmin"
               class="btn btn--sm"
@@ -87,14 +112,24 @@
             >
               {{ post.isLocked ? '🔓 解锁' : '🔒 锁定' }}
             </button>
-            <NuxtLink v-if="canEditPost" :to="`/forum/edit/${post.id}`" class="btn btn--sm btn--outline">
+            <NuxtLink
+              v-if="canEditPost"
+              :to="`/forum/edit/${post.id}`"
+              class="btn btn--sm btn--outline"
+            >
               ✏️ 编辑
             </NuxtLink>
-            <button v-if="canDeletePost" class="btn btn--sm btn--danger" @click="handleDeletePost">
+            <button
+              v-if="canDeletePost"
+              class="btn btn--sm btn--danger"
+              @click="handleDeletePost"
+            >
               🗑️ 删除
             </button>
           </div>
-          <div v-if="actionError" class="form-error form-error--global">{{ actionError }}</div>
+          <div v-if="actionError" class="form-error form-error--global">
+            {{ actionError }}
+          </div>
         </div>
       </div>
     </section>
@@ -104,14 +139,40 @@
       <div class="container">
         <div class="forum-detail__layout">
           <!-- Post body -->
-          <div class="forum-detail__body">
+          <div class="forum-detail__body" data-transition-group="content">
+            <div class="page-tools" data-transition-group="content">
+              <span>预计阅读 {{ readingMinutes }} 分钟</span>
+              <button
+                type="button"
+                class="btn btn--outline btn--sm"
+                @click="copyPostLink"
+              >
+                复制链接
+              </button>
+              <a href="#post-comments" class="btn btn--outline btn--sm"
+                >跳到评论 ↓</a
+              >
+            </div>
+            <p v-if="shareMessage" role="status">{{ shareMessage }}</p>
+            <label v-if="shareFallback" class="share-fallback"
+              >帖子链接<input
+                class="form-control"
+                :value="shareFallback"
+                readonly
+                @focus="($event.target as HTMLInputElement).select()"
+            /></label>
             <div class="forum-detail__text">
               <MarkdownRenderer :content="post.content" />
             </div>
 
             <!-- Tags -->
             <div class="forum-detail__tags" v-if="post.tags.length">
-              <span v-for="tag in post.tags" :key="tag" class="forum-detail__tag">{{ tag }}</span>
+              <span
+                v-for="tag in post.tags"
+                :key="tag"
+                class="forum-detail__tag"
+                >{{ tag }}</span
+              >
             </div>
 
             <!-- Like action -->
@@ -128,14 +189,23 @@
             </div>
 
             <!-- Comments section -->
-            <div class="forum-detail__comments">
+            <div
+              id="post-comments"
+              class="forum-detail__comments"
+              style="scroll-margin-top: 6rem"
+            >
               <h2 class="forum-detail__comments-title">
                 💬 评论 ({{ postComments.length }})
-                <span v-if="post.isLocked" class="forum-detail__locked-hint">— 帖子已锁定，无法添加新评论</span>
+                <span v-if="post.isLocked" class="forum-detail__locked-hint"
+                  >— 帖子已锁定，无法添加新评论</span
+                >
               </h2>
 
               <!-- Comment list -->
-              <div v-if="postComments.length" class="forum-detail__comment-list">
+              <div
+                v-if="postComments.length"
+                class="forum-detail__comment-list"
+              >
                 <ForumComment
                   v-for="comment in postComments"
                   :key="comment.id"
@@ -149,7 +219,10 @@
               </div>
 
               <!-- Add comment -->
-              <div v-if="!post.isLocked && isAuthenticated" class="forum-detail__add-comment">
+              <div
+                v-if="!post.isLocked && isAuthenticated"
+                class="forum-detail__add-comment"
+              >
                 <div class="forum-detail__comment-avatar">
                   <AvatarImage
                     :avatar-url="user?.avatarUrl"
@@ -167,7 +240,9 @@
                     @keydown.ctrl.enter="handleAddComment"
                   ></textarea>
                   <div class="forum-detail__comment-actions">
-                    <span class="forum-detail__comment-hint">Ctrl + Enter 发送</span>
+                    <span class="forum-detail__comment-hint"
+                      >Ctrl + Enter 发送</span
+                    >
                     <button
                       class="btn btn--primary btn--sm"
                       :disabled="submittingComment || !newComment.trim()"
@@ -182,14 +257,16 @@
                 🔒 该帖子已被锁定，无法添加评论
               </div>
               <div v-else class="forum-detail__login-prompt">
-                <NuxtLink to="/login" class="btn btn--outline">登录后参与评论</NuxtLink>
+                <NuxtLink to="/login" class="btn btn--outline"
+                  >登录后参与评论</NuxtLink
+                >
               </div>
             </div>
           </div>
 
           <!-- Sidebar -->
           <aside class="forum-detail__sidebar">
-            <div class="forum-sidebar-card">
+            <div class="forum-sidebar-card" data-transition-group="card">
               <h3 class="forum-sidebar-card__title">👤 作者</h3>
               <div class="forum-detail__author-card">
                 <AvatarImage
@@ -200,12 +277,16 @@
                 />
                 <span class="forum-detail__author-card-name">
                   {{ post.author.name }}
-                  <span v-if="post.author.isAdmin" class="forum-detail__admin-tag">管理员</span>
+                  <span
+                    v-if="post.author.isAdmin"
+                    class="forum-detail__admin-tag"
+                    >管理员</span
+                  >
                 </span>
                 <button
                   v-if="isAuthenticated && user?.id !== post.author.id"
                   class="btn btn--outline btn--sm"
-                  style="margin-top: 0.5rem; width: 100%;"
+                  style="margin-top: 0.5rem; width: 100%"
                   @click="openMessagePanel(post.author.id)"
                 >
                   💬 发送私信
@@ -213,24 +294,46 @@
               </div>
             </div>
 
-            <div class="forum-sidebar-card">
+            <div class="forum-sidebar-card" data-transition-group="card">
               <h3 class="forum-sidebar-card__title">📊 帖子信息</h3>
               <ul class="forum-sidebar-card__info-list">
-                <li><span>分类</span><span>{{ categoryInfo?.icon }} {{ categoryInfo?.label }}</span></li>
-                <li><span>浏览</span><span>{{ formatCount(post.viewCount) }}</span></li>
-                <li><span>点赞</span><span>{{ post.likeCount }}</span></li>
-                <li><span>评论</span><span>{{ post.commentCount }}</span></li>
-                <li><span>发布</span><span>{{ formatRelativeTime(post.createdAt) }}</span></li>
+                <li>
+                  <span>分类</span
+                  ><span
+                    >{{ categoryInfo?.icon }} {{ categoryInfo?.label }}</span
+                  >
+                </li>
+                <li>
+                  <span>浏览</span
+                  ><span>{{ formatCount(post.viewCount) }}</span>
+                </li>
+                <li>
+                  <span>点赞</span><span>{{ post.likeCount }}</span>
+                </li>
+                <li>
+                  <span>评论</span><span>{{ post.commentCount }}</span>
+                </li>
+                <li>
+                  <span>发布</span
+                  ><span>{{ formatRelativeTime(post.createdAt) }}</span>
+                </li>
               </ul>
             </div>
 
-            <div class="forum-sidebar-card">
+            <div class="forum-sidebar-card" data-transition-group="card">
               <h3 class="forum-sidebar-card__title">🔥 相关帖子</h3>
               <ul class="forum-sidebar-card__hot-list">
                 <li v-for="related in relatedPosts" :key="related.id">
-                  <NuxtLink :to="`/forum/${related.id}`" class="forum-sidebar-card__hot-link">
-                    <span class="forum-sidebar-card__hot-title">{{ related.title }}</span>
-                    <span class="forum-sidebar-card__hot-meta">💬 {{ related.commentCount }}</span>
+                  <NuxtLink
+                    :to="`/forum/${related.id}`"
+                    class="forum-sidebar-card__hot-link"
+                  >
+                    <span class="forum-sidebar-card__hot-title">{{
+                      related.title
+                    }}</span>
+                    <span class="forum-sidebar-card__hot-meta"
+                      >💬 {{ related.commentCount }}</span
+                    >
                   </NuxtLink>
                 </li>
               </ul>
@@ -244,10 +347,17 @@
   <!-- Not found -->
   <div v-else class="forum-detail forum-detail--404">
     <section class="page-header">
-      <div class="container" style="text-align: center;">
+      <div class="container" data-transition-group="title" style="text-align: center">
         <h1 class="page-header__title">😕 帖子未找到</h1>
-        <p class="page-header__subtitle">{{ actionError || '该帖子可能已被删除或不存在。' }}</p>
-        <NuxtLink to="/forum" class="btn btn--primary" style="margin-top: 1.5rem;">← 返回论坛</NuxtLink>
+        <p class="page-header__subtitle">
+          {{ actionError || '该帖子可能已被删除或不存在。' }}
+        </p>
+        <NuxtLink
+          to="/forum"
+          class="btn btn--primary"
+          style="margin-top: 1.5rem"
+          >← 返回论坛</NuxtLink
+        >
       </div>
     </section>
   </div>
@@ -258,12 +368,16 @@ import ForumComment from '~/components/ForumComment.vue'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
-import { formatCount, formatRelativeTime, getForumCategory } from '~/utils/forum'
+import {
+  formatCount,
+  formatRelativeTime,
+  getForumCategory,
+} from '~/utils/forum'
 
 // Update title and description dynamically
 useSeoMeta({
   title: '帖子详情 – DevBit Tech',
-  description: '查看帖子详情与讨论。'
+  description: '查看帖子详情与讨论。',
 })
 
 const route = useRoute()
@@ -281,11 +395,34 @@ const {
   ensureInit,
   loadPost,
   loadCommentsForPost,
-  openMessagePanel
+  openMessagePanel,
 } = useForum()
 
 const postId = computed(() => Number(route.params.id))
 const post = computed(() => getPostById(postId.value))
+const readingMinutes = computed(() =>
+  Math.max(
+    1,
+    Math.ceil((post.value?.content.replace(/\s/g, '').length ?? 0) / 400),
+  ),
+)
+const shareMessage = ref('')
+const shareFallback = ref('')
+watch(postId, () => {
+  shareMessage.value = ''
+  shareFallback.value = ''
+})
+async function copyPostLink() {
+  const link = new URL('/forum/' + postId.value, window.location.origin).href
+  shareFallback.value = ''
+  try {
+    await navigator.clipboard.writeText(link)
+    shareMessage.value = '链接已复制'
+  } catch {
+    shareMessage.value = '无法自动复制，请选中下方链接手动复制。'
+    shareFallback.value = link
+  }
+}
 const postComments = computed(() => getCommentsByPostId(postId.value))
 const newComment = ref('')
 const actionError = ref('')
@@ -303,7 +440,7 @@ watchEffect(() => {
 })
 
 const categoryInfo = computed(() =>
-  post.value ? getForumCategory(post.value.category) : null
+  post.value ? getForumCategory(post.value.category) : null,
 )
 
 const userAvatarFallback = computed(() => {
@@ -341,15 +478,22 @@ async function loadCurrentPost(id: number) {
     await loadPost(id)
     await loadCommentsForPost(id)
   } catch (error: unknown) {
-    actionError.value = extractApiErrorMessage(error, '帖子加载失败，请稍后重试。')
+    actionError.value = extractApiErrorMessage(
+      error,
+      '帖子加载失败，请稍后重试。',
+    )
   } finally {
     isLoadingPost.value = false
   }
 }
 
-watch(postId, (newId) => {
-  void loadCurrentPost(newId)
-}, { immediate: true })
+watch(
+  postId,
+  (newId) => {
+    void loadCurrentPost(newId)
+  },
+  { immediate: true },
+)
 
 function canDeleteComment(comment: { author: { id: number } }) {
   if (!user.value) return false
@@ -359,7 +503,9 @@ function canDeleteComment(comment: { author: { id: number } }) {
 const relatedPosts = computed(() => {
   if (!post.value) return []
   return posts.value
-    .filter(p => p.id !== post.value!.id && p.category === post.value!.category)
+    .filter(
+      (p) => p.id !== post.value!.id && p.category === post.value!.category,
+    )
     .sort((a, b) => b.commentCount - a.commentCount)
     .slice(0, 5)
 })
@@ -391,11 +537,17 @@ function handleDeleteComment(commentId: number) {
 }
 
 function handleTogglePin() {
-  void runAction(() => togglePinPost(postId.value), '更新置顶状态失败，请稍后重试。')
+  void runAction(
+    () => togglePinPost(postId.value),
+    '更新置顶状态失败，请稍后重试。',
+  )
 }
 
 function handleToggleLock() {
-  void runAction(() => toggleLockPost(postId.value), '更新锁定状态失败，请稍后重试。')
+  void runAction(
+    () => toggleLockPost(postId.value),
+    '更新锁定状态失败，请稍后重试。',
+  )
 }
 
 function handleDeletePost() {
@@ -411,5 +563,4 @@ function handleLike() {
   if (!isAuthenticated.value) return
   void runAction(() => toggleLikePost(postId.value), '点赞失败，请稍后重试。')
 }
-
 </script>

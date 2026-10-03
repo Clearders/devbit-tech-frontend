@@ -346,10 +346,10 @@ a:hover {
 .navbar__links a {
   color: var(--color-text-secondary);
   font-size: 0.93rem;
-  font-weight: 500;
+  font-weight: 600;
   padding: 0.4rem 0.75rem;
   border-radius: 0.5rem;
-  transition: all var(--duration-fast) var(--ease-in-out);
+  transition: color 200ms var(--ease-in-out), background-color 200ms var(--ease-in-out);
 }
 
 .navbar__links a:hover {
@@ -4182,23 +4182,31 @@ select.form-control {
 }
 
 /* ============================================
-   Page Transitions — Optimized for speed
+   Page Transitions — Fade the page, reveal its groups in sequence
    ============================================ */
-.page-enter-active,
-.page-leave-active {
-  transition:
-    opacity 0.2s var(--ease-out-quint),
-    transform 0.2s var(--ease-out-quint);
-}
+.page-enter-active { transition: opacity 200ms var(--ease-out-quint); }
+.page-leave-active { transition: opacity 140ms var(--ease-in-out); }
 
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
-}
-
+.page-enter-from,
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-4px);
+}
+
+/* Only groups captured by before-enter animate; late data updates stay still. */
+.page-enter-active [data-route-reveal] {
+  animation: devbit-route-reveal 240ms var(--ease-out-quint) var(--route-reveal-delay, 0ms) both;
+}
+.page-enter-active [data-route-reveal='title'] { --route-reveal-offset: 4px; }
+
+@keyframes devbit-route-reveal {
+  from { opacity: 0; transform: translateY(var(--route-reveal-offset, 6px)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter-active,
+  .page-leave-active { transition: none; }
+  .page-enter-active [data-route-reveal] { animation: none; }
 }
 
 /* ============================================
@@ -4718,4 +4726,33 @@ select.form-control {
   .forum-sort__btn--active {
     box-shadow: var(--shadow-sm), 0 0 10px var(--color-primary-o22);
   }
+}
+
+/* Secondary-page enhancements reuse the original porcelain and blue theme. */
+.page-tools { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin: 1rem 0; }
+.page-tools > label { flex: 1 1 180px; min-width: 0; font-size: .875rem; color: var(--color-text-secondary); }
+.page-tools > label .form-control { margin-top: .35rem; }
+.page-tools > span { overflow-wrap: anywhere; }
+.detail-panel { padding: 1.5rem; margin-top: 2rem; background: var(--color-surface); border: 1px solid var(--color-border-light); border-radius: 1rem; box-shadow: var(--shadow-sm); scroll-margin-top: 6rem; }
+.detail-panel h2 { font-size: 1.3rem; margin-bottom: 1rem; color: var(--color-text); }
+.detail-panel h3 { font-size: 1.05rem; margin-bottom: .65rem; }
+.detail-panel p { color: var(--color-text-secondary); line-height: 1.85; margin: .7rem 0; }
+.info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.guide-steps { padding-left: 1.3rem; color: var(--color-text-secondary); }
+.guide-steps li { padding: .35rem 0; }
+.info-disclosure { border-bottom: 1px solid var(--color-border-light); }
+.info-disclosure summary { padding: .9rem 0; cursor: pointer; color: var(--color-primary-dark); }
+.draft-status { font-size: .85rem; color: var(--color-text-secondary); margin-bottom: 1rem; }
+.draft-status.form-error { color: var(--color-danger-text); }
+.share-fallback { display: block; margin: .75rem 0; }
+:is(.page-tools, .detail-panel) :is(a, button, input, select, summary):focus-visible { outline: 3px solid var(--color-primary-soft); outline-offset: 3px; }
+@media (max-width: 640px) { .info-grid { grid-template-columns: 1fr; }.detail-panel { padding: 1.1rem; }.page-tools > label { flex-basis: 100%; } }
+
+/* A late WASM initialization must never cover a non-game route. */
+html:not(.is-game) body > canvas { display: none !important; }
+
+/* The app creates its own stacking context; lift controls above Bevy's body canvas. */
+html.is-game .app-shell {
+  z-index: 200;
+  pointer-events: none;
 }

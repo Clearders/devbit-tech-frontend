@@ -2,7 +2,7 @@
   <div class="post-editor-page">
     <!-- Header -->
     <section class="page-header">
-      <div class="container">
+      <div class="container" data-transition-group="title">
         <NuxtLink :to="`/forum/${postId}`" class="post-editor__back">← 返回帖子</NuxtLink>
         <h1 class="page-header__title">✏️ 编辑帖子</h1>
         <p class="page-header__subtitle">修改你的帖子内容</p>
@@ -10,7 +10,7 @@
     </section>
 
     <!-- Loading -->
-    <section v-if="isLoadingPost" class="post-editor__content">
+    <section v-if="isLoadingPost" class="post-editor__content" data-transition-group="content">
       <div class="container" style="text-align: center; padding: 3rem;">
         <div class="skeleton skeleton--title" style="width: 240px; margin: 0 auto 1rem;"></div>
         <div class="skeleton skeleton--text" style="width: 360px; margin: 0 auto;"></div>
@@ -18,7 +18,7 @@
     </section>
 
     <!-- Forbidden -->
-    <section v-else-if="forbidden" class="post-editor__content">
+    <section v-else-if="forbidden" class="post-editor__content" data-transition-group="content">
       <div class="container" style="text-align: center; padding: 4rem;">
         <div style="font-size: 3rem; margin-bottom: 1rem;">🚫</div>
         <h2>没有编辑权限</h2>
@@ -30,7 +30,7 @@
     </section>
 
     <!-- Editor form -->
-    <section v-else class="post-editor__content">
+    <section v-else class="post-editor__content" data-transition-group="content">
       <div class="container">
         <div v-if="apiError" class="form-error form-error--global post-editor__error">
           {{ apiError }}

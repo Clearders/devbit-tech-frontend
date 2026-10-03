@@ -2,8 +2,8 @@
   <div class="forum-page">
     <!-- Header -->
     <section class="page-header">
-      <div class="container">
-        <p class="hero__badge">Community</p>
+      <div class="container" data-transition-group="title">
+        <p class="hero__badge" data-transition-group="title">Community</p>
         <h1 class="page-header__title">💬 论坛</h1>
         <p class="page-header__subtitle">
           技术讨论、经验分享、问题解答——一切尽在 DevBit Tech 论坛。
@@ -12,7 +12,7 @@
     </section>
 
     <!-- Toolbar -->
-    <section class="forum-toolbar">
+    <section class="forum-toolbar" data-transition-group="content">
       <div class="container">
         <div class="forum-toolbar__row">
           <!-- Search -->
@@ -23,9 +23,14 @@
               type="text"
               class="form-control forum-toolbar__search-input"
               placeholder="搜索帖子标题、内容或标签"
-              @input="onSearchInput"
             />
-            <button v-if="searchQuery" class="forum-toolbar__search-clear" @click="clearSearch">✖</button>
+            <button
+              v-if="searchQuery"
+              class="forum-toolbar__search-clear"
+              @click="clearSearch"
+            >
+              ✖
+            </button>
           </div>
 
           <!-- Actions -->
@@ -48,7 +53,11 @@
                 </button>
               </div>
             </div>
-            <NuxtLink v-if="isAuthenticated" to="/forum/new" class="btn btn--primary">
+            <NuxtLink
+              v-if="isAuthenticated"
+              to="/forum/new"
+              class="btn btn--primary"
+            >
               ✏️ 发布帖子
             </NuxtLink>
             <button
@@ -63,17 +72,21 @@
         </div>
 
         <!-- Category tabs -->
-        <div class="forum-categories">
+        <div class="forum-categories" data-transition-group="content">
           <button
             v-for="cat in categoryTabs"
             :key="cat.value"
             class="forum-categories__tab"
-            :class="{ 'forum-categories__tab--active': activeCategory === cat.value }"
+            :class="{
+              'forum-categories__tab--active': activeCategory === cat.value,
+            }"
             @click="activeCategory = cat.value"
           >
             <span class="forum-categories__tab-icon">{{ cat.icon }}</span>
             <span class="forum-categories__tab-label">{{ cat.label }}</span>
-            <span class="forum-categories__tab-count">{{ getCategoryCount(cat.value) }}</span>
+            <span class="forum-categories__tab-count">{{
+              getCategoryCount(cat.value)
+            }}</span>
           </button>
         </div>
       </div>
@@ -88,42 +101,79 @@
             <!-- Admin Panel -->
             <ForumAdminPanel v-if="showAdminPanel && isAdmin" />
 
-            <div v-if="loadError" class="forum-status forum-status--error">        <span>{{ loadError }}</span>
-              <button class="btn btn--outline btn--sm" @click="loadForum(true)">重试</button>
+            <div v-if="loadError" class="forum-status forum-status--error">
+              <span>{{ loadError }}</span>
+              <button class="btn btn--outline btn--sm" @click="loadForum(true)">
+                重试
+              </button>
             </div>
 
-            <div class="forum-results-bar">
+            <div v-if="!loadError" class="forum-results-bar" data-transition-group="content">
               <span>{{ resultSummary }}</span>
-              <NuxtLink v-if="!isAuthenticated" to="/login" class="forum-results-bar__link">登录后发帖和评论</NuxtLink>
+              <button
+                v-if="hasFilters"
+                type="button"
+                class="btn btn--outline btn--sm"
+                @click="clearFilters"
+              >
+                清除筛选
+              </button>
+              <NuxtLink
+                v-if="!isAuthenticated"
+                to="/login"
+                class="forum-results-bar__link"
+                >登录后发帖和评论</NuxtLink
+              >
             </div>
 
             <div v-if="isLoadingForum" class="forum-post-list">
               <!-- Skeleton loading cards -->
-              <div v-for="n in 5" :key="'skel-'+n" class="skeleton-card">
+              <div v-for="n in 5" :key="'skel-' + n" class="skeleton-card" data-transition-group="card">
                 <div class="skeleton-card__header">
                   <div class="skeleton skeleton--avatar"></div>
-                  <div class="skeleton skeleton--text-sm" style="width: 30%;"></div>
+                  <div
+                    class="skeleton skeleton--text-sm"
+                    style="width: 30%"
+                  ></div>
                 </div>
                 <div class="skeleton-card__body">
-                  <div class="skeleton skeleton--title" style="width: 70%;"></div>
+                  <div
+                    class="skeleton skeleton--title"
+                    style="width: 70%"
+                  ></div>
                   <div class="skeleton skeleton--text"></div>
-                  <div class="skeleton skeleton--text" style="width: 60%;"></div>
+                  <div class="skeleton skeleton--text" style="width: 60%"></div>
                 </div>
                 <div class="skeleton-card__footer">
-                  <div class="skeleton skeleton--text-sm" style="width: 25%;"></div>
-                  <div class="skeleton skeleton--text-sm" style="width: 20%;"></div>
+                  <div
+                    class="skeleton skeleton--text-sm"
+                    style="width: 25%"
+                  ></div>
+                  <div
+                    class="skeleton skeleton--text-sm"
+                    style="width: 20%"
+                  ></div>
                 </div>
               </div>
             </div>
 
             <!-- Empty state -->
-            <div v-else-if="displayedPosts.length === 0" class="forum-empty">
-              <div class="forum-empty__icon">{{ searchQuery ? '🔍' : '📝' }}</div>
+            <div
+              v-else-if="!loadError && displayedPosts.length === 0"
+              class="forum-empty"
+            >
+              <div class="forum-empty__icon">
+                {{ searchQuery ? '🔍' : '📝' }}
+              </div>
               <h3 class="forum-empty__title">
                 {{ searchQuery ? '未找到匹配的帖子' : '暂无帖子' }}
               </h3>
               <p class="forum-empty__desc">
-                {{ searchQuery ? '尝试其他关键词或浏览不同分类' : '成为第一个发帖的人吧！' }}
+                {{
+                  searchQuery
+                    ? '尝试其他关键词或浏览不同分类'
+                    : '成为第一个发帖的人吧！'
+                }}
               </p>
               <NuxtLink
                 v-if="!searchQuery && isAuthenticated"
@@ -135,8 +185,8 @@
             </div>
 
             <!-- Post list -->
-            <div v-else class="forum-post-list">
-              <ForumPostCard
+            <div v-else-if="!loadError" class="forum-post-list">
+              <ForumPostCard data-transition-group="card"
                 v-for="post in displayedPosts"
                 :key="post.id"
                 :post="post"
@@ -147,39 +197,52 @@
           <!-- Right: Sidebar -->
           <aside class="forum-layout__sidebar">
             <!-- Stats -->
-            <div class="forum-sidebar-card">
+            <div class="forum-sidebar-card" data-transition-group="card">
               <h3 class="forum-sidebar-card__title">📊 社区统计</h3>
               <div class="forum-sidebar-card__stats">
                 <div class="forum-sidebar-card__stat">
-                  <span class="forum-sidebar-card__stat-value">{{ totalPostCount }}</span>
+                  <span class="forum-sidebar-card__stat-value">{{
+                    totalPostCount
+                  }}</span>
                   <span class="forum-sidebar-card__stat-label">帖子</span>
                 </div>
                 <div class="forum-sidebar-card__stat">
-                  <span class="forum-sidebar-card__stat-value">{{ totalCommentCount }}</span>
+                  <span class="forum-sidebar-card__stat-value">{{
+                    totalCommentCount
+                  }}</span>
                   <span class="forum-sidebar-card__stat-label">评论</span>
                 </div>
                 <div class="forum-sidebar-card__stat">
-                  <span class="forum-sidebar-card__stat-value">{{ users.length }}</span>
+                  <span class="forum-sidebar-card__stat-value">{{
+                    users.length
+                  }}</span>
                   <span class="forum-sidebar-card__stat-label">用户</span>
                 </div>
               </div>
             </div>
 
             <!-- Hot posts -->
-            <div class="forum-sidebar-card">
+            <div class="forum-sidebar-card" data-transition-group="card">
               <h3 class="forum-sidebar-card__title">🔥 热门帖子</h3>
               <ul class="forum-sidebar-card__hot-list">
                 <li v-for="post in hotPosts" :key="post.id">
-                  <NuxtLink :to="`/forum/${post.id}`" class="forum-sidebar-card__hot-link">
-                    <span class="forum-sidebar-card__hot-title">{{ post.title }}</span>
-                    <span class="forum-sidebar-card__hot-meta">💬 {{ post.commentCount }}</span>
+                  <NuxtLink
+                    :to="`/forum/${post.id}`"
+                    class="forum-sidebar-card__hot-link"
+                  >
+                    <span class="forum-sidebar-card__hot-title">{{
+                      post.title
+                    }}</span>
+                    <span class="forum-sidebar-card__hot-meta"
+                      >💬 {{ post.commentCount }}</span
+                    >
                   </NuxtLink>
                 </li>
               </ul>
             </div>
 
             <!-- Guidelines -->
-            <div class="forum-sidebar-card">
+            <div class="forum-sidebar-card" data-transition-group="card">
               <h3 class="forum-sidebar-card__title">📋 社区规范</h3>
               <ul class="forum-sidebar-card__rules">
                 <li>尊重他人，友善交流</li>
@@ -193,8 +256,6 @@
         </div>
       </div>
     </section>
-
-
   </div>
 </template>
 
@@ -208,7 +269,7 @@ import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
 useSeoMeta({
   title: '论坛 — DevBit Tech',
-  description: '参与技术讨论，分享经验，提问解答。'
+  description: '参与技术讨论，分享经验，提问解答。',
 })
 
 const { user, isAuthenticated } = useAuth()
@@ -230,7 +291,10 @@ async function loadForum(force = false) {
   try {
     await ensureInit(force)
   } catch (error: unknown) {
-    loadError.value = extractApiErrorMessage(error, '论坛数据加载失败，请稍后重试。')
+    loadError.value = extractApiErrorMessage(
+      error,
+      '论坛数据加载失败，请稍后重试。',
+    )
   } finally {
     isLoadingForum.value = false
   }
@@ -243,7 +307,11 @@ onMounted(() => {
 // Category tabs (prepend "all")
 const categoryTabs = computed(() => [
   { value: 'all' as const, label: '全部', icon: '🌐' },
-  ...FORUM_CATEGORIES.map((c: typeof FORUM_CATEGORIES[number]) => ({ value: c.value, label: c.label, icon: c.icon })),
+  ...FORUM_CATEGORIES.map((c: (typeof FORUM_CATEGORIES)[number]) => ({
+    value: c.value,
+    label: c.label,
+    icon: c.icon,
+  })),
 ])
 
 const totalPostCount = computed(() => posts.value.length)
@@ -252,11 +320,57 @@ const totalCommentCount = computed(() => comments.value.length)
 const isAdmin = computed(() => !!user.value?.isAdmin)
 
 // Search & filter
-const searchQuery = ref('')
-const activeCategory = ref<ForumCategory | 'all'>('all')
-const sortMode = ref<'latest' | 'active' | 'views' | 'likes'>('latest')
+const route = useRoute()
+const router = useRouter()
+const searchQuery = computed({
+  get: () => (typeof route.query.q === 'string' ? route.query.q : ''),
+  set: (q: string) => {
+    void router.replace({ query: { ...route.query, q: q || undefined } })
+  },
+})
+const activeCategory = computed<ForumCategory | 'all'>({
+  get: () =>
+    FORUM_CATEGORIES.find((c) => c.value === route.query.category)?.value ??
+    'all',
+  set: (category) => {
+    void router.push({
+      query: {
+        ...route.query,
+        category: category === 'all' ? undefined : category,
+      },
+    })
+  },
+})
+type SortMode = 'latest' | 'active' | 'views' | 'likes'
+const sortMode = computed<SortMode>({
+  get: () =>
+    ['latest', 'active', 'views', 'likes'].includes(String(route.query.sort)) &&
+    typeof route.query.sort === 'string'
+      ? (route.query.sort as SortMode)
+      : 'latest',
+  set: (sort) => {
+    void router.push({
+      query: { ...route.query, sort: sort === 'latest' ? undefined : sort },
+    })
+  },
+})
+const hasFilters = computed(
+  () =>
+    !!searchQuery.value ||
+    activeCategory.value !== 'all' ||
+    sortMode.value !== 'latest',
+)
+function clearFilters() {
+  void router.push({
+    query: {
+      ...route.query,
+      q: undefined,
+      category: undefined,
+      sort: undefined,
+    },
+  })
+}
 const showAdminPanel = ref(false)
-let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 const sortOptions = [
   { value: 'latest' as const, label: '最新发布', icon: '🕐' },
@@ -267,36 +381,47 @@ const sortOptions = [
 
 const hotPosts = computed(() =>
   [...posts.value]
-    .sort((a, b) => b.commentCount - a.commentCount || b.viewCount - a.viewCount)
-    .slice(0, 5)
+    .sort(
+      (a, b) => b.commentCount - a.commentCount || b.viewCount - a.viewCount,
+    )
+    .slice(0, 5),
 )
 
 const filteredPosts = computed(() => {
   if (searchQuery.value.trim()) {
     const results = localSearchPosts(searchQuery.value)
     if (activeCategory.value !== 'all') {
-      return results.filter((p: typeof results[number]) => p.category === activeCategory.value)
+      return results.filter(
+        (p: (typeof results)[number]) => p.category === activeCategory.value,
+      )
     }
     return results
   }
-  return getPostsByCategory(activeCategory.value === 'all' ? undefined : activeCategory.value)
+  return getPostsByCategory(
+    activeCategory.value === 'all' ? undefined : activeCategory.value,
+  )
 })
 
 const displayedPosts = computed(() => {
   const sorted = [...filteredPosts.value]
   return sorted.sort((a, b) => {
     if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1
-    if (sortMode.value === 'active') return b.commentCount - a.commentCount || newestFirst(a, b)
-    if (sortMode.value === 'views') return b.viewCount - a.viewCount || newestFirst(a, b)
-    if (sortMode.value === 'likes') return b.likeCount - a.likeCount || newestFirst(a, b)
+    if (sortMode.value === 'active')
+      return b.commentCount - a.commentCount || newestFirst(a, b)
+    if (sortMode.value === 'views')
+      return b.viewCount - a.viewCount || newestFirst(a, b)
+    if (sortMode.value === 'likes')
+      return b.likeCount - a.likeCount || newestFirst(a, b)
     return newestFirst(a, b)
   })
 })
 
 const resultSummary = computed(() => {
-  const scope = activeCategory.value === 'all'
-    ? '全部分类'
-    : categoryTabs.value.find(cat => cat.value === activeCategory.value)?.label ?? '当前分类'
+  const scope =
+    activeCategory.value === 'all'
+      ? '全部分类'
+      : (categoryTabs.value.find((cat) => cat.value === activeCategory.value)
+          ?.label ?? '当前分类')
   const query = searchQuery.value.trim()
   return query
     ? `${scope}中找到 ${displayedPosts.value.length} 个匹配结果`
@@ -309,17 +434,10 @@ function newestFirst(a: { createdAt: string }, b: { createdAt: string }) {
 
 function getCategoryCount(category: ForumCategory | 'all') {
   if (category === 'all') return totalPostCount.value
-  return posts.value.filter(post => post.category === category).length
-}
-
-function onSearchInput() {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => { /* reactive, no-op */ }, 300)
+  return posts.value.filter((post) => post.category === category).length
 }
 
 function clearSearch() {
   searchQuery.value = ''
 }
-
-
 </script>

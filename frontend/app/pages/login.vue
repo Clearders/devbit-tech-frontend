@@ -2,10 +2,10 @@
   <div class="auth-page">
     <div class="container">
       <div class="auth-card">
-        <h1 class="auth-card__title">Welcome back</h1>
-        <p class="auth-card__subtitle">Sign in to your DevBit Tech account</p>
+        <h1 class="auth-card__title" data-transition-group="title">Welcome back</h1>
+        <p class="auth-card__subtitle" data-transition-group="content">Sign in to your DevBit Tech account</p>
 
-        <form class="auth-form" novalidate @submit.prevent="handleSubmit">
+        <form class="auth-form" novalidate @submit.prevent="handleSubmit" data-transition-group="content">
           <div v-if="apiError" class="form-error form-error--global">{{ apiError }}</div>
 
           <div class="form-group">
@@ -41,7 +41,7 @@
           </button>
         </form>
 
-        <p class="auth-card__footer">
+        <p class="auth-card__footer" data-transition-group="content">
           Don't have an account? <NuxtLink to="/register">Create one</NuxtLink>
         </p>
       </div>

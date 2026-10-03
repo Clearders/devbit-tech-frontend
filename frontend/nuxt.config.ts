@@ -110,7 +110,7 @@ export default defineNuxtConfig({
         { name: 'twitter:card', content: 'summary' },
       ],
     },
-    pageTransition: { name: 'page', mode: 'default' },
+    pageTransition: { name: 'page', mode: 'out-in' },
     buildAssetsDir: '/_nuxt/',
   },
 

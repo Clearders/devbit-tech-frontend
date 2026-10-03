@@ -2,10 +2,10 @@
   <div class="auth-page">
     <div class="container">
       <div class="auth-card">
-        <h1 class="auth-card__title">Create an account</h1>
-        <p class="auth-card__subtitle">Join DevBit Tech today</p>
+        <h1 class="auth-card__title" data-transition-group="title">Create an account</h1>
+        <p class="auth-card__subtitle" data-transition-group="content">Join DevBit Tech today</p>
 
-        <form class="auth-form" novalidate @submit.prevent="handleSubmit">
+        <form class="auth-form" novalidate @submit.prevent="handleSubmit" data-transition-group="content">
           <div v-if="apiError" class="form-error form-error--global">{{ apiError }}</div>
           <div v-if="codeMessage" class="form-success">{{ codeMessage }}</div>
 
@@ -92,7 +92,7 @@
           </button>
         </form>
 
-        <p class="auth-card__footer">
+        <p class="auth-card__footer" data-transition-group="content">
           Already have an account? <NuxtLink to="/login">Sign in</NuxtLink>
         </p>
       </div>

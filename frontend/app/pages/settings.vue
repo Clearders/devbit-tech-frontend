@@ -1,7 +1,7 @@
 <template>
   <div class="settings-page">
     <section class="page-header">
-      <div class="container">
+      <div class="container" data-transition-group="title">
         <h1 class="page-header__title">⚙️ 账户设置</h1>
         <p class="page-header__subtitle">管理你的个人资料与头像</p>
       </div>
@@ -9,26 +9,35 @@
 
     <section class="settings-content">
       <div class="container">
-        <div v-if="isResolving" class="settings-loading">
-          <div class="skeleton skeleton--title" style="width: 200px; margin: 0 auto 1rem;"></div>
-          <div class="skeleton skeleton--text" style="width: 300px; margin: 0 auto;"></div>
+        <div v-if="isResolving" class="settings-loading" data-transition-group="content">
+          <div
+            class="skeleton skeleton--title"
+            style="width: 200px; margin: 0 auto 1rem"
+          ></div>
+          <div
+            class="skeleton skeleton--text"
+            style="width: 300px; margin: 0 auto"
+          ></div>
         </div>
 
-        <div v-else-if="!isAuthenticated" class="settings-login-prompt">
+        <div v-else-if="!isAuthenticated" class="settings-login-prompt" data-transition-group="content">
           <p>请先登录以管理账户设置。</p>
           <NuxtLink to="/login" class="btn btn--primary">前往登录</NuxtLink>
         </div>
 
-        <div v-else class="settings-card">
+        <div v-else class="settings-card" data-transition-group="card">
           <!-- Avatar Section -->
           <div class="settings-section">
             <h2 class="settings-section__title">🖼️ 个人头像</h2>
-            <p class="settings-section__desc">上传一张图片作为你的头像。支持 PNG、JPG、GIF、WebP 格式，最大 2MB。</p>
+            <p class="settings-section__desc">
+              上传一张图片作为你的头像。支持 PNG、JPG、GIF、WebP 格式，最大
+              2MB。
+            </p>
 
             <div class="settings-avatar-area">
               <div class="settings-avatar-preview">
                 <AvatarImage
-                  :avatar-url="user?.avatarUrl"
+                  :avatar-url="previewUrl || user?.avatarUrl"
                   :avatar="userInitials"
                   :name="user?.name ?? ''"
                   size="lg"
@@ -36,22 +45,54 @@
               </div>
 
               <div class="settings-avatar-actions">
-                <label class="btn btn--outline settings-upload-btn" :class="{ 'btn--disabled': uploading }">
-                  {{ uploading ? '上传中...' : '📁 选择图片' }}
+                <label
+                  class="btn btn--outline settings-upload-btn"
+                  :class="{ 'btn--disabled': uploading }"
+                >
+                  {{ validating ? '检查图片中…' : '📁 选择图片' }}
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/gif,image/webp"
                     class="settings-file-input"
-                    :disabled="uploading"
+                    :disabled="uploading || validating"
                     @change="handleFileSelect"
                   />
                 </label>
-
               </div>
             </div>
 
-            <div v-if="uploadError" class="form-error form-error--global">{{ uploadError }}</div>
-            <div v-if="uploadSuccess" class="form-success">{{ uploadSuccess }}</div>
+            <div v-if="selectedFile" class="page-tools" data-transition-group="content">
+              <span>待上传：{{ selectedFile.name }}</span>
+              <button
+                type="button"
+                class="btn btn--primary"
+                :disabled="uploading"
+                @click="uploadAvatar"
+              >
+                {{ uploading ? '上传中…' : '确认上传' }}
+              </button>
+              <button
+                type="button"
+                class="btn btn--outline"
+                :disabled="uploading"
+                @click="cancelPreview"
+              >
+                取消
+              </button>
+            </div>
+            <p v-if="selectedFile" class="settings-section__desc">
+              当前为本地预览，确认上传后才会更新头像。
+            </p>
+            <div
+              v-if="uploadError"
+              role="alert"
+              class="form-error form-error--global"
+            >
+              {{ uploadError }}
+            </div>
+            <div v-if="uploadSuccess" role="status" class="form-success">
+              {{ uploadSuccess }}
+            </div>
           </div>
 
           <!-- Profile Info Section -->
@@ -92,10 +133,29 @@ useSeoMeta({
   description: '管理你的 DevBit Tech 账户设置与头像。',
 })
 
-const { user, isAuthenticated, isResolving, syncCurrentUser } = useAuth()
+const { user, isAuthenticated, isResolving } = useAuth()
 const { apiFetch } = useApiFetch()
 
 const uploading = ref(false)
+const validating = ref(false)
+const selectedFile = shallowRef<File | null>(null)
+const previewUrl = ref('')
+let selectionVersion = 0
+function clearPreview() {
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+  previewUrl.value = ''
+  selectedFile.value = null
+}
+function cancelPreview() {
+  selectionVersion++
+  clearPreview()
+  uploadError.value = ''
+  uploadSuccess.value = ''
+}
+onUnmounted(() => {
+  selectionVersion++
+  clearPreview()
+})
 const uploadError = ref('')
 const uploadSuccess = ref('')
 
@@ -114,11 +174,15 @@ const userInitials = computed(() => {
 async function handleFileSelect(e: Event) {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
-  if (!file) return
-
-  // Client-side validation
-  const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
-  if (!allowedTypes.includes(file.type)) {
+  input.value = ''
+  if (!file || uploading.value) return
+  const version = ++selectionVersion
+  clearPreview()
+  uploadError.value = ''
+  uploadSuccess.value = ''
+  if (
+    !['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)
+  ) {
     uploadError.value = '不支持的文件格式。请上传 PNG、JPG、GIF 或 WebP 图片。'
     return
   }
@@ -126,40 +190,54 @@ async function handleFileSelect(e: Event) {
     uploadError.value = '文件大小不能超过 2MB。'
     return
   }
-
-  uploadError.value = ''
-  uploadSuccess.value = ''
-  uploading.value = true
-
+  validating.value = true
+  const url = URL.createObjectURL(file)
   try {
-    const formData = new FormData()
-    formData.append('avatar', file)
-
-    const updatedUser = await apiFetch<{
-      id: number
-      name: string
-      email: string
-      avatarUrl?: string
-      isAdmin: boolean
-    }>('/me/avatar', {
-      method: 'POST',
-      body: formData,
-      headers: new Headers({ accept: 'application/json' }),
-    })
-
-    // Update local user state
-    user.value = updatedUser
-    uploadSuccess.value = '头像上传成功！'
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : '头像上传失败，请稍后重试。'
-    uploadError.value = msg
+    const image = new Image()
+    image.src = url
+    await image.decode()
+    if (!image.naturalWidth || !image.naturalHeight)
+      throw new Error('Invalid image')
+    if (version !== selectionVersion) {
+      URL.revokeObjectURL(url)
+      return
+    }
+    selectedFile.value = file
+    previewUrl.value = url
+  } catch {
+    URL.revokeObjectURL(url)
+    if (version === selectionVersion)
+      uploadError.value = '图片无法读取，文件可能已损坏。请选择另一张图片。'
   } finally {
-    uploading.value = false
-    input.value = '' // Reset input so same file can be re-selected
+    if (version === selectionVersion) validating.value = false
   }
 }
-
-
+async function uploadAvatar() {
+  if (!selectedFile.value || uploading.value) return
+  uploading.value = true
+  uploadError.value = ''
+  uploadSuccess.value = ''
+  try {
+    const formData = new FormData()
+    formData.append('avatar', selectedFile.value)
+    const updatedUser = await apiFetch<NonNullable<typeof user.value>>(
+      '/me/avatar',
+      {
+        method: 'POST',
+        body: formData,
+        headers: new Headers({ accept: 'application/json' }),
+      },
+    )
+    user.value = updatedUser
+    clearPreview()
+    uploadSuccess.value = '头像上传成功！'
+  } catch (error: unknown) {
+    uploadError.value =
+      error instanceof Error ? error.message : '头像上传失败，请稍后重试。'
+  } finally {
+    uploading.value = false
+  }
+}
 </script>
 
 <style scoped>
