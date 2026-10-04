@@ -8,6 +8,10 @@ const source = readFileSync(new URL('../app/composables/usePageTransition.ts', i
 const compiled = ts.transpileModule(source.replaceAll('import.meta.client', 'true'), {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 }).outputText
+const navigation = {}
+runInNewContext(ts.transpileModule(readFileSync(new URL('../app/utils/navigation.ts', import.meta.url), 'utf8'), {
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+}).outputText, { exports: navigation })
 
 function style() {
   const properties = new Map()
@@ -48,6 +52,7 @@ function setup({ reducedMotion = false, startup = false } = {}) {
   const exports = {}
   runInNewContext(compiled, {
     exports,
+    require: () => navigation,
     shallowRef: value => ({ value }),
     useRouter: () => ({
       beforeResolve: register('beforeResolve'),
@@ -58,6 +63,7 @@ function setup({ reducedMotion = false, startup = false } = {}) {
     onBeforeUnmount: callback => { callbacks.unmount = callback },
     window: {
       matchMedia: () => motion,
+      getComputedStyle: element => element.computedStyle ?? { opacity: '1', transform: 'none' },
       __devbitStartupLoading: { finish: immediate => { assert.equal(immediate, true); dismissals++ } },
     },
     document: { documentElement: { hasAttribute: () => startup } },
@@ -66,6 +72,7 @@ function setup({ reducedMotion = false, startup = false } = {}) {
   const main = { style: style(), getBoundingClientRect: () => ({ height: 720 }) }
   const groups = [group('title'), group('content'), ...Array.from({ length: 6 }, () => group('card'))]
   const element = {
+    ...group('page'),
     closest: () => main,
     querySelectorAll: () => groups,
     contains: parent => groups.includes(parent),
@@ -73,7 +80,7 @@ function setup({ reducedMotion = false, startup = false } = {}) {
   return {
     transition, callbacks, motion, motionEvents, disposals, main, groups, element,
     get dismissals() { return dismissals },
-    navigate(to = {}, from = {}) { callbacks.beforeResolve({ meta: to }, { meta: from }) },
+    navigate(to = {}, from = {}, toPath = '/', fromPath = '/') { callbacks.beforeResolve({ meta: to, path: toPath }, { meta: from, path: fromPath }) },
   }
 }
 
@@ -81,8 +88,8 @@ test('page fade has no initial appearance and includes the final staggered group
   const app = setup()
   assert.equal(app.transition.value.mode, 'out-in')
   assert.equal(app.transition.value.appear, false)
-  assert.equal(app.transition.value.duration.enter, 340)
-  assert.equal(app.transition.value.duration.leave, 140)
+  assert.equal(app.transition.value.duration.enter, 480)
+  assert.equal(app.transition.value.duration.leave, 180)
   app.transition.value.onBeforeEnter(app.element)
   assert.deepEqual(app.groups.map(g => g.style.getPropertyValue('--route-reveal-delay')),
     ['0ms', '40ms', '60ms', '80ms', '100ms', '100ms', '100ms', '100ms'])
@@ -108,6 +115,7 @@ for (const end of ['onAfterEnter', 'onEnterCancelled', 'onLeaveCancelled']) {
     assert.equal(app.main.style.getPropertyValue('min-height'), '720px')
     app.transition.value.onBeforeEnter(app.element)
     app.transition.value[end]()
+    assert.equal(app.element.getAttribute('data-route-direction'), undefined)
     assert.equal(app.main.style.getPropertyValue('min-height'), '15rem')
     assert.equal(app.main.style.getPropertyPriority('min-height'), 'important')
     for (const item of app.groups) {
@@ -126,6 +134,71 @@ test('rapid navigation, navigation failure and application errors release a rese
     end()
     assert.equal(app.main.style.getPropertyValue('min-height'), '')
     assert.equal(app.groups[0].getAttribute('data-route-reveal'), undefined)
+  }
+})
+
+test('interrupted reveals keep their current frame until the outgoing page is removed', () => {
+  const app = setup()
+  const delayed = app.groups[2]
+  const midway = app.groups[3]
+  delayed.computedStyle = { opacity: '0', transform: 'matrix(1, 0, 0, 1, 16, 0)' }
+  midway.computedStyle = { opacity: '.32', transform: 'matrix(1, 0, 0, 1, 8, 0)' }
+  midway.style.setProperty('opacity', '.65', 'important')
+  midway.style.setProperty('transform', 'translateY(-4px)')
+  app.transition.value.onBeforeEnter(app.element)
+  app.navigate({}, {}, '/forum', '/games')
+  app.transition.value.onEnterCancelled()
+  app.transition.value.onBeforeLeave(app.element)
+  assert.equal(delayed.style.getPropertyValue('opacity'), '0')
+  assert.equal(midway.style.getPropertyValue('opacity'), '.32')
+  assert.equal(midway.style.getPropertyValue('transform'), 'matrix(1, 0, 0, 1, 8, 0)')
+  assert.equal(delayed.getAttribute('data-route-reveal'), undefined)
+  // Another navigation during the outgoing fade cannot release frozen frames.
+  app.navigate({}, {}, '/about', '/forum')
+  assert.equal(delayed.style.getPropertyValue('opacity'), '0')
+  app.transition.value.onAfterLeave(app.element)
+  assert.equal(delayed.style.getPropertyValue('opacity'), '')
+  assert.equal(delayed.style.getPropertyValue('transform'), '')
+  assert.equal(midway.style.getPropertyValue('opacity'), '.65')
+  assert.equal(midway.style.getPropertyPriority('opacity'), 'important')
+  assert.equal(midway.style.getPropertyValue('transform'), 'translateY(-4px)')
+})
+
+test('failure, cancellation, reduced motion and unmount restore frozen component styles', () => {
+  for (const finish of [
+    app => app.callbacks.afterEach({}, {}, new Error('cancelled')),
+    app => app.callbacks.routerError(),
+    app => app.callbacks.appError(),
+    app => app.transition.value.onLeaveCancelled(),
+    app => { app.motion.matches = true; app.motionEvents.get('change')() },
+    app => app.callbacks.unmount(),
+  ]) {
+    const app = setup()
+    app.groups[2].computedStyle = { opacity: '.2', transform: 'translateX(10px)' }
+    app.transition.value.onBeforeEnter(app.element)
+    app.navigate()
+    assert.equal(app.groups[2].style.getPropertyValue('opacity'), '.2')
+    finish(app)
+    assert.equal(app.groups[2].style.getPropertyValue('opacity'), '')
+    assert.equal(app.groups[2].style.getPropertyValue('transform'), '')
+  }
+})
+
+test('section order controls both route roots, including reverse and same-section navigation', () => {
+  const app = setup()
+  for (const [from, to, expected] of [
+    ['/', '/about', '1'], ['/about', '/games', '-1'],
+    ['/forum', '/forum/myposts', '1'], ['/forum/myposts', '/forum/123', '-1'],
+    ['/forum/123', '/forum/456', '0'], ['/unknown', '/about', '0'],
+    ['/login', '/register', '1'], ['/games', '/', '-1'],
+  ]) {
+    app.navigate({}, {}, to, from)
+    app.transition.value.onBeforeLeave(app.element)
+    assert.equal(app.element.getAttribute('data-route-direction'), expected)
+    app.transition.value.onBeforeEnter(app.element)
+    assert.equal(app.element.getAttribute('data-route-direction'), expected)
+    app.transition.value.onAfterEnter()
+    assert.equal(app.element.getAttribute('data-route-direction'), undefined)
   }
 })
 

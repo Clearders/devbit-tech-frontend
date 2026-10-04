@@ -1,4 +1,5 @@
 import type { TransitionProps } from 'vue'
+import { navigationDirection } from '~/utils/navigation'
 
 export const usePageTransition = () => {
   const router = useRouter()
@@ -8,6 +9,40 @@ export const usePageTransition = () => {
   let previousMinHeight = ''
   let previousPriority = ''
   let reveals: HTMLElement[] = []
+  let direction = 0
+  const movingElements = new Set<Element>()
+  const frozenReveals = new Map<HTMLElement, { name: string; value: string; priority: string }[]>()
+
+  const freezeReveals = () => {
+    // A new navigation can interrupt a group's delay. Preserve that exact
+    // frame before removing its animation so it cannot flash fully visible.
+    for (const element of reveals) {
+      const computed = window.getComputedStyle(element)
+      const frame = { opacity: computed.opacity, transform: computed.transform }
+      if (!frozenReveals.has(element)) {
+        frozenReveals.set(element, ['opacity', 'transform'].map(name => ({
+          name, value: element.style.getPropertyValue(name), priority: element.style.getPropertyPriority(name),
+        })))
+      }
+      element.style.setProperty('opacity', frame.opacity)
+      element.style.setProperty('transform', frame.transform)
+    }
+  }
+  const restoreFrozenReveals = (root?: Element) => {
+    for (const [element, properties] of frozenReveals) {
+      if (root && !root.contains(element)) continue
+      for (const { name, value, priority } of properties) {
+        if (value) element.style.setProperty(name, value, priority)
+        else element.style.removeProperty(name)
+      }
+      frozenReveals.delete(element)
+    }
+  }
+
+  const setDirection = (element: Element) => {
+    element.setAttribute('data-route-direction', String(direction))
+    movingElements.add(element)
+  }
 
   const clearReveals = () => {
     for (const element of reveals) {
@@ -16,8 +51,10 @@ export const usePageTransition = () => {
     }
     reveals = []
   }
-  const cleanup = () => {
+  const clearTransitionState = () => {
     clearReveals()
+    for (const element of movingElements) element.removeAttribute('data-route-direction')
+    movingElements.clear()
     if (reservedMain) {
       if (previousMinHeight) {
         reservedMain.style.setProperty('min-height', previousMinHeight, previousPriority)
@@ -27,14 +64,19 @@ export const usePageTransition = () => {
       reservedMain = undefined
     }
   }
+  const cleanup = () => {
+    clearTransitionState()
+    restoreFrozenReveals()
+  }
   const options = (reducedMotion: boolean): TransitionProps => ({
     name: 'page',
     mode: 'out-in',
     appear: false,
-    // Include the last child's 100ms delay and 240ms reveal in Vue's lifecycle.
-    duration: reducedMotion ? 0 : { enter: 340, leave: 140 },
+    // Include the final 100ms stagger plus its 380ms horizontal reveal.
+    duration: reducedMotion ? 0 : { enter: 480, leave: 180 },
     onBeforeLeave(element) {
-      cleanup()
+      clearTransitionState()
+      if (!reducedMotion) setDirection(element)
       const main = element.closest<HTMLElement>('.site-layout__main')
       if (!main) return
       reservedMain = main
@@ -45,6 +87,7 @@ export const usePageTransition = () => {
     onBeforeEnter(element) {
       clearReveals()
       if (reducedMotion) return
+      setDirection(element)
       let cardIndex = 0
       const groups = element.querySelectorAll<HTMLElement>('[data-transition-group]')
       for (const group of groups) {
@@ -60,7 +103,8 @@ export const usePageTransition = () => {
       }
     },
     onAfterEnter: cleanup,
-    onEnterCancelled: cleanup,
+    onAfterLeave: restoreFrozenReveals,
+    onEnterCancelled: clearTransitionState,
     onLeaveCancelled: cleanup,
   })
 
@@ -68,13 +112,16 @@ export const usePageTransition = () => {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
     transition.value = options(motion.matches)
     const removeGuard = router.beforeResolve((to, from) => {
-      cleanup()
+      freezeReveals()
+      clearTransitionState()
+      direction = navigationDirection(to.path, from.path)
       // Navigation interrupts startup rather than stacking two animations.
       if (document.documentElement.hasAttribute('data-devbit-startup')) {
         window.__devbitStartupLoading?.finish(true)
       }
       transition.value = to.meta.layout === 'game' || from.meta.layout === 'game'
         || to.meta.pageTransition === false ? false : options(motion.matches)
+      if (transition.value === false) restoreFrozenReveals()
     })
     const removeAfter = router.afterEach((_to, _from, failure) => {
       if (failure) cleanup()

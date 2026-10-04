@@ -2,24 +2,29 @@
   <div>
     <div class="page-header">
       <div class="container" data-transition-group="title">
-        <h1 class="page-header__title">或许</h1>
-        <p class="page-header__subtitle about-subtitle--large">
-          将谓偷闲学少年
-        </p>
-        <p class="page-header__subtitle about-subtitle--large">但</p>
-        <p class="page-header__subtitle about-subtitle--Bold">谁又不曾是少年</p>
+        <p class="hero__badge">ABOUT DEVBIT · 关于我们</p>
+        <h1 class="page-header__title about-title">从一 bit 灵感，<br><span>到一起创造。</span></h1>
+        <p class="page-header__subtitle">把好奇写进代码，把经验分享给彼此。<br>在 DevBit，每一个微小的开始，都值得认真对待。</p>
       </div>
     </div>
 
     <section class="about-section">
       <div class="container">
-        <h2 class="section__title" data-transition-group="title">我们的目标</h2>
-        <p data-transition-group="content">我们相信：网站应该让人感到快乐</p>
-        <p data-transition-group="content">快乐不能构筑现实，但现实是为了更快乐的生活</p>
-        <p data-transition-group="content">
-          We believe that websites should make people happy.Happiness cannot
-          construct reality, but reality is for a happier life
-        </p>
+        <section class="about-meaning" aria-labelledby="meaning-title" data-transition-group="card">
+          <div class="about-meaning__name" aria-hidden="true"><span>Dev</span><span class="about-meaning__plus">+</span><span>Bit</span></div>
+          <div>
+            <h2 id="meaning-title">名字里的两份心意</h2>
+            <p><strong>Dev，是开发，也是创造。</strong>把“如果可以”变成一个能运行、能体验、能帮助他人的作品。</p>
+            <p><strong>Bit，是比特，也是点滴。</strong>一行代码、一次提问、一份耐心的回答，都是向前的最小一步。把这些小小的进步连接起来，就是 DevBit。</p>
+          </div>
+        </section>
+        <div class="about-principles">
+          <section v-for="principle in principles" :key="principle.label" class="about-principle" data-transition-group="card">
+            <p class="about-principle__label">{{ principle.label }}</p>
+            <h2>{{ principle.title }}</h2>
+            <p>{{ principle.description }}</p>
+          </section>
+        </div>
 
         <h2 class="section__title" style="margin-top: 3rem" data-transition-group="title">我们的团队</h2>
         <div class="team-grid">
@@ -99,19 +104,36 @@ const team = [
   { avatar: '👨‍💻', name: 'Clearders', role: '全栈前端工程师' },
   { avatar: '🧑‍🎨', name: 'EpsilonHunter', role: '全栈后端工程师' },
 ]
+const principles = [
+  { label: '01 / 使命', title: '让创造更容易开始', description: '用清楚的技术讨论、可体验的小实验和开放的协作，让学习者敢于提问，让开发者愿意分享，让想法有机会落地。' },
+  { label: '02 / 愿景', title: '让点滴汇成共同的成长', description: '我们希望这里成为一个可以长期交流、反复尝试的开发者社区。经验能被接续，作品能得到回应，每个人都能找到同行者。' },
+  { label: '03 / 行动', title: '做一点，分享一点', description: '从解决一个真实问题开始，记录过程，分享收获，也认真回应别人的尝试。保留玩心，在代码与游戏中发现创造的快乐。' },
+]
 
 useSeoMeta({
   title: '团队介绍 – DevBit Tech',
-  description: '认识 DevBit Tech 团队，了解社区、游戏实验与开源参与方式。',
+  description: 'Dev 是创造，Bit 是点滴。认识 DevBit Tech 的使命、团队，以及技术交流、游戏实验与开源参与方式。',
 })
 </script>
 
 <style scoped>
-.about-subtitle--large {
-  font-size: 1.35rem;
-}
-.about-subtitle--Bold {
-  font-size: 1.55rem;
-  font-weight: bold;
+.about-title { font-size: clamp(2rem, 4.5vw, 3.5rem); line-height: 1.25; }
+.about-title span { color: var(--color-primary); }
+.about-meaning { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(0, 1.6fr); align-items: center; gap: 40px; padding: 36px; background: linear-gradient(120deg, #fff, #f4f7fc); border: 1px solid var(--color-border-light); border-radius: 28px; box-shadow: var(--shadow-sm); }
+.about-meaning__name { display: flex; align-items: center; justify-content: center; gap: 12px; font: 700 clamp(1.8rem, 3.4vw, 3rem) var(--font-display); letter-spacing: -.06em; }
+.about-meaning__name span:first-child { color: var(--color-primary); }
+.about-meaning__plus { font-size: 1.2rem; color: var(--color-text-muted); font-weight: 400; }
+.about-meaning h2 { font-size: 1.25rem; margin-bottom: 18px; }
+.about-meaning p:last-child { margin-bottom: 0; }
+.about-principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 24px; }
+.about-principle { padding: 26px; border: 1px solid var(--color-border-light); border-radius: 22px; background: var(--color-surface); }
+.about-principle .about-principle__label { color: var(--color-primary-dark); font-size: .75rem; font-weight: 600; letter-spacing: .08em; }
+.about-principle h2 { font-size: 1.15rem; margin-bottom: 14px; }
+.about-principle p:last-child { font-size: .9rem; margin-bottom: 0; }
+@media (max-width: 760px) {
+  .about-meaning { grid-template-columns: 1fr; gap: 24px; padding: 24px; }
+  .about-meaning__name { justify-content: flex-start; }
+  .about-principles { grid-template-columns: 1fr; gap: 14px; }
+  .about-principle { padding: 24px; }
 }
 </style>

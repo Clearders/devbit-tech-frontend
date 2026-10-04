@@ -72,10 +72,20 @@
         </div>
 
         <!-- Category tabs -->
-        <div class="forum-categories" data-transition-group="content">
+        <div class="forum-category-nav" role="group" aria-label="帖子分类" data-transition-group="content">
+          <button type="button" class="forum-category-nav__arrow" aria-label="查看前面的分类" aria-controls="forum-category-list"
+            :disabled="!categoryScroll.before" :class="{ 'is-pressed': pressedCategoryArrow === -1 }"
+            @pointerenter="setCategoryArrowOrigin" @pointerdown="pressCategoryArrow($event, -1)"
+            @pointermove="trackCategoryArrowPointer" @pointerleave="leaveCategoryArrow"
+            @pointerup="pressedCategoryArrow = null" @pointercancel="pressedCategoryArrow = null"
+            @focus="centerCategoryArrowOrigin" @click="scrollCategories(-1)"><span aria-hidden="true">‹</span></button>
+        <div class="forum-category-window" :class="{ 'has-before': categoryScroll.before, 'has-after': categoryScroll.after }">
+        <div id="forum-category-list" ref="categoryList" class="forum-categories" @scroll.passive="updateCategoryScroll">
           <button
             v-for="cat in categoryTabs"
             :key="cat.value"
+            type="button"
+            :aria-pressed="activeCategory === cat.value"
             class="forum-categories__tab"
             :class="{
               'forum-categories__tab--active': activeCategory === cat.value,
@@ -89,6 +99,14 @@
             }}</span>
           </button>
         </div>
+        </div>
+          <button type="button" class="forum-category-nav__arrow" aria-label="查看后面的分类" aria-controls="forum-category-list"
+            :disabled="!categoryScroll.after" :class="{ 'is-pressed': pressedCategoryArrow === 1 }"
+            @pointerenter="setCategoryArrowOrigin" @pointerdown="pressCategoryArrow($event, 1)"
+            @pointermove="trackCategoryArrowPointer" @pointerleave="leaveCategoryArrow"
+            @pointerup="pressedCategoryArrow = null" @pointercancel="pressedCategoryArrow = null"
+            @focus="centerCategoryArrowOrigin" @click="scrollCategories(1)"><span aria-hidden="true">›</span></button>
+        </div>
       </div>
     </section>
 
@@ -96,6 +114,9 @@
     <section class="forum-content">
       <div class="container">
         <div class="forum-layout">
+          <ForumCommunityPanel :post-count="totalPostCount" :comment-count="totalCommentCount"
+            :user-count="users.length" :hot-posts="hotPosts" :loading="isLoadingForum" :error="loadError"
+            @retry="loadForum(true)" />
           <!-- Left: Post list -->
           <div class="forum-layout__main">
             <!-- Admin Panel -->
@@ -194,65 +215,7 @@
             </div>
           </div>
 
-          <!-- Right: Sidebar -->
-          <aside class="forum-layout__sidebar">
-            <!-- Stats -->
-            <div class="forum-sidebar-card" data-transition-group="card">
-              <h3 class="forum-sidebar-card__title">📊 社区统计</h3>
-              <div class="forum-sidebar-card__stats">
-                <div class="forum-sidebar-card__stat">
-                  <span class="forum-sidebar-card__stat-value">{{
-                    totalPostCount
-                  }}</span>
-                  <span class="forum-sidebar-card__stat-label">帖子</span>
-                </div>
-                <div class="forum-sidebar-card__stat">
-                  <span class="forum-sidebar-card__stat-value">{{
-                    totalCommentCount
-                  }}</span>
-                  <span class="forum-sidebar-card__stat-label">评论</span>
-                </div>
-                <div class="forum-sidebar-card__stat">
-                  <span class="forum-sidebar-card__stat-value">{{
-                    users.length
-                  }}</span>
-                  <span class="forum-sidebar-card__stat-label">用户</span>
-                </div>
-              </div>
-            </div>
 
-            <!-- Hot posts -->
-            <div class="forum-sidebar-card" data-transition-group="card">
-              <h3 class="forum-sidebar-card__title">🔥 热门帖子</h3>
-              <ul class="forum-sidebar-card__hot-list">
-                <li v-for="post in hotPosts" :key="post.id">
-                  <NuxtLink
-                    :to="`/forum/${post.id}`"
-                    class="forum-sidebar-card__hot-link"
-                  >
-                    <span class="forum-sidebar-card__hot-title">{{
-                      post.title
-                    }}</span>
-                    <span class="forum-sidebar-card__hot-meta"
-                      >💬 {{ post.commentCount }}</span
-                    >
-                  </NuxtLink>
-                </li>
-              </ul>
-            </div>
-
-            <!-- Guidelines -->
-            <div class="forum-sidebar-card" data-transition-group="card">
-              <h3 class="forum-sidebar-card__title">📋 社区规范</h3>
-              <ul class="forum-sidebar-card__rules">
-                <li>尊重他人，友善交流</li>
-                <li>禁止发布广告与垃圾信息</li>
-                <li>技术讨论请保持客观</li>
-                <li>求助时请描述清楚问题</li>
-                <li>转载内容请注明出处</li>
-              </ul>
-            </div>
-          </aside>
         </div>
       </div>
     </section>
@@ -341,6 +304,102 @@ const activeCategory = computed<ForumCategory | 'all'>({
     })
   },
 })
+const categoryList = ref<HTMLElement>()
+const categoryScroll = reactive({ before: false, after: false })
+const pressedCategoryArrow = ref<number | null>(null)
+const categoryArrowPointers = new WeakMap<HTMLButtonElement, { x: number; y: number }>()
+let categoryResize: ResizeObserver | undefined
+let categoryDisposed = false
+function pressCategoryArrow(event: PointerEvent, direction: number) {
+  const arrow = event.currentTarget as HTMLButtonElement
+  if (arrow.disabled) return
+  setCategoryArrowOrigin(event)
+  if (event.pointerType !== 'mouse') pressedCategoryArrow.value = direction
+}
+function setCategoryArrowOrigin(event: PointerEvent) {
+  const arrow = event.currentTarget as HTMLButtonElement
+  if (arrow.disabled) return
+  const visible = Number.parseFloat(getComputedStyle(arrow, '::before').opacity) > .01
+  arrow.style.setProperty('--arrow-origin-duration', visible ? '480ms' : '0ms')
+  const bounds = arrow.getBoundingClientRect()
+  arrow.style.setProperty('--arrow-origin-x', `${event.clientX - bounds.left - arrow.clientLeft}px`)
+  arrow.style.setProperty('--arrow-origin-y', `${event.clientY - bounds.top - arrow.clientTop}px`)
+  trackCategoryArrowPointer(event)
+}
+function trackCategoryArrowPointer(event: PointerEvent) {
+  categoryArrowPointers.set(event.currentTarget as HTMLButtonElement, { x: event.clientX, y: event.clientY })
+}
+function leaveCategoryArrow(event: PointerEvent) {
+  pressedCategoryArrow.value = null
+  const arrow = event.currentTarget as HTMLButtonElement
+  const previous = categoryArrowPointers.get(arrow)
+  categoryArrowPointers.delete(arrow)
+  if (arrow.disabled || event.pointerType === 'touch') return
+  const bounds = arrow.getBoundingClientRect()
+  const radius = Math.min(bounds.width, bounds.height) / 2
+  const inside = (x: number, y: number) => {
+    const dx = Math.max(Math.abs(x - bounds.width / 2) - (bounds.width / 2 - radius), 0)
+    const dy = Math.max(Math.abs(y - bounds.height / 2) - (bounds.height / 2 - radius), 0)
+    return dx * dx + dy * dy <= radius * radius
+  }
+  const start = { x: previous ? previous.x - bounds.left : bounds.width / 2, y: previous ? previous.y - bounds.top : bounds.height / 2 }
+  const end = { x: event.clientX - bounds.left, y: event.clientY - bounds.top }
+  // A fast move may deliver pointerleave far outside the button. Find where
+  // that segment crossed the capsule rather than using the distant pointer.
+  if (inside(start.x, start.y) && !inside(end.x, end.y)) {
+    let low = 0
+    let high = 1
+    for (let i = 0; i < 18; i++) {
+      const middle = (low + high) / 2
+      if (inside(start.x + (end.x - start.x) * middle, start.y + (end.y - start.y) * middle)) low = middle
+      else high = middle
+    }
+    end.x = start.x + (end.x - start.x) * low
+    end.y = start.y + (end.y - start.y) * low
+  }
+  arrow.style.setProperty('--arrow-origin-duration', '360ms')
+  arrow.style.setProperty('--arrow-origin-x', `${Math.max(0, Math.min(bounds.width, end.x)) - arrow.clientLeft}px`)
+  arrow.style.setProperty('--arrow-origin-y', `${Math.max(0, Math.min(bounds.height, end.y)) - arrow.clientTop}px`)
+}
+function centerCategoryArrowOrigin(event: FocusEvent) {
+  const arrow = event.currentTarget as HTMLButtonElement
+  if (!arrow.matches(':focus-visible')) return
+  arrow.style.setProperty('--arrow-origin-duration', '360ms')
+  arrow.style.setProperty('--arrow-origin-x', '50%')
+  arrow.style.setProperty('--arrow-origin-y', '50%')
+}
+function updateCategoryScroll() {
+  const list = categoryList.value
+  if (!list) return
+  categoryScroll.before = list.scrollLeft > 2
+  categoryScroll.after = list.scrollLeft + list.clientWidth < list.scrollWidth - 2
+}
+function categoryScrollBehavior(): ScrollBehavior {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
+}
+function scrollCategories(direction: number) {
+  const list = categoryList.value
+  list?.scrollBy({ left: direction * list.clientWidth * .75, behavior: categoryScrollBehavior() })
+}
+function revealActiveCategory() {
+  const list = categoryList.value
+  const active = list?.querySelector<HTMLElement>('[aria-pressed="true"]')
+  if (!list || !active) return
+  const left = active.offsetLeft - 6
+  const right = active.offsetLeft + active.offsetWidth + 6
+  if (left < list.scrollLeft) list.scrollTo({ left, behavior: categoryScrollBehavior() })
+  else if (right > list.scrollLeft + list.clientWidth) list.scrollTo({ left: right - list.clientWidth, behavior: categoryScrollBehavior() })
+  updateCategoryScroll()
+}
+watch(activeCategory, async () => { await nextTick(); revealActiveCategory() })
+watch(totalPostCount, async () => { await nextTick(); updateCategoryScroll() })
+onMounted(() => {
+  categoryResize = new ResizeObserver(revealActiveCategory)
+  if (categoryList.value) categoryResize.observe(categoryList.value)
+  revealActiveCategory()
+  document.fonts.ready.then(() => { if (!categoryDisposed) revealActiveCategory() })
+})
+onBeforeUnmount(() => { categoryDisposed = true; categoryResize?.disconnect() })
 type SortMode = 'latest' | 'active' | 'views' | 'likes'
 const sortMode = computed<SortMode>({
   get: () =>

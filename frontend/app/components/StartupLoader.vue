@@ -183,7 +183,7 @@ html[data-devbit-startup='leaving'] [data-transition-group] [data-transition-gro
 }
 @keyframes devbit-startup-reveal {
   from { opacity: 0; transform: translateY(28px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { transform: translateY(0); }
 }
 @keyframes devbit-startup-ambient { from { opacity: 0; } to { opacity: 1; } }
 
@@ -191,7 +191,7 @@ html[data-devbit-startup='leaving'] [data-transition-group] [data-transition-gro
   .startup-loader__track, .startup-loader__readout { width: 168px; }
   @keyframes devbit-startup-reveal {
     from { opacity: 0; transform: translateY(18px); }
-    to { opacity: 1; transform: translateY(0); }
+    to { transform: translateY(0); }
   }
 }
 @media (prefers-reduced-motion: reduce) {
