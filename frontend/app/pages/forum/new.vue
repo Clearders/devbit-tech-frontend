@@ -2,13 +2,15 @@
   <div class="post-editor-page">
     <!-- Header -->
     <section class="page-header">
-      <div class="container" data-transition-group="title">
-        <NuxtLink to="/forum" class="post-editor__back">← 返回论坛</NuxtLink>
-        <h1 class="page-header__title">✏️ 撰写帖子</h1>
-        <p class="page-header__subtitle">
-          分享你的技术见解、经验心得或提问求助。
-        </p>
-      </div>
+      <ScrollReveal>
+        <div class="container" data-transition-group="title">
+          <NuxtLink to="/forum" class="post-editor__back">← 返回论坛</NuxtLink>
+          <h1 class="page-header__title">✏️ 撰写帖子</h1>
+          <p class="page-header__subtitle">
+            分享你的技术见解、经验心得或提问求助。
+          </p>
+        </div>
+      </ScrollReveal>
     </section>
 
     <!-- Editor form -->
@@ -21,69 +23,73 @@
           {{ apiError }}
         </div>
 
-        <div class="post-editor__meta">
-          <div class="form-group post-editor__title-group">
-            <label class="form-label" for="post-title">标题</label>
-            <input
-              id="post-title"
-              v-model="title"
-              type="text"
-              class="form-control post-editor__title-input"
-              :class="{ 'form-control--error': errors.title }"
-              placeholder="起一个吸引人的标题…"
-              maxlength="100"
-            />
-            <div class="post-editor__title-meta">
-              <span v-if="errors.title" class="form-error">{{
-                errors.title
-              }}</span>
-              <span class="post-editor__char-hint">{{ title.length }}/100</span>
-            </div>
-          </div>
-
-          <div class="post-editor__meta-row">
-            <div class="form-group">
-              <label class="form-label" for="post-category">分类</label>
-              <select
-                id="post-category"
-                v-model="category"
-                class="form-control"
-              >
-                <option
-                  v-for="cat in FORUM_CATEGORIES"
-                  :key="cat.value"
-                  :value="cat.value"
-                >
-                  {{ cat.icon }} {{ cat.label }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="post-tags">标签（逗号分隔）</label>
+        <ScrollReveal>
+          <div class="post-editor__meta">
+            <div class="form-group post-editor__title-group">
+              <label class="form-label" for="post-title">标题</label>
               <input
-                id="post-tags"
-                v-model="tagsInput"
+                id="post-title"
+                v-model="title"
                 type="text"
-                class="form-control"
-                placeholder="例如：Rust, 前端, 教程"
+                class="form-control post-editor__title-input"
+                :class="{ 'form-control--error': errors.title }"
+                placeholder="起一个吸引人的标题…"
+                maxlength="100"
               />
+              <div class="post-editor__title-meta">
+                <span v-if="errors.title" class="form-error">{{
+                  errors.title
+                }}</span>
+                <span class="post-editor__char-hint">{{ title.length }}/100</span>
+              </div>
+            </div>
+
+            <div class="post-editor__meta-row">
+              <div class="form-group">
+                <label class="form-label" for="post-category">分类</label>
+                <select
+                  id="post-category"
+                  v-model="category"
+                  class="form-control"
+                >
+                  <option
+                    v-for="cat in FORUM_CATEGORIES"
+                    :key="cat.value"
+                    :value="cat.value"
+                  >
+                    {{ cat.icon }} {{ cat.label }}
+                  </option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="post-tags">标签（逗号分隔）</label>
+                <input
+                  id="post-tags"
+                  v-model="tagsInput"
+                  type="text"
+                  class="form-control"
+                  placeholder="例如：Rust, 前端, 教程"
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </ScrollReveal>
 
-        <div class="page-tools" role="group" aria-label="正文模板" data-transition-group="content">
-          <span>从模板开始：</span>
-          <button
-            v-for="item in postTemplates"
-            :key="item.name"
-            type="button"
-            class="btn btn--outline btn--sm"
-            :disabled="submitting || published"
-            @click="applyTemplate(item.body)"
-          >
-            {{ item.name }}
-          </button>
-        </div>
+        <ScrollReveal>
+          <div class="page-tools" role="group" aria-label="正文模板" data-transition-group="content">
+            <span>从模板开始：</span>
+            <button
+              v-for="item in postTemplates"
+              :key="item.name"
+              type="button"
+              class="btn btn--outline btn--sm"
+              :disabled="submitting || published"
+              @click="applyTemplate(item.body)"
+            >
+              {{ item.name }}
+            </button>
+          </div>
+        </ScrollReveal>
         <p
           class="draft-status"
           :class="{ 'form-error': draftFailed }"
@@ -92,13 +98,15 @@
           {{ draftMessage }}
         </p>
         <!-- Markdown Editor -->
-        <div class="post-editor__editor-wrapper">
-          <MarkdownEditor
-            ref="editorRef"
-            v-model="content"
-            placeholder="开始写作…（支持 Markdown 语法）&#10;&#10;## 简介&#10;在这里写下你的想法…&#10;&#10;## 正文&#10;详细内容…"
-          />
-        </div>
+        <ScrollReveal>
+          <div class="post-editor__editor-wrapper">
+            <MarkdownEditor
+              ref="editorRef"
+              v-model="content"
+              placeholder="开始写作…（支持 Markdown 语法）&#10;&#10;## 简介&#10;在这里写下你的想法…&#10;&#10;## 正文&#10;详细内容…"
+            />
+          </div>
+        </ScrollReveal>
 
         <div
           v-if="errors.content"
@@ -108,34 +116,36 @@
         </div>
 
         <!-- Actions -->
-        <div class="post-editor__actions">
-          <button
-            type="button"
-            class="btn btn--outline btn--lg"
-            :disabled="submitting"
-            @click="handleCancel"
-          >
-            ← 取消
-          </button>
-          <div class="post-editor__actions-right">
+        <ScrollReveal>
+          <div class="post-editor__actions">
             <button
               type="button"
               class="btn btn--outline btn--lg"
-              :disabled="submitting || published"
-              @click="handleSaveDraft"
+              :disabled="submitting"
+              @click="handleCancel"
             >
-              💾 存草稿
+              ← 取消
             </button>
-            <button
-              type="button"
-              class="btn btn--primary btn--lg"
-              :disabled="submitting || published"
-              @click="handleSubmit"
-            >
-              {{ submitting ? '发布中…' : '🚀 发布帖子' }}
-            </button>
+            <div class="post-editor__actions-right">
+              <button
+                type="button"
+                class="btn btn--outline btn--lg"
+                :disabled="submitting || published"
+                @click="handleSaveDraft"
+              >
+                💾 存草稿
+              </button>
+              <button
+                type="button"
+                class="btn btn--primary btn--lg"
+                :disabled="submitting || published"
+                @click="handleSubmit"
+              >
+                {{ submitting ? '发布中…' : '🚀 发布帖子' }}
+              </button>
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   </div>

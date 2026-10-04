@@ -11,6 +11,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 :root {
@@ -123,6 +124,11 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+/* Pointer/touch focus needs no browser ring; keyboard focus stays visible. */
+:where(a, button, summary, [role='button'], [tabindex]):focus:not(:focus-visible) {
+  outline: none;
 }
 
 img,
@@ -4055,13 +4061,15 @@ select.form-control {
 [data-route-direction='-1'] { --route-enter-x: -42px; --route-leave-x: 30px; --route-group-x: -16px; }
 [data-route-direction='0'] { --route-enter-x: 0px; --route-leave-x: 0px; --route-group-x: 0px; }
 .site-layout__main { overflow-x: clip; }
-.page-enter-active { transition: opacity 340ms var(--ease-out-quint), transform 420ms var(--ease-out-quint), filter 340ms var(--ease-out-quint); }
-.page-leave-active { transition: opacity 180ms ease-in, transform 180ms ease-in, filter 180ms ease-in; }
+/* Keep route motion on the compositor; blurring a whole page is expensive. */
+.page-enter-active,
+.page-leave-active { will-change: opacity, transform; }
+.page-enter-active { transition: opacity 340ms var(--ease-out-quint), transform 420ms var(--ease-out-quint); }
+.page-leave-active { transition: opacity 180ms ease-in, transform 180ms ease-in; }
 
 .page-enter-from,
 .page-leave-to {
   opacity: 0;
-  filter: blur(5px);
 }
 .page-enter-from { transform: translate3d(var(--route-enter-x, 0px), 0, 0); }
 .page-leave-to { transform: translate3d(var(--route-leave-x, 0px), 0, 0); }
@@ -4079,8 +4087,8 @@ select.form-control {
 
 @media (prefers-reduced-motion: reduce) {
   .page-enter-active,
-  .page-leave-active { transition: none; }
-  .page-enter-from, .page-leave-to { transform: none; filter: none; }
+  .page-leave-active { transition: none; will-change: auto; }
+  .page-enter-from, .page-leave-to { transform: none; }
   .page-enter-active [data-route-reveal] { animation: none; }
 }
 

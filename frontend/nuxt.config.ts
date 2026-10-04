@@ -119,6 +119,12 @@ export default defineNuxtConfig({
 
   // Nuxt 4 optimizations
   experimental: {
+    defaults: {
+      nuxtLink: {
+        // Start loading on hover/focus even before idle visibility prefetch runs.
+        prefetchOn: { visibility: true, interaction: true },
+      },
+    },
     // viewTransition disabled: the browser's View Transition API snapshots the
     // entire viewport on every navigation, freezing the background canvas and
     // causing 130+ms frame drops. Vue's pageTransition (CSS-only, scoped to

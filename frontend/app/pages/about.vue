@@ -1,99 +1,115 @@
 <template>
   <div>
     <div class="page-header">
-      <div class="container" data-transition-group="title">
-        <p class="hero__badge">ABOUT DEVBIT · 关于我们</p>
-        <h1 class="page-header__title about-title">从一 bit 灵感，<br><span>到一起创造。</span></h1>
-        <p class="page-header__subtitle">把好奇写进代码，把经验分享给彼此。<br>在 DevBit，每一个微小的开始，都值得认真对待。</p>
-      </div>
+      <ScrollReveal>
+        <div class="container" data-transition-group="title">
+          <p class="hero__badge">ABOUT DEVBIT · 关于我们</p>
+          <h1 class="page-header__title about-title">从一 bit 灵感，<br><span>到一起创造。</span></h1>
+          <p class="page-header__subtitle">把好奇写进代码，把经验分享给彼此。<br>在 DevBit，每一个微小的开始，都值得认真对待。</p>
+        </div>
+      </ScrollReveal>
     </div>
 
     <section class="about-section">
       <div class="container">
-        <section class="about-meaning" aria-labelledby="meaning-title" data-transition-group="card">
-          <div class="about-meaning__name" aria-hidden="true"><span>Dev</span><span class="about-meaning__plus">+</span><span>Bit</span></div>
-          <div>
-            <h2 id="meaning-title">名字里的两份心意</h2>
-            <p><strong>Dev，是开发，也是创造。</strong>把“如果可以”变成一个能运行、能体验、能帮助他人的作品。</p>
-            <p><strong>Bit，是比特，也是点滴。</strong>一行代码、一次提问、一份耐心的回答，都是向前的最小一步。把这些小小的进步连接起来，就是 DevBit。</p>
-          </div>
-        </section>
-        <div class="about-principles">
-          <section v-for="principle in principles" :key="principle.label" class="about-principle" data-transition-group="card">
-            <p class="about-principle__label">{{ principle.label }}</p>
-            <h2>{{ principle.title }}</h2>
-            <p>{{ principle.description }}</p>
+        <ScrollReveal>
+          <section class="about-meaning" aria-labelledby="meaning-title" data-transition-group="card">
+            <div class="about-meaning__name" aria-hidden="true"><span>Dev</span><span class="about-meaning__plus">+</span><span>Bit</span></div>
+            <div>
+              <h2 id="meaning-title">名字里的两份心意</h2>
+              <p><strong>Dev，是开发，也是创造。</strong>把“如果可以”变成一个能运行、能体验、能帮助他人的作品。</p>
+              <p><strong>Bit，是比特，也是点滴。</strong>一行代码、一次提问、一份耐心的回答，都是向前的最小一步。把这些小小的进步连接起来，就是 DevBit。</p>
+            </div>
           </section>
+        </ScrollReveal>
+        <div class="about-principles">
+          <ScrollReveal v-for="principle in principles" :key="principle.label" stretch>
+            <section class="about-principle" data-transition-group="card">
+              <p class="about-principle__label">{{ principle.label }}</p>
+              <h2>{{ principle.title }}</h2>
+              <p>{{ principle.description }}</p>
+            </section>
+          </ScrollReveal>
         </div>
 
-        <h2 class="section__title" style="margin-top: 3rem" data-transition-group="title">我们的团队</h2>
+        <ScrollReveal>
+          <h2 class="section__title" style="margin-top: 3rem" data-transition-group="title">我们的团队</h2>
+        </ScrollReveal>
         <div class="team-grid">
-          <div v-for="member in team" :key="member.name" class="team-card" data-transition-group="card">
-            <div class="team-card__avatar">{{ member.avatar }}</div>
-            <div class="team-card__name">{{ member.name }}</div>
-            <div class="team-card__role">{{ member.role }}</div>
-          </div>
+          <ScrollReveal v-for="member in team" :key="member.name" stretch>
+            <div class="team-card" data-transition-group="card">
+              <div class="team-card__avatar">{{ member.avatar }}</div>
+              <div class="team-card__name">{{ member.name }}</div>
+              <div class="team-card__role">{{ member.role }}</div>
+            </div>
+          </ScrollReveal>
         </div>
-        <section class="detail-panel" aria-labelledby="project-about-title" data-transition-group="card">
-          <h2 id="project-about-title">我们正在创造什么</h2>
-          <div class="info-grid">
-            <article>
-              <h3>交流社区</h3>
+        <ScrollReveal>
+          <section class="detail-panel" aria-labelledby="project-about-title" data-transition-group="card">
+            <h2 id="project-about-title">我们正在创造什么</h2>
+            <div class="info-grid">
+              <article>
+                <h3>交流社区</h3>
+                <p>
+                  用论坛记录技术问题、开发过程与作品灵感，让一个人的经验成为大家的参考。
+                </p>
+                <NuxtLink to="/forum">浏览讨论 →</NuxtLink>
+              </article>
+              <article>
+                <h3>浏览器里的实验</h3>
+                <p>从 Bevy 光影演示出发，探索代码、图形与交互带来的乐趣。</p>
+                <NuxtLink to="/games">了解游戏实验 →</NuxtLink>
+              </article>
+            </div>
+          </section>
+        </ScrollReveal>
+        <ScrollReveal>
+          <section class="detail-panel" aria-labelledby="contribute-title" data-transition-group="card">
+            <h2 id="contribute-title">从一个小贡献开始</h2>
+            <ol class="guide-steps">
+              <li>阅读仓库 README，了解项目结构与启动方式。</li>
+              <li>
+                先查看已有问题和讨论，选择文档修正、体验反馈或边界清楚的小改动。
+              </li>
+              <li>分享改动的原因和验证方式；界面改动可以附上前后截图。</li>
+            </ol>
+            <div class="page-tools" data-transition-group="content">
+              <a
+                href="https://github.com/Clearders/devbit-tech"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn--primary"
+                >查看 GitHub 仓库 ↗</a
+              ><NuxtLink to="/forum/new" class="btn btn--outline"
+                >分享建议</NuxtLink
+              >
+            </div>
+          </section>
+        </ScrollReveal>
+        <ScrollReveal>
+          <section class="detail-panel" aria-labelledby="about-faq-title" data-transition-group="card">
+            <h2 id="about-faq-title">常见问题</h2>
+            <details class="info-disclosure">
+              <summary>刚开始学习编程，也可以参与吗？</summary>
               <p>
-                用论坛记录技术问题、开发过程与作品灵感，让一个人的经验成为大家的参考。
+                可以。一个描述清楚的问题、一段学习记录或一处文档修正，都是参与的起点。
               </p>
-              <NuxtLink to="/forum">浏览讨论 →</NuxtLink>
-            </article>
-            <article>
-              <h3>浏览器里的实验</h3>
-              <p>从 Bevy 光影演示出发，探索代码、图形与交互带来的乐趣。</p>
-              <NuxtLink to="/games">了解游戏实验 →</NuxtLink>
-            </article>
-          </div>
-        </section>
-        <section class="detail-panel" aria-labelledby="contribute-title" data-transition-group="card">
-          <h2 id="contribute-title">从一个小贡献开始</h2>
-          <ol class="guide-steps">
-            <li>阅读仓库 README，了解项目结构与启动方式。</li>
-            <li>
-              先查看已有问题和讨论，选择文档修正、体验反馈或边界清楚的小改动。
-            </li>
-            <li>分享改动的原因和验证方式；界面改动可以附上前后截图。</li>
-          </ol>
-          <div class="page-tools" data-transition-group="content">
-            <a
-              href="https://github.com/Clearders/devbit-tech"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn btn--primary"
-              >查看 GitHub 仓库 ↗</a
-            ><NuxtLink to="/forum/new" class="btn btn--outline"
-              >分享建议</NuxtLink
-            >
-          </div>
-        </section>
-        <section class="detail-panel" aria-labelledby="about-faq-title" data-transition-group="card">
-          <h2 id="about-faq-title">常见问题</h2>
-          <details class="info-disclosure">
-            <summary>刚开始学习编程，也可以参与吗？</summary>
-            <p>
-              可以。一个描述清楚的问题、一段学习记录或一处文档修正，都是参与的起点。
-            </p>
-          </details>
-          <details class="info-disclosure">
-            <summary>怎样反馈问题更有帮助？</summary>
-            <p>
-              说明预期与实际行为，附上复现步骤、浏览器版本和错误信息。发布截图或日志前，请移除个人信息与密钥。
-            </p>
-          </details>
-          <details class="info-disclosure">
-            <summary>网站的功能都已开放了吗？</summary>
-            <p>
-              社区仍处于 Beta
-              阶段。可以体验论坛与现有游戏；排行榜正在开发中，尚未开放排名。
-            </p>
-          </details>
-        </section>
+            </details>
+            <details class="info-disclosure">
+              <summary>怎样反馈问题更有帮助？</summary>
+              <p>
+                说明预期与实际行为，附上复现步骤、浏览器版本和错误信息。发布截图或日志前，请移除个人信息与密钥。
+              </p>
+            </details>
+            <details class="info-disclosure">
+              <summary>网站的功能都已开放了吗？</summary>
+              <p>
+                社区仍处于 Beta
+                阶段。可以体验论坛与现有游戏；排行榜正在开发中，尚未开放排名。
+              </p>
+            </details>
+          </section>
+        </ScrollReveal>
       </div>
     </section>
   </div>

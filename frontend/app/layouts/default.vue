@@ -3,12 +3,14 @@ import AppNavbar from "~/components/AppNavbar.vue"
 import AppFooter from "~/components/AppFooter.vue"
 
 const { isAuthenticated } = useAuth()
+const mainContent = ref<HTMLElement>()
+useScrollReveal(mainContent)
 </script>
 
 <template>
   <div class="site-layout">
     <AppNavbar />
-    <main class="site-layout__main">
+    <main ref="mainContent" class="site-layout__main">
       <slot />
     </main>
     <AppFooter />

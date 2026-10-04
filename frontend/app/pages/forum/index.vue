@@ -2,113 +2,117 @@
   <div class="forum-page">
     <!-- Header -->
     <section class="page-header">
-      <div class="container" data-transition-group="title">
-        <p class="hero__badge" data-transition-group="title">Community</p>
-        <h1 class="page-header__title">💬 论坛</h1>
-        <p class="page-header__subtitle">
-          技术讨论、经验分享、问题解答——一切尽在 DevBit Tech 论坛。
-        </p>
-      </div>
+      <ScrollReveal>
+        <div class="container" data-transition-group="title">
+          <p class="hero__badge" data-transition-group="title">Community</p>
+          <h1 class="page-header__title">💬 论坛</h1>
+          <p class="page-header__subtitle">
+            技术讨论、经验分享、问题解答——一切尽在 DevBit Tech 论坛。
+          </p>
+        </div>
+      </ScrollReveal>
     </section>
 
     <!-- Toolbar -->
-    <section class="forum-toolbar" data-transition-group="content">
-      <div class="container">
-        <div class="forum-toolbar__row">
-          <!-- Search -->
-          <div class="forum-toolbar__search">
-            <span class="forum-toolbar__search-icon">🔍</span>
-            <input
-              v-model="searchQuery"
-              type="text"
-              class="form-control forum-toolbar__search-input"
-              placeholder="搜索帖子标题、内容或标签"
-            />
-            <button
-              v-if="searchQuery"
-              class="forum-toolbar__search-clear"
-              @click="clearSearch"
-            >
-              ✖
-            </button>
-          </div>
-
-          <!-- Actions -->
-          <div class="forum-toolbar__actions">
-            <div class="forum-sort">
-              <span class="forum-sort__label">
-                <span class="forum-sort__label-icon">↕</span>
-                <span class="forum-sort__label-text">排序</span>
-              </span>
-              <div class="forum-sort__options">
-                <button
-                  v-for="opt in sortOptions"
-                  :key="opt.value"
-                  class="forum-sort__btn"
-                  :class="{ 'forum-sort__btn--active': sortMode === opt.value }"
-                  @click="sortMode = opt.value"
-                >
-                  <span class="forum-sort__btn-icon">{{ opt.icon }}</span>
-                  <span class="forum-sort__btn-text">{{ opt.label }}</span>
-                </button>
-              </div>
+    <ScrollReveal>
+      <section class="forum-toolbar" data-transition-group="content">
+        <div class="container">
+          <div class="forum-toolbar__row">
+            <!-- Search -->
+            <div class="forum-toolbar__search">
+              <span class="forum-toolbar__search-icon">🔍</span>
+              <input
+                v-model="searchQuery"
+                type="text"
+                class="form-control forum-toolbar__search-input"
+                placeholder="搜索帖子标题、内容或标签"
+              />
+              <button
+                v-if="searchQuery"
+                class="forum-toolbar__search-clear"
+                @click="clearSearch"
+              >
+                ✖
+              </button>
             </div>
-            <NuxtLink
-              v-if="isAuthenticated"
-              to="/forum/new"
-              class="btn btn--primary"
-            >
-              ✏️ 发布帖子
-            </NuxtLink>
+
+            <!-- Actions -->
+            <div class="forum-toolbar__actions">
+              <div class="forum-sort">
+                <span class="forum-sort__label">
+                  <span class="forum-sort__label-icon">↕</span>
+                  <span class="forum-sort__label-text">排序</span>
+                </span>
+                <div class="forum-sort__options">
+                  <button
+                    v-for="opt in sortOptions"
+                    :key="opt.value"
+                    class="forum-sort__btn"
+                    :class="{ 'forum-sort__btn--active': sortMode === opt.value }"
+                    @click="sortMode = opt.value"
+                  >
+                    <span class="forum-sort__btn-icon">{{ opt.icon }}</span>
+                    <span class="forum-sort__btn-text">{{ opt.label }}</span>
+                  </button>
+                </div>
+              </div>
+              <NuxtLink
+                v-if="isAuthenticated"
+                to="/forum/new"
+                class="btn btn--primary"
+              >
+                ✏️ 发布帖子
+              </NuxtLink>
+              <button
+                v-if="isAdmin"
+                class="btn btn--outline"
+                :class="{ 'btn--active': showAdminPanel }"
+                @click="showAdminPanel = !showAdminPanel"
+              >
+                🛡️ 管理
+              </button>
+            </div>
+          </div>
+
+          <!-- Category tabs -->
+          <div class="forum-category-nav" role="group" aria-label="帖子分类" data-transition-group="content">
+            <button type="button" class="forum-category-nav__arrow" aria-label="查看前面的分类" aria-controls="forum-category-list"
+              :disabled="!categoryScroll.before" :class="{ 'is-pressed': pressedCategoryArrow === -1 }"
+              @pointerenter="setCategoryArrowOrigin" @pointerdown="pressCategoryArrow($event, -1)"
+              @pointermove="trackCategoryArrowPointer" @pointerleave="leaveCategoryArrow"
+              @pointerup="pressedCategoryArrow = null" @pointercancel="pressedCategoryArrow = null"
+              @focus="centerCategoryArrowOrigin" @click="scrollCategories(-1)"><span aria-hidden="true">‹</span></button>
+          <div class="forum-category-window" :class="{ 'has-before': categoryScroll.before, 'has-after': categoryScroll.after }">
+          <div id="forum-category-list" ref="categoryList" class="forum-categories" @scroll.passive="updateCategoryScroll">
             <button
-              v-if="isAdmin"
-              class="btn btn--outline"
-              :class="{ 'btn--active': showAdminPanel }"
-              @click="showAdminPanel = !showAdminPanel"
+              v-for="cat in categoryTabs"
+              :key="cat.value"
+              type="button"
+              :aria-pressed="activeCategory === cat.value"
+              class="forum-categories__tab"
+              :class="{
+                'forum-categories__tab--active': activeCategory === cat.value,
+              }"
+              @click="activeCategory = cat.value"
             >
-              🛡️ 管理
+              <span class="forum-categories__tab-icon">{{ cat.icon }}</span>
+              <span class="forum-categories__tab-label">{{ cat.label }}</span>
+              <span class="forum-categories__tab-count">{{
+                getCategoryCount(cat.value)
+              }}</span>
             </button>
           </div>
+          </div>
+            <button type="button" class="forum-category-nav__arrow" aria-label="查看后面的分类" aria-controls="forum-category-list"
+              :disabled="!categoryScroll.after" :class="{ 'is-pressed': pressedCategoryArrow === 1 }"
+              @pointerenter="setCategoryArrowOrigin" @pointerdown="pressCategoryArrow($event, 1)"
+              @pointermove="trackCategoryArrowPointer" @pointerleave="leaveCategoryArrow"
+              @pointerup="pressedCategoryArrow = null" @pointercancel="pressedCategoryArrow = null"
+              @focus="centerCategoryArrowOrigin" @click="scrollCategories(1)"><span aria-hidden="true">›</span></button>
+          </div>
         </div>
-
-        <!-- Category tabs -->
-        <div class="forum-category-nav" role="group" aria-label="帖子分类" data-transition-group="content">
-          <button type="button" class="forum-category-nav__arrow" aria-label="查看前面的分类" aria-controls="forum-category-list"
-            :disabled="!categoryScroll.before" :class="{ 'is-pressed': pressedCategoryArrow === -1 }"
-            @pointerenter="setCategoryArrowOrigin" @pointerdown="pressCategoryArrow($event, -1)"
-            @pointermove="trackCategoryArrowPointer" @pointerleave="leaveCategoryArrow"
-            @pointerup="pressedCategoryArrow = null" @pointercancel="pressedCategoryArrow = null"
-            @focus="centerCategoryArrowOrigin" @click="scrollCategories(-1)"><span aria-hidden="true">‹</span></button>
-        <div class="forum-category-window" :class="{ 'has-before': categoryScroll.before, 'has-after': categoryScroll.after }">
-        <div id="forum-category-list" ref="categoryList" class="forum-categories" @scroll.passive="updateCategoryScroll">
-          <button
-            v-for="cat in categoryTabs"
-            :key="cat.value"
-            type="button"
-            :aria-pressed="activeCategory === cat.value"
-            class="forum-categories__tab"
-            :class="{
-              'forum-categories__tab--active': activeCategory === cat.value,
-            }"
-            @click="activeCategory = cat.value"
-          >
-            <span class="forum-categories__tab-icon">{{ cat.icon }}</span>
-            <span class="forum-categories__tab-label">{{ cat.label }}</span>
-            <span class="forum-categories__tab-count">{{
-              getCategoryCount(cat.value)
-            }}</span>
-          </button>
-        </div>
-        </div>
-          <button type="button" class="forum-category-nav__arrow" aria-label="查看后面的分类" aria-controls="forum-category-list"
-            :disabled="!categoryScroll.after" :class="{ 'is-pressed': pressedCategoryArrow === 1 }"
-            @pointerenter="setCategoryArrowOrigin" @pointerdown="pressCategoryArrow($event, 1)"
-            @pointermove="trackCategoryArrowPointer" @pointerleave="leaveCategoryArrow"
-            @pointerup="pressedCategoryArrow = null" @pointercancel="pressedCategoryArrow = null"
-            @focus="centerCategoryArrowOrigin" @click="scrollCategories(1)"><span aria-hidden="true">›</span></button>
-        </div>
-      </div>
-    </section>
+      </section>
+    </ScrollReveal>
 
     <!-- Main content -->
     <section class="forum-content">
@@ -129,23 +133,25 @@
               </button>
             </div>
 
-            <div v-if="!loadError" class="forum-results-bar" data-transition-group="content">
-              <span>{{ resultSummary }}</span>
-              <button
-                v-if="hasFilters"
-                type="button"
-                class="btn btn--outline btn--sm"
-                @click="clearFilters"
-              >
-                清除筛选
-              </button>
-              <NuxtLink
-                v-if="!isAuthenticated"
-                to="/login"
-                class="forum-results-bar__link"
-                >登录后发帖和评论</NuxtLink
-              >
-            </div>
+            <ScrollReveal v-if="!loadError">
+              <div class="forum-results-bar" data-transition-group="content">
+                <span>{{ resultSummary }}</span>
+                <button
+                  v-if="hasFilters"
+                  type="button"
+                  class="btn btn--outline btn--sm"
+                  @click="clearFilters"
+                >
+                  清除筛选
+                </button>
+                <NuxtLink
+                  v-if="!isAuthenticated"
+                  to="/login"
+                  class="forum-results-bar__link"
+                  >登录后发帖和评论</NuxtLink
+                >
+              </div>
+            </ScrollReveal>
 
             <div v-if="isLoadingForum" class="forum-post-list">
               <!-- Skeleton loading cards -->
@@ -207,11 +213,11 @@
 
             <!-- Post list -->
             <div v-else-if="!loadError" class="forum-post-list">
-              <ForumPostCard data-transition-group="card"
-                v-for="post in displayedPosts"
-                :key="post.id"
-                :post="post"
-              />
+              <ScrollReveal v-for="post in displayedPosts" :key="post.id">
+                <ForumPostCard data-transition-group="card"
+                  :post="post"
+                />
+              </ScrollReveal>
             </div>
           </div>
 

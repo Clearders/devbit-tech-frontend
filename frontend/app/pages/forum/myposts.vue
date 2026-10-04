@@ -2,11 +2,13 @@
   <div class="myposts-page">
     <!-- Header -->
     <section class="page-header">
-      <div class="container" data-transition-group="title">
-        <NuxtLink to="/forum" class="forum-detail__back">← 返回论坛</NuxtLink>
-        <h1 class="page-header__title">📋 我的帖子</h1>
-        <p class="page-header__subtitle">管理你发布的所有帖子</p>
-      </div>
+      <ScrollReveal>
+        <div class="container" data-transition-group="title">
+          <NuxtLink to="/forum" class="forum-detail__back">← 返回论坛</NuxtLink>
+          <h1 class="page-header__title">📋 我的帖子</h1>
+          <p class="page-header__subtitle">管理你发布的所有帖子</p>
+        </div>
+      </ScrollReveal>
     </section>
 
     <!-- Content -->
@@ -54,34 +56,38 @@
             </div>
 
             <div v-else-if="!loadError" class="forum-post-list">
-              <div class="page-tools" data-transition-group="content">
-                <label
-                  >搜索我的帖子<input
-                    v-model="query"
-                    class="form-control"
-                    type="search"
-                    placeholder="标题、正文或标签" /></label
-                ><label
-                  >排序<select
-                    v-model="sort"
-                    aria-label="排序"
-                    class="form-control"
+              <ScrollReveal>
+                <div class="page-tools" data-transition-group="content">
+                  <label
+                    >搜索我的帖子<input
+                      v-model="query"
+                      class="form-control"
+                      type="search"
+                      placeholder="标题、正文或标签" /></label
+                  ><label
+                    >排序<select
+                      v-model="sort"
+                      aria-label="排序"
+                      class="form-control"
+                    >
+                      <option value="latest">最新发布</option>
+                      <option value="likes">获赞最多</option>
+                      <option value="comments">评论最多</option>
+                    </select></label
                   >
-                    <option value="latest">最新发布</option>
-                    <option value="likes">获赞最多</option>
-                    <option value="comments">评论最多</option>
-                  </select></label
-                >
-              </div>
-              <div class="forum-results-bar" data-transition-group="content">
-                <span
-                  >共 {{ myPosts.length }} 篇帖子 · 当前显示
-                  {{ visiblePosts.length }} 篇</span
-                >
-                <NuxtLink to="/forum/new" class="btn btn--primary btn--sm"
-                  >✏️ 发布新帖</NuxtLink
-                >
-              </div>
+                </div>
+              </ScrollReveal>
+              <ScrollReveal>
+                <div class="forum-results-bar" data-transition-group="content">
+                  <span
+                    >共 {{ myPosts.length }} 篇帖子 · 当前显示
+                    {{ visiblePosts.length }} 篇</span
+                  >
+                  <NuxtLink to="/forum/new" class="btn btn--primary btn--sm"
+                    >✏️ 发布新帖</NuxtLink
+                  >
+                </div>
+              </ScrollReveal>
               <p v-if="visiblePosts.length === 0" role="status">
                 未找到匹配的帖子，请尝试其它关键词。<button
                   class="btn btn--outline btn--sm"
@@ -90,48 +96,52 @@
                   清除搜索
                 </button>
               </p>
-              <ForumPostCard data-transition-group="card"
-                v-for="post in visiblePosts"
-                :key="post.id"
-                :post="post"
-              />
+              <ScrollReveal v-for="post in visiblePosts" :key="post.id">
+                <ForumPostCard data-transition-group="card"
+                  :post="post"
+                />
+              </ScrollReveal>
             </div>
           </div>
 
           <aside class="forum-layout__sidebar">
-            <div class="forum-sidebar-card" data-transition-group="card">
-              <h3 class="forum-sidebar-card__title">📊 我的统计</h3>
-              <div class="forum-sidebar-card__stats">
-                <div class="forum-sidebar-card__stat">
-                  <span class="forum-sidebar-card__stat-value">{{
-                    myPosts.length
-                  }}</span>
-                  <span class="forum-sidebar-card__stat-label">帖子</span>
-                </div>
-                <div class="forum-sidebar-card__stat">
-                  <span class="forum-sidebar-card__stat-value">{{
-                    totalComments
-                  }}</span>
-                  <span class="forum-sidebar-card__stat-label">收到评论</span>
-                </div>
-                <div class="forum-sidebar-card__stat">
-                  <span class="forum-sidebar-card__stat-value">{{
-                    totalLikes
-                  }}</span>
-                  <span class="forum-sidebar-card__stat-label">获赞</span>
+            <ScrollReveal>
+              <div class="forum-sidebar-card" data-transition-group="card">
+                <h3 class="forum-sidebar-card__title">📊 我的统计</h3>
+                <div class="forum-sidebar-card__stats">
+                  <div class="forum-sidebar-card__stat">
+                    <span class="forum-sidebar-card__stat-value">{{
+                      myPosts.length
+                    }}</span>
+                    <span class="forum-sidebar-card__stat-label">帖子</span>
+                  </div>
+                  <div class="forum-sidebar-card__stat">
+                    <span class="forum-sidebar-card__stat-value">{{
+                      totalComments
+                    }}</span>
+                    <span class="forum-sidebar-card__stat-label">收到评论</span>
+                  </div>
+                  <div class="forum-sidebar-card__stat">
+                    <span class="forum-sidebar-card__stat-value">{{
+                      totalLikes
+                    }}</span>
+                    <span class="forum-sidebar-card__stat-label">获赞</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            </ScrollReveal>
 
-            <div class="forum-sidebar-card" data-transition-group="card">
-              <h3 class="forum-sidebar-card__title">💡 提示</h3>
-              <ul class="forum-sidebar-card__rules">
-                <li>你可以编辑和删除自己的帖子</li>
-                <li>编辑帖子仅支持修改内容</li>
-                <li>删除帖子会同时删除所有评论</li>
-                <li>分享清晰的过程，更有助于交流</li>
-              </ul>
-            </div>
+            <ScrollReveal>
+              <div class="forum-sidebar-card" data-transition-group="card">
+                <h3 class="forum-sidebar-card__title">💡 提示</h3>
+                <ul class="forum-sidebar-card__rules">
+                  <li>你可以编辑和删除自己的帖子</li>
+                  <li>编辑帖子仅支持修改内容</li>
+                  <li>删除帖子会同时删除所有评论</li>
+                  <li>分享清晰的过程，更有助于交流</li>
+                </ul>
+              </div>
+            </ScrollReveal>
           </aside>
         </div>
       </div>

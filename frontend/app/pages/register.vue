@@ -2,99 +2,107 @@
   <div class="auth-page">
     <div class="container">
       <div class="auth-card">
-        <h1 class="auth-card__title" data-transition-group="title">Create an account</h1>
-        <p class="auth-card__subtitle" data-transition-group="content">Join DevBit Tech today</p>
+        <ScrollReveal>
+          <h1 class="auth-card__title" data-transition-group="title">Create an account</h1>
+        </ScrollReveal>
+        <ScrollReveal>
+          <p class="auth-card__subtitle" data-transition-group="content">Join DevBit Tech today</p>
+        </ScrollReveal>
 
-        <form class="auth-form" novalidate @submit.prevent="handleSubmit" data-transition-group="content">
-          <div v-if="apiError" class="form-error form-error--global">{{ apiError }}</div>
-          <div v-if="codeMessage" class="form-success">{{ codeMessage }}</div>
+        <ScrollReveal>
+          <form class="auth-form" novalidate @submit.prevent="handleSubmit" data-transition-group="content">
+            <div v-if="apiError" class="form-error form-error--global">{{ apiError }}</div>
+            <div v-if="codeMessage" class="form-success">{{ codeMessage }}</div>
 
-          <div class="form-group">
-            <label class="form-label" for="name">Name</label>
-            <input
-              id="name"
-              v-model="form.name"
-              type="text"
-              class="form-control"
-              :class="{ 'form-control--error': errors.name }"
-              placeholder="Your full name"
-              autocomplete="name"
-            />
-            <span v-if="errors.name" class="form-error">{{ errors.name }}</span>
-          </div>
+            <div class="form-group">
+              <label class="form-label" for="name">Name</label>
+              <input
+                id="name"
+                v-model="form.name"
+                type="text"
+                class="form-control"
+                :class="{ 'form-control--error': errors.name }"
+                placeholder="Your full name"
+                autocomplete="name"
+              />
+              <span v-if="errors.name" class="form-error">{{ errors.name }}</span>
+            </div>
 
-          <div class="form-group">
-            <label class="form-label" for="email">Email</label>
-            <input
-              id="email"
-              v-model="form.email"
-              type="email"
-              class="form-control"
-              :class="{ 'form-control--error': errors.email }"
-              placeholder="you@example.com"
-              autocomplete="email"
-            />
-            <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
-          </div>
+            <div class="form-group">
+              <label class="form-label" for="email">Email</label>
+              <input
+                id="email"
+                v-model="form.email"
+                type="email"
+                class="form-control"
+                :class="{ 'form-control--error': errors.email }"
+                placeholder="you@example.com"
+                autocomplete="email"
+              />
+              <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
+            </div>
 
-          <div class="form-group">
-            <label class="form-label" for="code">Email Verification Code</label>
-            <input
-              id="code"
-              v-model="form.code"
-              type="text"
-              class="form-control"
-              :class="{ 'form-control--error': errors.code }"
-              placeholder="Enter the code from your email"
-              autocomplete="one-time-code"
-            />
-            <button
-              type="button"
-              class="btn btn--outline"
-              :disabled="codeLoading || cooldown > 0"
-              @click="handleSendCode"
-            >
-              {{ codeLoading ? 'Sending...' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Send Verification Code' }}
+            <div class="form-group">
+              <label class="form-label" for="code">Email Verification Code</label>
+              <input
+                id="code"
+                v-model="form.code"
+                type="text"
+                class="form-control"
+                :class="{ 'form-control--error': errors.code }"
+                placeholder="Enter the code from your email"
+                autocomplete="one-time-code"
+              />
+              <button
+                type="button"
+                class="btn btn--outline"
+                :disabled="codeLoading || cooldown > 0"
+                @click="handleSendCode"
+              >
+                {{ codeLoading ? 'Sending...' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Send Verification Code' }}
+              </button>
+              <span v-if="errors.code" class="form-error">{{ errors.code }}</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="password">Password</label>
+              <input
+                id="password"
+                v-model="form.password"
+                type="password"
+                class="form-control"
+                :class="{ 'form-control--error': errors.password }"
+                placeholder="Min. 8 characters with letters and numbers"
+                autocomplete="new-password"
+              />
+              <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="confirmPassword">Confirm Password</label>
+              <input
+                id="confirmPassword"
+                v-model="form.confirmPassword"
+                type="password"
+                class="form-control"
+                :class="{ 'form-control--error': errors.confirmPassword }"
+                placeholder="Re-enter your password"
+                autocomplete="new-password"
+              />
+              <span v-if="errors.confirmPassword" class="form-error">{{ errors.confirmPassword }}</span>
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--full" :disabled="loading">
+              {{ loading ? 'Creating account...' : 'Create Account' }}
             </button>
-            <span v-if="errors.code" class="form-error">{{ errors.code }}</span>
-          </div>
+          </form>
+        </ScrollReveal>
 
-          <div class="form-group">
-            <label class="form-label" for="password">Password</label>
-            <input
-              id="password"
-              v-model="form.password"
-              type="password"
-              class="form-control"
-              :class="{ 'form-control--error': errors.password }"
-              placeholder="Min. 8 characters with letters and numbers"
-              autocomplete="new-password"
-            />
-            <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="confirmPassword">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              v-model="form.confirmPassword"
-              type="password"
-              class="form-control"
-              :class="{ 'form-control--error': errors.confirmPassword }"
-              placeholder="Re-enter your password"
-              autocomplete="new-password"
-            />
-            <span v-if="errors.confirmPassword" class="form-error">{{ errors.confirmPassword }}</span>
-          </div>
-
-          <button type="submit" class="btn btn--primary btn--full" :disabled="loading">
-            {{ loading ? 'Creating account...' : 'Create Account' }}
-          </button>
-        </form>
-
-        <p class="auth-card__footer" data-transition-group="content">
-          Already have an account? <NuxtLink to="/login">Sign in</NuxtLink>
-        </p>
+        <ScrollReveal>
+          <p class="auth-card__footer" data-transition-group="content">
+            Already have an account? <NuxtLink to="/login">Sign in</NuxtLink>
+          </p>
+        </ScrollReveal>
       </div>
     </div>
   </div>

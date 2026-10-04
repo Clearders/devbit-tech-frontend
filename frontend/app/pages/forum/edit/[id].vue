@@ -2,11 +2,13 @@
   <div class="post-editor-page">
     <!-- Header -->
     <section class="page-header">
-      <div class="container" data-transition-group="title">
-        <NuxtLink :to="`/forum/${postId}`" class="post-editor__back">← 返回帖子</NuxtLink>
-        <h1 class="page-header__title">✏️ 编辑帖子</h1>
-        <p class="page-header__subtitle">修改你的帖子内容</p>
-      </div>
+      <ScrollReveal>
+        <div class="container" data-transition-group="title">
+          <NuxtLink :to="`/forum/${postId}`" class="post-editor__back">← 返回帖子</NuxtLink>
+          <h1 class="page-header__title">✏️ 编辑帖子</h1>
+          <p class="page-header__subtitle">修改你的帖子内容</p>
+        </div>
+      </ScrollReveal>
     </section>
 
     <!-- Loading -->
@@ -36,52 +38,56 @@
           {{ apiError }}
         </div>
 
-        <div class="post-editor__meta">
-          <!-- Title (read-only) -->
-          <div class="form-group">
-            <label class="form-label">标题</label>
-            <input
-              type="text"
-              class="form-control"
-              :value="originalPost?.title"
-              disabled
-            />
-            <span class="post-editor__field-hint">标题不可修改</span>
-          </div>
-
-          <div class="post-editor__meta-row">
-            <!-- Category (read-only) -->
+        <ScrollReveal>
+          <div class="post-editor__meta">
+            <!-- Title (read-only) -->
             <div class="form-group">
-              <label class="form-label">分类</label>
+              <label class="form-label">标题</label>
               <input
                 type="text"
                 class="form-control"
-                :value="categoryLabel"
+                :value="originalPost?.title"
                 disabled
               />
+              <span class="post-editor__field-hint">标题不可修改</span>
             </div>
 
-            <!-- Tags (read-only) -->
-            <div class="form-group">
-              <label class="form-label">标签</label>
-              <input
-                type="text"
-                class="form-control"
-                :value="originalPost?.tags.join(', ') || ''"
-                disabled
-              />
+            <div class="post-editor__meta-row">
+              <!-- Category (read-only) -->
+              <div class="form-group">
+                <label class="form-label">分类</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  :value="categoryLabel"
+                  disabled
+                />
+              </div>
+
+              <!-- Tags (read-only) -->
+              <div class="form-group">
+                <label class="form-label">标签</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  :value="originalPost?.tags.join(', ') || ''"
+                  disabled
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </ScrollReveal>
 
         <!-- Markdown Editor -->
-        <div class="post-editor__editor-wrapper">
-          <MarkdownEditor
-            ref="editorRef"
-            v-model="content"
-            placeholder="编辑你的帖子内容…（支持 Markdown 语法）"
-          />
-        </div>
+        <ScrollReveal>
+          <div class="post-editor__editor-wrapper">
+            <MarkdownEditor
+              ref="editorRef"
+              v-model="content"
+              placeholder="编辑你的帖子内容…（支持 Markdown 语法）"
+            />
+          </div>
+        </ScrollReveal>
 
         <div v-if="errors.content" class="form-error post-editor__content-error">
           {{ errors.content }}
@@ -93,21 +99,23 @@
         </div>
 
         <!-- Actions -->
-        <div class="post-editor__actions">
-          <NuxtLink :to="`/forum/${postId}`" class="btn btn--outline btn--lg">
-            ← 取消
-          </NuxtLink>
-          <div class="post-editor__actions-right">
-            <button
-              type="button"
-              class="btn btn--primary btn--lg"
-              :disabled="submitting || content === originalPost?.content"
-              @click="handleSubmit"
-            >
-              {{ submitting ? '保存中…' : '💾 保存修改' }}
-            </button>
+        <ScrollReveal>
+          <div class="post-editor__actions">
+            <NuxtLink :to="`/forum/${postId}`" class="btn btn--outline btn--lg">
+              ← 取消
+            </NuxtLink>
+            <div class="post-editor__actions-right">
+              <button
+                type="button"
+                class="btn btn--primary btn--lg"
+                :disabled="submitting || content === originalPost?.content"
+                @click="handleSubmit"
+              >
+                {{ submitting ? '保存中…' : '💾 保存修改' }}
+              </button>
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   </div>

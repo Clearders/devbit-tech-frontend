@@ -164,6 +164,24 @@ test('interrupted reveals keep their current frame until the outgoing page is re
   assert.equal(midway.style.getPropertyValue('transform'), 'translateY(-4px)')
 })
 
+test('interrupted reveals capture every frame before any style writes', () => {
+  const app = setup()
+  for (const item of app.groups) {
+    Object.defineProperty(item, 'computedStyle', {
+      get() {
+        assert.equal(app.groups[0].style.getPropertyValue('opacity'), '')
+        return { opacity: '.4', transform: 'translateX(6px)' }
+      },
+    })
+  }
+  app.transition.value.onBeforeEnter(app.element)
+  app.navigate()
+  for (const item of app.groups) {
+    assert.equal(item.style.getPropertyValue('opacity'), '.4')
+    assert.equal(item.style.getPropertyValue('transform'), 'translateX(6px)')
+  }
+})
+
 test('failure, cancellation, reduced motion and unmount restore frozen component styles', () => {
   for (const finish of [
     app => app.callbacks.afterEach({}, {}, new Error('cancelled')),

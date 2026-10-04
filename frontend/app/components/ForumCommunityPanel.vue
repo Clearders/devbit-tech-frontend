@@ -48,43 +48,45 @@ function onTabKey(event: KeyboardEvent, index: number) {
         <span aria-hidden="true">{{ section.icon }}</span>{{ section.label }}
       </button>
     </div>
-    <section v-for="section in sections" :id="`community-panel-${section.id}`" :key="section.id"
-      class="forum-sidebar-card forum-community__panel" :data-active="selected === section.id"
-      :role="compact ? 'tabpanel' : 'region'" :tabindex="compact ? 0 : undefined"
-      :aria-labelledby="compact ? `community-tab-${section.id}` : `community-title-${section.id}`"
-      :aria-busy="section.id !== 'rules' && loading" data-transition-group="card">
-      <h3 :id="`community-title-${section.id}`" class="forum-sidebar-card__title"><span aria-hidden="true">{{ section.icon }}</span> {{ section.label }}</h3>
-      <template v-if="section.id === 'stats'">
-        <dl class="forum-sidebar-card__stats">
-          <div v-for="stat in [{ label: '帖子', value: postCount }, { label: '评论', value: commentCount }, { label: '用户', value: userCount }]"
-            :key="stat.label" class="forum-sidebar-card__stat">
-            <dt class="forum-sidebar-card__stat-label">{{ stat.label }}</dt>
-            <dd class="forum-sidebar-card__stat-value">{{ loading || error ? '—' : stat.value.toLocaleString('zh-CN') }}</dd>
-          </div>
-        </dl>
-        <p v-if="loading" class="forum-community__note" role="status">正在汇集社区数据…</p>
-        <p v-else-if="error" class="forum-community__note">统计暂时无法加载。<button type="button" class="forum-community__retry" @click="$emit('retry')">重新加载</button></p>
-        <p v-else class="forum-community__note">每一次分享，都是社区的一点积累。</p>
-      </template>
-      <template v-else-if="section.id === 'hot'">
-        <p v-if="loading" class="forum-community__note" role="status">正在寻找热门讨论…</p>
-        <p v-else-if="error" class="forum-community__note">热门帖子暂时无法加载。<button type="button" class="forum-community__retry" @click="$emit('retry')">重新加载</button></p>
-        <ul v-else-if="hotPosts.length" class="forum-sidebar-card__hot-list">
-          <li v-for="(post, index) in hotPosts" :key="post.id">
-            <NuxtLink :to="`/forum/${post.id}`" class="forum-sidebar-card__hot-link">
-              <span class="forum-community__rank" aria-hidden="true">{{ String(index + 1).padStart(2, '0') }}</span>
-              <span class="forum-sidebar-card__hot-title">{{ post.title }}</span>
-              <span class="forum-sidebar-card__hot-meta" :aria-label="`${post.commentCount} 条评论`">💬 {{ post.commentCount }}</span>
-            </NuxtLink>
-          </li>
+    <ScrollReveal v-for="section in sections" :key="section.id" class="forum-community__reveal" :data-active="selected === section.id">
+      <section :id="`community-panel-${section.id}`"
+        class="forum-sidebar-card forum-community__panel" :data-active="selected === section.id"
+        :role="compact ? 'tabpanel' : 'region'" :tabindex="compact ? 0 : undefined"
+        :aria-labelledby="compact ? `community-tab-${section.id}` : `community-title-${section.id}`"
+        :aria-busy="section.id !== 'rules' && loading" data-transition-group="card">
+        <h3 :id="`community-title-${section.id}`" class="forum-sidebar-card__title"><span aria-hidden="true">{{ section.icon }}</span> {{ section.label }}</h3>
+        <template v-if="section.id === 'stats'">
+          <dl class="forum-sidebar-card__stats">
+            <div v-for="stat in [{ label: '帖子', value: postCount }, { label: '评论', value: commentCount }, { label: '用户', value: userCount }]"
+              :key="stat.label" class="forum-sidebar-card__stat">
+              <dt class="forum-sidebar-card__stat-label">{{ stat.label }}</dt>
+              <dd class="forum-sidebar-card__stat-value">{{ loading || error ? '—' : stat.value.toLocaleString('zh-CN') }}</dd>
+            </div>
+          </dl>
+          <p v-if="loading" class="forum-community__note" role="status">正在汇集社区数据…</p>
+          <p v-else-if="error" class="forum-community__note">统计暂时无法加载。<button type="button" class="forum-community__retry" @click="$emit('retry')">重新加载</button></p>
+          <p v-else class="forum-community__note">每一次分享，都是社区的一点积累。</p>
+        </template>
+        <template v-else-if="section.id === 'hot'">
+          <p v-if="loading" class="forum-community__note" role="status">正在寻找热门讨论…</p>
+          <p v-else-if="error" class="forum-community__note">热门帖子暂时无法加载。<button type="button" class="forum-community__retry" @click="$emit('retry')">重新加载</button></p>
+          <ul v-else-if="hotPosts.length" class="forum-sidebar-card__hot-list">
+            <li v-for="(post, index) in hotPosts" :key="post.id">
+              <NuxtLink :to="`/forum/${post.id}`" class="forum-sidebar-card__hot-link">
+                <span class="forum-community__rank" aria-hidden="true">{{ String(index + 1).padStart(2, '0') }}</span>
+                <span class="forum-sidebar-card__hot-title">{{ post.title }}</span>
+                <span class="forum-sidebar-card__hot-meta" :aria-label="`${post.commentCount} 条评论`">💬 {{ post.commentCount }}</span>
+              </NuxtLink>
+            </li>
+          </ul>
+          <p v-else class="forum-community__note">还没有热门讨论。你的一个问题，也可以成为交流的起点。</p>
+        </template>
+        <ul v-else class="forum-sidebar-card__rules">
+          <li>尊重他人，友善交流</li><li>禁止发布广告与垃圾信息</li><li>技术讨论请保持客观</li>
+          <li>求助时请描述清楚问题</li><li>转载内容请注明出处</li>
         </ul>
-        <p v-else class="forum-community__note">还没有热门讨论。你的一个问题，也可以成为交流的起点。</p>
-      </template>
-      <ul v-else class="forum-sidebar-card__rules">
-        <li>尊重他人，友善交流</li><li>禁止发布广告与垃圾信息</li><li>技术讨论请保持客观</li>
-        <li>求助时请描述清楚问题</li><li>转载内容请注明出处</li>
-      </ul>
-    </section>
+      </section>
+    </ScrollReveal>
   </aside>
 </template>
 
@@ -108,7 +110,7 @@ function onTabKey(event: KeyboardEvent, index: number) {
   .forum-community__tabs button { display: flex; gap: 5px; align-items: center; justify-content: center; min-height: 42px; padding: 6px 2px; border: 1px solid transparent; border-radius: 11px; background: transparent; color: var(--color-text-secondary); font: 600 .82rem var(--font-body); cursor: pointer; }
   .forum-community__tabs button[aria-selected='true'] { color: var(--color-primary-dark); background: var(--color-surface); border-color: var(--color-border-focus); box-shadow: var(--shadow-xs); }
   .forum-community__panel { margin: 0; padding: 1rem .25rem .15rem; border: 0; border-radius: 0; box-shadow: none; }
-  .forum-community__panel[data-active='false'] { display: none; }
+  .forum-community__reveal[data-active='false'] { display: none; }
   .forum-community__panel .forum-sidebar-card__title { display: none; }
   .forum-community__panel .forum-sidebar-card__rules { gap: .6rem; }
   .forum-community__panel .forum-sidebar-card__rules li { color: var(--color-text-secondary); }

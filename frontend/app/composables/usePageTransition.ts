@@ -16,16 +16,19 @@ export const usePageTransition = () => {
   const freezeReveals = () => {
     // A new navigation can interrupt a group's delay. Preserve that exact
     // frame before removing its animation so it cannot flash fully visible.
-    for (const element of reveals) {
+    // Read all frames before writing styles to avoid a forced layout per group.
+    const frames = reveals.map(element => {
       const computed = window.getComputedStyle(element)
-      const frame = { opacity: computed.opacity, transform: computed.transform }
+      return { element, opacity: computed.opacity, transform: computed.transform }
+    })
+    for (const { element, opacity, transform } of frames) {
       if (!frozenReveals.has(element)) {
         frozenReveals.set(element, ['opacity', 'transform'].map(name => ({
           name, value: element.style.getPropertyValue(name), priority: element.style.getPropertyPriority(name),
         })))
       }
-      element.style.setProperty('opacity', frame.opacity)
-      element.style.setProperty('transform', frame.transform)
+      element.style.setProperty('opacity', opacity)
+      element.style.setProperty('transform', transform)
     }
   }
   const restoreFrozenReveals = (root?: Element) => {
@@ -75,14 +78,15 @@ export const usePageTransition = () => {
     // Include the final 100ms stagger plus its 380ms horizontal reveal.
     duration: reducedMotion ? 0 : { enter: 480, leave: 180 },
     onBeforeLeave(element) {
+      const main = element.closest<HTMLElement>('.site-layout__main')
+      const height = main?.getBoundingClientRect().height
       clearTransitionState()
       if (!reducedMotion) setDirection(element)
-      const main = element.closest<HTMLElement>('.site-layout__main')
       if (!main) return
       reservedMain = main
       previousMinHeight = main.style.getPropertyValue('min-height')
       previousPriority = main.style.getPropertyPriority('min-height')
-      main.style.setProperty('min-height', `${main.getBoundingClientRect().height}px`)
+      main.style.setProperty('min-height', `${height}px`)
     },
     onBeforeEnter(element) {
       clearReveals()

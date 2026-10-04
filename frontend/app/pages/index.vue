@@ -3,46 +3,58 @@
     <!-- Hero -->
     <section class="hero">
       <div class="container hero__content">
-        <p class="hero__badge" data-transition-group="title">Now in Beta</p>
-        <h1 class="hero__title" data-transition-group="title">
-          Enjoy Life With<br><span>DevBit Tech</span>
-        </h1>
-        <p class="hero__subtitle" data-transition-group="content">
-          独乐乐不如众乐乐
-        </p>
-        <div class="hero__actions" data-transition-group="content">
-          <NuxtLink to="/about" class="btn btn--primary">了解更多</NuxtLink>
-          <a href="https://github.com/Clearders/devbit-tech" target="_blank" rel="noopener" class="btn btn--outline">
-            github仓库
-          </a>
-        </div>
+        <ScrollReveal>
+          <p class="hero__badge" data-transition-group="title">Now in Beta</p>
+        </ScrollReveal>
+        <ScrollReveal>
+          <h1 class="hero__title" data-transition-group="title">
+            Enjoy Life With<br><span>DevBit Tech</span>
+          </h1>
+        </ScrollReveal>
+        <ScrollReveal>
+          <p class="hero__subtitle" data-transition-group="content">
+            独乐乐不如众乐乐
+          </p>
+        </ScrollReveal>
+        <ScrollReveal>
+          <div class="hero__actions" data-transition-group="content">
+            <NuxtLink to="/about" class="btn btn--primary">了解更多</NuxtLink>
+            <a href="https://github.com/Clearders/devbit-tech" target="_blank" rel="noopener" class="btn btn--outline">
+              github仓库
+            </a>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
 
     <!-- Quick Navigation -->
     <section class="section quick-nav-section">
       <div class="container">
-        <h2 class="section__title" data-transition-group="title">探索 DevBit Tech</h2>
-        <p class="section__subtitle" data-transition-group="content">从一个问题、一次实验，到下一位同行者。</p>
-        <div ref="quickNavGrid" class="quick-nav-grid">
-          <div v-for="nav in quickNavItems" :key="nav.to" class="quick-nav-slot" :class="`quick-nav-slot--${nav.kind}`">
-          <NuxtLink
-            :to="nav.to"
-            class="quick-nav-card"
-            :class="[`quick-nav-card--${nav.kind}`, { 'is-pressed': pressedQuickNav === nav.kind }]"
-            @pointerdown="onCardPress($event, nav.kind)" @pointerup="pressedQuickNav = null"
-            @pointercancel="pressedQuickNav = null" @pointerleave="pressedQuickNav = null">
-            <div class="quick-nav-card__top"><span>{{ nav.eyebrow }}</span><span class="quick-nav-card__number" aria-hidden="true">{{ nav.number }}</span></div>
-            <div class="quick-nav-card__art" aria-hidden="true">
-              <QuickNavIcon :kind="nav.kind" />
-            </div>
-            <div class="quick-nav-card__copy">
-              <h3 class="quick-nav-card__title">{{ nav.title }}</h3>
-              <p class="quick-nav-card__desc">{{ nav.description }}</p>
-            </div>
-            <div class="quick-nav-card__bottom"><span>{{ nav.action }}</span><span class="quick-nav-card__arrow" aria-hidden="true">↗</span></div>
-          </NuxtLink>
-          </div>
+        <ScrollReveal>
+          <h2 class="section__title" data-transition-group="title">探索 DevBit Tech</h2>
+        </ScrollReveal>
+        <ScrollReveal>
+          <p class="section__subtitle" data-transition-group="content">从一个问题、一次实验，到下一位同行者。</p>
+        </ScrollReveal>
+        <div class="quick-nav-grid">
+          <ScrollReveal v-for="nav in quickNavItems" :key="nav.to" stretch class="quick-nav-slot" :class="`quick-nav-slot--${nav.kind}`" data-transition-group="card">
+            <NuxtLink
+              :to="nav.to"
+              class="quick-nav-card"
+              :class="[`quick-nav-card--${nav.kind}`, { 'is-pressed': pressedQuickNav === nav.kind }]"
+              @pointerdown="onCardPress($event, nav.kind)" @pointerup="pressedQuickNav = null"
+              @pointercancel="pressedQuickNav = null" @pointerleave="pressedQuickNav = null">
+              <div class="quick-nav-card__top"><span>{{ nav.eyebrow }}</span><span class="quick-nav-card__number" aria-hidden="true">{{ nav.number }}</span></div>
+              <div class="quick-nav-card__art" aria-hidden="true">
+                <QuickNavIcon :kind="nav.kind" />
+              </div>
+              <div class="quick-nav-card__copy">
+                <h3 class="quick-nav-card__title">{{ nav.title }}</h3>
+                <p class="quick-nav-card__desc">{{ nav.description }}</p>
+              </div>
+              <div class="quick-nav-card__bottom"><span>{{ nav.action }}</span><span class="quick-nav-card__arrow" aria-hidden="true">↗</span></div>
+            </NuxtLink>
+          </ScrollReveal>
         </div>
       </div>
     </section>
@@ -51,57 +63,10 @@
 </template>
 
 <script setup lang="ts">
-const quickNavGrid = ref<HTMLElement>()
 const pressedQuickNav = ref<string | null>(null)
 function onCardPress(event: PointerEvent, kind: string) {
   if (event.pointerType !== 'mouse') pressedQuickNav.value = kind
 }
-let revealObserver: IntersectionObserver | undefined
-let startupObserver: MutationObserver | undefined
-let motionPreference: MediaQueryList | undefined
-const revealAnimations = new Set<Animation>()
-function stopReveals() {
-  revealObserver?.disconnect()
-  startupObserver?.disconnect()
-  for (const animation of revealAnimations) animation.cancel()
-  revealAnimations.clear()
-}
-function onMotionPreferenceChange() {
-  if (motionPreference?.matches) stopReveals()
-}
-onMounted(() => {
-  motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
-  motionPreference.addEventListener('change', onMotionPreferenceChange)
-  if (motionPreference.matches) return
-  const startReveals = () => {
-    startupObserver?.disconnect()
-    // Animate the outer slot so hover on the card remains responsive during the entrance.
-    revealObserver = new IntersectionObserver(entries => {
-      const visible = entries.filter(entry => entry.isIntersecting)
-      visible.forEach((entry, index) => {
-        revealObserver?.unobserve(entry.target)
-        const animation = entry.target.animate([
-          { opacity: 0, transform: 'translateY(12px)' },
-          { opacity: 1, transform: 'translateY(0)' },
-        ], { duration: 600, delay: index * 70, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' })
-        revealAnimations.add(animation)
-        animation.onfinish = () => revealAnimations.delete(animation)
-      })
-    }, { threshold: .12 })
-    quickNavGrid.value?.querySelectorAll('.quick-nav-slot').forEach(card => revealObserver?.observe(card))
-  }
-  // Avoid stacking the entrance with the first-visit startup curtain.
-  if (document.documentElement.hasAttribute('data-devbit-startup')) {
-    startupObserver = new MutationObserver(() => {
-      if (!document.documentElement.hasAttribute('data-devbit-startup')) startReveals()
-    })
-    startupObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-devbit-startup'] })
-  } else startReveals()
-})
-onBeforeUnmount(() => {
-  stopReveals()
-  motionPreference?.removeEventListener('change', onMotionPreferenceChange)
-})
 
 const quickNavItems = [
   {
@@ -179,7 +144,7 @@ useSeoMeta({
 .quick-nav-card__title { font-size: 1.6rem; margin-bottom: 10px; letter-spacing: -.03em; }
 .quick-nav-card__desc { font-size: .9rem; line-height: 1.8; color: var(--color-text-secondary); }
 .quick-nav-card__bottom { margin-top: 24px; font-size: .8rem; font-weight: 600; color: var(--color-primary-dark); }
-.quick-nav-card__arrow { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--color-border-focus); border-radius: 50%; background: rgba(255,255,255,.7); font-size: 1.15rem; transform: translate(calc(var(--quick-nav-active) * 2px), calc(var(--quick-nav-active) * -2px)); transition: transform var(--quick-nav-duration) var(--ease-out-quint); }
+.quick-nav-card__arrow { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--color-border-focus); border-radius: 50%; background: rgba(255,255,255,.7); font-size: 1.15rem; transform: translate(calc(var(--quick-nav-active) * 2px), calc(var(--quick-nav-active) * -2px)) rotate(calc(var(--quick-nav-active) * 45deg)); transition: transform var(--quick-nav-duration) var(--ease-out-quint); }
 .quick-nav-card__art { position: absolute; right: 30px; top: 62px; width: 120px; height: 120px; z-index: -1; pointer-events: none; }
 .quick-nav-card--forum { border-radius: 32px 32px 64px 32px; background: linear-gradient(125deg, #fff 45%, #f0f5ff); }
 .quick-nav-card--games { border-radius: 64px 28px 28px 28px; background: linear-gradient(145deg, #fff, #f5f2fc); }

@@ -1,97 +1,107 @@
 <template>
   <div>
     <section class="page-header">
-      <div class="container" data-transition-group="title">
-        <h1 class="page-header__title">🎮 游戏</h1>
-        <p class="page-header__subtitle">
-          探索我们开发的小游戏，寓教于乐，提升技能。
-        </p>
-      </div>
+      <ScrollReveal>
+        <div class="container" data-transition-group="title">
+          <h1 class="page-header__title">🎮 游戏</h1>
+          <p class="page-header__subtitle">
+            探索我们开发的小游戏，寓教于乐，提升技能。
+          </p>
+        </div>
+      </ScrollReveal>
     </section>
 
     <section class="games-section">
       <div class="container">
         <div class="games-grid">
           <!-- Heartstring Blade -->
-          <article class="game-card" data-transition-group="card">
-            <div class="game-card__cover">
-              <div class="game-card__cover-placeholder">
-                <span class="game-card__cover-emoji">✨</span>
+          <ScrollReveal stretch>
+            <article class="game-card" data-transition-group="card">
+              <div class="game-card__cover">
+                <div class="game-card__cover-placeholder">
+                  <span class="game-card__cover-emoji">✨</span>
+                </div>
               </div>
-            </div>
-            <div class="game-card__body">
-              <h3 class="game-card__title">Heartstring Blade</h3>
-              <p class="game-card__desc">
-                基于 Bevy 引擎的 2D bloom
-                后期特效演示。交互式调整泛光强度、色调映射等参数，感受现代游戏渲染管线的魅力。
-              </p>
-              <div class="game-card__tags">
-                <span class="game-card__tag">Bevy</span>
-                <span class="game-card__tag">WASM</span>
-                <span class="game-card__tag">图形学</span>
-                <span class="game-card__tag">Bloom</span>
+              <div class="game-card__body">
+                <h3 class="game-card__title">Heartstring Blade</h3>
+                <p class="game-card__desc">
+                  基于 Bevy 引擎的 2D bloom
+                  后期特效演示。交互式调整泛光强度、色调映射等参数，感受现代游戏渲染管线的魅力。
+                </p>
+                <div class="game-card__tags">
+                  <span class="game-card__tag">Bevy</span>
+                  <span class="game-card__tag">WASM</span>
+                  <span class="game-card__tag">图形学</span>
+                  <span class="game-card__tag">Bloom</span>
+                </div>
               </div>
-            </div>
-            <div class="page-tools game-card__actions" data-transition-group="content">
-              <NuxtLink
-                to="/games/heartstring-blade"
-                no-prefetch
-                class="btn btn--primary"
-                >开始体验</NuxtLink
-              ><a href="#game-guide" class="btn btn--outline">查看操作</a>
-            </div>
-          </article>
+              <div class="page-tools game-card__actions" data-transition-group="content">
+                <NuxtLink
+                  to="/games/heartstring-blade"
+                  no-prefetch
+                  class="btn btn--primary"
+                  >开始体验</NuxtLink
+                ><a href="#game-guide" class="btn btn--outline">查看操作</a>
+              </div>
+            </article>
+          </ScrollReveal>
 
           <!-- Future game placeholder -->
-          <div class="game-card game-card--coming-soon" data-transition-group="card">
-            <div class="game-card__cover">
-              <div
-                class="game-card__cover-placeholder game-card__cover-placeholder--dimmed"
-              >
-                <span class="game-card__cover-emoji">🚧</span>
+          <ScrollReveal stretch>
+            <div class="game-card game-card--coming-soon" data-transition-group="card">
+              <div class="game-card__cover">
+                <div
+                  class="game-card__cover-placeholder game-card__cover-placeholder--dimmed"
+                >
+                  <span class="game-card__cover-emoji">🚧</span>
+                </div>
+              </div>
+              <div class="game-card__body">
+                <h3 class="game-card__title">更多游戏</h3>
+                <p class="game-card__desc">敬请期待更多精彩小游戏……</p>
               </div>
             </div>
-            <div class="game-card__body">
-              <h3 class="game-card__title">更多游戏</h3>
-              <p class="game-card__desc">敬请期待更多精彩小游戏……</p>
-            </div>
-          </div>
+          </ScrollReveal>
         </div>
-        <section
-          id="game-guide"
-          class="detail-panel"
-          aria-labelledby="game-guide-title"
-         data-transition-group="card">
-          <h2 id="game-guide-title">Heartstring Blade · 操作指南</h2>
-          <p>
-            这是一个基于 Bevy 与 WebAssembly 的 2D
-            图形实验。通过对比泛光与色调映射，探索光晕、亮度和颜色之间的关系。
-          </p>
-          <GameControls />
-        </section>
-        <section class="detail-panel" aria-labelledby="game-faq-title" data-transition-group="card">
-          <h2 id="game-faq-title">体验前，你可能想知道</h2>
-          <details class="info-disclosure">
-            <summary>为什么首次进入需要等待？</summary>
+        <ScrollReveal>
+          <section
+            id="game-guide"
+            class="detail-panel"
+            aria-labelledby="game-guide-title"
+           data-transition-group="card">
+            <h2 id="game-guide-title">Heartstring Blade · 操作指南</h2>
             <p>
-              首次启动需要下载并初始化游戏资源。查看本页说明不会启动游戏，点击“开始体验”后才会加载。
+              这是一个基于 Bevy 与 WebAssembly 的 2D
+              图形实验。通过对比泛光与色调映射，探索光晕、亮度和颜色之间的关系。
             </p>
-          </details>
-          <details class="info-disclosure">
-            <summary>手机可以操作吗？</summary>
-            <p>
-              目前参数调整以键盘为主，建议在电脑上体验。手机可以浏览项目与操作说明。
-            </p>
-          </details>
-          <details class="info-disclosure">
-            <summary>画面黑屏或加载失败怎么办？</summary>
-            <p>
-              检查网络连接，使用加载页的重试按钮；如仍失败，尝试支持 WebGL
-              的桌面浏览器，并检查硬件加速设置。反馈时可提供浏览器版本及错误提示。
-            </p>
-          </details>
-          <NuxtLink to="/forum" class="btn btn--outline">交流实验心得</NuxtLink>
-        </section>
+            <GameControls />
+          </section>
+        </ScrollReveal>
+        <ScrollReveal>
+          <section class="detail-panel" aria-labelledby="game-faq-title" data-transition-group="card">
+            <h2 id="game-faq-title">体验前，你可能想知道</h2>
+            <details class="info-disclosure">
+              <summary>为什么首次进入需要等待？</summary>
+              <p>
+                首次启动需要下载并初始化游戏资源。查看本页说明不会启动游戏，点击“开始体验”后才会加载。
+              </p>
+            </details>
+            <details class="info-disclosure">
+              <summary>手机可以操作吗？</summary>
+              <p>
+                目前参数调整以键盘为主，建议在电脑上体验。手机可以浏览项目与操作说明。
+              </p>
+            </details>
+            <details class="info-disclosure">
+              <summary>画面黑屏或加载失败怎么办？</summary>
+              <p>
+                检查网络连接，使用加载页的重试按钮；如仍失败，尝试支持 WebGL
+                的桌面浏览器，并检查硬件加速设置。反馈时可提供浏览器版本及错误提示。
+              </p>
+            </details>
+            <NuxtLink to="/forum" class="btn btn--outline">交流实验心得</NuxtLink>
+          </section>
+        </ScrollReveal>
       </div>
     </section>
   </div>

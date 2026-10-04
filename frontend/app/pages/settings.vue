@@ -1,10 +1,12 @@
 <template>
   <div class="settings-page">
     <section class="page-header">
-      <div class="container" data-transition-group="title">
-        <h1 class="page-header__title">⚙️ 账户设置</h1>
-        <p class="page-header__subtitle">管理你的个人资料与头像</p>
-      </div>
+      <ScrollReveal>
+        <div class="container" data-transition-group="title">
+          <h1 class="page-header__title">⚙️ 账户设置</h1>
+          <p class="page-header__subtitle">管理你的个人资料与头像</p>
+        </div>
+      </ScrollReveal>
     </section>
 
     <section class="settings-content">
@@ -20,101 +22,107 @@
           ></div>
         </div>
 
-        <div v-else-if="!isAuthenticated" class="settings-login-prompt" data-transition-group="content">
-          <p>请先登录以管理账户设置。</p>
-          <NuxtLink to="/login" class="btn btn--primary">前往登录</NuxtLink>
-        </div>
+        <ScrollReveal v-else-if="!isAuthenticated">
+          <div class="settings-login-prompt" data-transition-group="content">
+            <p>请先登录以管理账户设置。</p>
+            <NuxtLink to="/login" class="btn btn--primary">前往登录</NuxtLink>
+          </div>
+        </ScrollReveal>
 
         <div v-else class="settings-card" data-transition-group="card">
           <!-- Avatar Section -->
-          <div class="settings-section">
-            <h2 class="settings-section__title">🖼️ 个人头像</h2>
-            <p class="settings-section__desc">
-              上传一张图片作为你的头像。支持 PNG、JPG、GIF、WebP 格式，最大
-              2MB。
-            </p>
+          <ScrollReveal>
+            <div class="settings-section">
+              <h2 class="settings-section__title">🖼️ 个人头像</h2>
+              <p class="settings-section__desc">
+                上传一张图片作为你的头像。支持 PNG、JPG、GIF、WebP 格式，最大
+                2MB。
+              </p>
 
-            <div class="settings-avatar-area">
-              <div class="settings-avatar-preview">
-                <AvatarImage
-                  :avatar-url="previewUrl || user?.avatarUrl"
-                  :avatar="userInitials"
-                  :name="user?.name ?? ''"
-                  size="lg"
-                />
-              </div>
-
-              <div class="settings-avatar-actions">
-                <label
-                  class="btn btn--outline settings-upload-btn"
-                  :class="{ 'btn--disabled': uploading }"
-                >
-                  {{ validating ? '检查图片中…' : '📁 选择图片' }}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/gif,image/webp"
-                    class="settings-file-input"
-                    :disabled="uploading || validating"
-                    @change="handleFileSelect"
+              <div class="settings-avatar-area">
+                <div class="settings-avatar-preview">
+                  <AvatarImage
+                    :avatar-url="previewUrl || user?.avatarUrl"
+                    :avatar="userInitials"
+                    :name="user?.name ?? ''"
+                    size="lg"
                   />
-                </label>
+                </div>
+
+                <div class="settings-avatar-actions">
+                  <label
+                    class="btn btn--outline settings-upload-btn"
+                    :class="{ 'btn--disabled': uploading }"
+                  >
+                    {{ validating ? '检查图片中…' : '📁 选择图片' }}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/gif,image/webp"
+                      class="settings-file-input"
+                      :disabled="uploading || validating"
+                      @change="handleFileSelect"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div v-if="selectedFile" class="page-tools" data-transition-group="content">
+                <span>待上传：{{ selectedFile.name }}</span>
+                <button
+                  type="button"
+                  class="btn btn--primary"
+                  :disabled="uploading"
+                  @click="uploadAvatar"
+                >
+                  {{ uploading ? '上传中…' : '确认上传' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn--outline"
+                  :disabled="uploading"
+                  @click="cancelPreview"
+                >
+                  取消
+                </button>
+              </div>
+              <p v-if="selectedFile" class="settings-section__desc">
+                当前为本地预览，确认上传后才会更新头像。
+              </p>
+              <div
+                v-if="uploadError"
+                role="alert"
+                class="form-error form-error--global"
+              >
+                {{ uploadError }}
+              </div>
+              <div v-if="uploadSuccess" role="status" class="form-success">
+                {{ uploadSuccess }}
               </div>
             </div>
-
-            <div v-if="selectedFile" class="page-tools" data-transition-group="content">
-              <span>待上传：{{ selectedFile.name }}</span>
-              <button
-                type="button"
-                class="btn btn--primary"
-                :disabled="uploading"
-                @click="uploadAvatar"
-              >
-                {{ uploading ? '上传中…' : '确认上传' }}
-              </button>
-              <button
-                type="button"
-                class="btn btn--outline"
-                :disabled="uploading"
-                @click="cancelPreview"
-              >
-                取消
-              </button>
-            </div>
-            <p v-if="selectedFile" class="settings-section__desc">
-              当前为本地预览，确认上传后才会更新头像。
-            </p>
-            <div
-              v-if="uploadError"
-              role="alert"
-              class="form-error form-error--global"
-            >
-              {{ uploadError }}
-            </div>
-            <div v-if="uploadSuccess" role="status" class="form-success">
-              {{ uploadSuccess }}
-            </div>
-          </div>
+          </ScrollReveal>
 
           <!-- Profile Info Section -->
-          <div class="settings-section">
-            <h2 class="settings-section__title">📋 基本信息</h2>
-            <div class="settings-info-grid">
-              <div class="settings-info-item">
-                <span class="settings-info-label">用户名</span>
-                <span class="settings-info-value">{{ user?.name }}</span>
-              </div>
-              <div class="settings-info-item">
-                <span class="settings-info-label">邮箱</span>
-                <span class="settings-info-value">{{ user?.email }}</span>
-              </div>
-              <div class="settings-info-item">
-                <span class="settings-info-label">角色</span>
-                <span class="settings-info-value">
-                  {{ user?.isAdmin ? '👑 管理员' : '👤 用户' }}
-                </span>
+          <ScrollReveal>
+            <div class="settings-section">
+              <h2 class="settings-section__title">📋 基本信息</h2>
+              <div class="settings-info-grid">
+                <div class="settings-info-item">
+                  <span class="settings-info-label">用户名</span>
+                  <span class="settings-info-value">{{ user?.name }}</span>
+                </div>
+                <div class="settings-info-item">
+                  <span class="settings-info-label">邮箱</span>
+                  <span class="settings-info-value">{{ user?.email }}</span>
+                </div>
+                <div class="settings-info-item">
+                  <span class="settings-info-label">角色</span>
+                  <span class="settings-info-value">
+                    {{ user?.isAdmin ? '👑 管理员' : '👤 用户' }}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </div>
     </section>
