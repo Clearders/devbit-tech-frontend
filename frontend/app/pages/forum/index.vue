@@ -1,130 +1,87 @@
 ﻿<template>
-  <div class="forum-page">
-    <!-- Header -->
-    <section class="page-header">
+  <div ref="forumRoot" class="forum-page">
+    <section class="forum-heading">
       <ScrollReveal>
-        <div class="container" data-transition-group="title">
-          <p class="hero__badge" data-transition-group="title">Community</p>
-          <h1 class="page-header__title">💬 论坛</h1>
-          <p class="page-header__subtitle">
-            技术讨论、经验分享、问题解答——一切尽在 DevBit Tech 论坛。
-          </p>
+        <div class="container forum-heading__row" data-transition-group="title">
+          <div class="forum-heading__intro">
+            <h1 class="forum-heading__title"><span class="forum-heading__mark"><MessageSquare :size="28" :stroke-width="1.75" /></span>论坛</h1>
+            <p class="forum-heading__subtitle">交流技术，分享经验，解决问题。</p>
+          </div>
+          <div class="forum-heading__actions">
+            <ForumCommunityPanel :post-count="totalPostCount" :comment-count="totalCommentCount"
+              :user-count="users.length" :hot-posts="hotPosts" :loading="isLoadingForum" :error="loadError"
+              @retry="loadForum(true)" />
+            <Transition :css="false" @before-enter="motion.beforeInline" @enter="motion.enterInline" @leave="motion.leaveInline"
+              @enter-cancelled="motion.stop" @leave-cancelled="motion.stop">
+              <span v-if="isAuthenticated" class="forum-heading__action-slot"><span class="forum-heading__action-inner">
+                <NuxtLink to="/forum/new" class="forum-header-action forum-header-action--primary" data-forum-control>
+                  <span class="forum-control-icon" data-forum-icon><Plus :size="18" :stroke-width="1.75" /></span>发布帖子
+                </NuxtLink>
+              </span></span>
+            </Transition>
+            <Transition :css="false" @before-enter="motion.beforeInline" @enter="motion.enterInline" @leave="motion.leaveInline"
+              @enter-cancelled="motion.stop" @leave-cancelled="motion.stop">
+              <span v-if="isAdmin" class="forum-heading__action-slot"><span class="forum-heading__action-inner">
+                <button type="button" class="forum-header-action" data-forum-control :aria-expanded="showAdminPanel"
+                  aria-controls="forum-admin-panel" @click="showAdminPanel = !showAdminPanel">
+                  <span class="forum-control-icon" data-forum-icon><Shield :size="18" :stroke-width="1.75" /></span>管理
+                </button>
+              </span></span>
+            </Transition>
+          </div>
         </div>
       </ScrollReveal>
     </section>
 
-    <!-- Toolbar -->
-    <ScrollReveal>
-      <section class="forum-toolbar" data-transition-group="content">
-        <div class="container">
-          <div class="forum-toolbar__row">
-            <!-- Search -->
-            <div class="forum-toolbar__search">
-              <span class="forum-toolbar__search-icon">🔍</span>
-              <input
-                v-model="searchQuery"
-                type="text"
-                class="form-control forum-toolbar__search-input"
-                placeholder="搜索帖子标题、内容或标签"
-              />
-              <button
-                v-if="searchQuery"
-                class="forum-toolbar__search-clear"
-                @click="clearSearch"
-              >
-                ✖
-              </button>
+    <section class="forum-tools" aria-label="搜索与筛选帖子">
+      <ScrollReveal>
+        <div class="container" data-transition-group="content">
+          <div class="forum-tools__row">
+            <div ref="searchSource" class="forum-search-host" :class="{ 'is-docked': searchDocked }" :inert="searchDocked" :aria-hidden="searchDocked">
+              <ForumSearchField v-model="searchQuery" @composition="composing = $event" />
             </div>
-
-            <!-- Actions -->
-            <div class="forum-toolbar__actions">
-              <div class="forum-sort">
-                <span class="forum-sort__label">
-                  <span class="forum-sort__label-icon">↕</span>
-                  <span class="forum-sort__label-text">排序</span>
-                </span>
-                <div class="forum-sort__options">
-                  <button
-                    v-for="opt in sortOptions"
-                    :key="opt.value"
-                    class="forum-sort__btn"
-                    :class="{ 'forum-sort__btn--active': sortMode === opt.value }"
-                    @click="sortMode = opt.value"
-                  >
-                    <span class="forum-sort__btn-icon">{{ opt.icon }}</span>
-                    <span class="forum-sort__btn-text">{{ opt.label }}</span>
-                  </button>
-                </div>
-              </div>
-              <NuxtLink
-                v-if="isAuthenticated"
-                to="/forum/new"
-                class="btn btn--primary"
-              >
-                ✏️ 发布帖子
-              </NuxtLink>
-              <button
-                v-if="isAdmin"
-                class="btn btn--outline"
-                :class="{ 'btn--active': showAdminPanel }"
-                @click="showAdminPanel = !showAdminPanel"
-              >
-                🛡️ 管理
-              </button>
+            <div ref="sortSource" class="forum-sort-host" :class="{ 'is-docked': sortDocked }" :inert="sortDocked" :aria-hidden="sortDocked">
+              <ForumSortMenu v-model="sortMode" :active="!sortDocked" :dismiss="popup === 'search'" @open-change="controls.setSortOpen" />
             </div>
           </div>
-
-          <!-- Category tabs -->
-          <div class="forum-category-nav" role="group" aria-label="帖子分类" data-transition-group="content">
-            <button type="button" class="forum-category-nav__arrow" aria-label="查看前面的分类" aria-controls="forum-category-list"
-              :disabled="!categoryScroll.before" :class="{ 'is-pressed': pressedCategoryArrow === -1 }"
-              @pointerenter="setCategoryArrowOrigin" @pointerdown="pressCategoryArrow($event, -1)"
-              @pointermove="trackCategoryArrowPointer" @pointerleave="leaveCategoryArrow"
-              @pointerup="pressedCategoryArrow = null" @pointercancel="pressedCategoryArrow = null"
-              @focus="centerCategoryArrowOrigin" @click="scrollCategories(-1)"><span aria-hidden="true">‹</span></button>
-          <div class="forum-category-window" :class="{ 'has-before': categoryScroll.before, 'has-after': categoryScroll.after }">
-          <div id="forum-category-list" ref="categoryList" class="forum-categories" @scroll.passive="updateCategoryScroll">
-            <button
-              v-for="cat in categoryTabs"
-              :key="cat.value"
-              type="button"
-              :aria-pressed="activeCategory === cat.value"
-              class="forum-categories__tab"
-              :class="{
-                'forum-categories__tab--active': activeCategory === cat.value,
-              }"
-              @click="activeCategory = cat.value"
-            >
-              <span class="forum-categories__tab-icon">{{ cat.icon }}</span>
-              <span class="forum-categories__tab-label">{{ cat.label }}</span>
-              <span class="forum-categories__tab-count">{{
-                getCategoryCount(cat.value)
-              }}</span>
+          <div class="forum-filter-nav" role="group" aria-label="帖子分类">
+            <button type="button" class="forum-filter-nav__arrow" data-forum-control aria-label="查看前面的分类"
+              aria-controls="forum-category-list" :disabled="!categoryScroll.before" @click="scrollCategories(-1)">
+              <span class="forum-filter-nav__wash" data-forum-wash aria-hidden="true"></span>
+              <span class="forum-control-icon" data-forum-icon><ChevronLeft :size="18" :stroke-width="1.75" /></span>
+            </button>
+            <div class="forum-filter-window">
+              <div id="forum-category-list" ref="categoryList" class="forum-filter-list" @scroll.passive="updateCategoryScroll">
+                <span ref="categoryIndicator" class="forum-filter-indicator" aria-hidden="true"></span>
+                <button v-for="cat in categoryTabs" :key="cat.value" type="button" class="forum-filter-tab"
+                  :aria-pressed="activeCategory === cat.value" @click="activeCategory = cat.value">
+                  <span>{{ cat.label }}</span><span class="forum-filter-tab__count">{{ getCategoryCount(cat.value) }}</span>
+                </button>
+              </div>
+            </div>
+            <button type="button" class="forum-filter-nav__arrow" data-forum-control aria-label="查看后面的分类"
+              aria-controls="forum-category-list" :disabled="!categoryScroll.after" @click="scrollCategories(1)">
+              <span class="forum-filter-nav__wash" data-forum-wash aria-hidden="true"></span>
+              <span class="forum-control-icon" data-forum-icon><ChevronRight :size="18" :stroke-width="1.75" /></span>
             </button>
           </div>
-          </div>
-            <button type="button" class="forum-category-nav__arrow" aria-label="查看后面的分类" aria-controls="forum-category-list"
-              :disabled="!categoryScroll.after" :class="{ 'is-pressed': pressedCategoryArrow === 1 }"
-              @pointerenter="setCategoryArrowOrigin" @pointerdown="pressCategoryArrow($event, 1)"
-              @pointermove="trackCategoryArrowPointer" @pointerleave="leaveCategoryArrow"
-              @pointerup="pressedCategoryArrow = null" @pointercancel="pressedCategoryArrow = null"
-              @focus="centerCategoryArrowOrigin" @click="scrollCategories(1)"><span aria-hidden="true">›</span></button>
-          </div>
         </div>
-      </section>
-    </ScrollReveal>
+      </ScrollReveal>
+    </section>
 
     <!-- Main content -->
     <section class="forum-content">
       <div class="container">
         <div class="forum-layout">
-          <ForumCommunityPanel :post-count="totalPostCount" :comment-count="totalCommentCount"
-            :user-count="users.length" :hot-posts="hotPosts" :loading="isLoadingForum" :error="loadError"
-            @retry="loadForum(true)" />
           <!-- Left: Post list -->
           <div class="forum-layout__main">
             <!-- Admin Panel -->
-            <ForumAdminPanel v-if="showAdminPanel && isAdmin" />
+            <Transition :css="false" @before-enter="motion.beforePanel" @enter="motion.enterPanel" @leave="motion.leavePanel"
+              @enter-cancelled="motion.stop" @leave-cancelled="motion.stop">
+              <div v-if="showAdminPanel && isAdmin" id="forum-admin-panel" class="forum-admin-disclosure">
+                <div class="forum-admin-disclosure__body"><ForumAdminPanel /></div>
+              </div>
+            </Transition>
 
             <div v-if="loadError" class="forum-status forum-status--error">
               <span>{{ loadError }}</span>
@@ -135,11 +92,11 @@
 
             <ScrollReveal v-if="!loadError">
               <div class="forum-results-bar" data-transition-group="content">
-                <span>{{ resultSummary }}</span>
+                <span :title="resultSummary">{{ resultSummary }}</span>
                 <button
                   v-if="hasFilters"
                   type="button"
-                  class="btn btn--outline btn--sm"
+                  class="forum-results-bar__clear"
                   @click="clearFilters"
                 >
                   清除筛选
@@ -190,7 +147,8 @@
               class="forum-empty"
             >
               <div class="forum-empty__icon">
-                {{ searchQuery ? '🔍' : '📝' }}
+                <Search v-if="searchQuery" :size="36" :stroke-width="1.5" />
+                <MessageSquare v-else :size="36" :stroke-width="1.5" />
               </div>
               <h3 class="forum-empty__title">
                 {{ searchQuery ? '未找到匹配的帖子' : '暂无帖子' }}
@@ -229,6 +187,7 @@
 </template>
 
 <script setup lang="ts">
+import { MessageSquare, Search, Plus, Shield, ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { ForumCategory } from '~~/shared/forum'
 import { FORUM_CATEGORIES } from '~~/shared/forum'
 import { useForum } from '~/composables/useForum'
@@ -251,11 +210,16 @@ const {
   ensureInit,
 } = useForum()
 
-const isLoadingForum = ref(true)
+const forumRoot = ref<HTMLElement>()
+const controls = useForumControls()
+const { searchSource, sortSource, searchDocked, sortDocked, composing, popup, searchQuery, sortMode } = controls
+const categoryIndicator = ref<HTMLElement>()
+const motion = useForumHeaderMotion(forumRoot)
+const isLoadingForum = ref(posts.value.length === 0)
 const loadError = ref('')
 
 async function loadForum(force = false) {
-  isLoadingForum.value = true
+  isLoadingForum.value = force || posts.value.length === 0
   loadError.value = ''
   try {
     await ensureInit(force)
@@ -275,11 +239,10 @@ onMounted(() => {
 
 // Category tabs (prepend "all")
 const categoryTabs = computed(() => [
-  { value: 'all' as const, label: '全部', icon: '🌐' },
+  { value: 'all' as const, label: '全部' },
   ...FORUM_CATEGORIES.map((c: (typeof FORUM_CATEGORIES)[number]) => ({
     value: c.value,
     label: c.label,
-    icon: c.icon,
   })),
 ])
 
@@ -291,12 +254,6 @@ const isAdmin = computed(() => !!user.value?.isAdmin)
 // Search & filter
 const route = useRoute()
 const router = useRouter()
-const searchQuery = computed({
-  get: () => (typeof route.query.q === 'string' ? route.query.q : ''),
-  set: (q: string) => {
-    void router.replace({ query: { ...route.query, q: q || undefined } })
-  },
-})
 const activeCategory = computed<ForumCategory | 'all'>({
   get: () =>
     FORUM_CATEGORIES.find((c) => c.value === route.query.category)?.value ??
@@ -312,68 +269,8 @@ const activeCategory = computed<ForumCategory | 'all'>({
 })
 const categoryList = ref<HTMLElement>()
 const categoryScroll = reactive({ before: false, after: false })
-const pressedCategoryArrow = ref<number | null>(null)
-const categoryArrowPointers = new WeakMap<HTMLButtonElement, { x: number; y: number }>()
 let categoryResize: ResizeObserver | undefined
 let categoryDisposed = false
-function pressCategoryArrow(event: PointerEvent, direction: number) {
-  const arrow = event.currentTarget as HTMLButtonElement
-  if (arrow.disabled) return
-  setCategoryArrowOrigin(event)
-  if (event.pointerType !== 'mouse') pressedCategoryArrow.value = direction
-}
-function setCategoryArrowOrigin(event: PointerEvent) {
-  const arrow = event.currentTarget as HTMLButtonElement
-  if (arrow.disabled) return
-  const visible = Number.parseFloat(getComputedStyle(arrow, '::before').opacity) > .01
-  arrow.style.setProperty('--arrow-origin-duration', visible ? '480ms' : '0ms')
-  const bounds = arrow.getBoundingClientRect()
-  arrow.style.setProperty('--arrow-origin-x', `${event.clientX - bounds.left - arrow.clientLeft}px`)
-  arrow.style.setProperty('--arrow-origin-y', `${event.clientY - bounds.top - arrow.clientTop}px`)
-  trackCategoryArrowPointer(event)
-}
-function trackCategoryArrowPointer(event: PointerEvent) {
-  categoryArrowPointers.set(event.currentTarget as HTMLButtonElement, { x: event.clientX, y: event.clientY })
-}
-function leaveCategoryArrow(event: PointerEvent) {
-  pressedCategoryArrow.value = null
-  const arrow = event.currentTarget as HTMLButtonElement
-  const previous = categoryArrowPointers.get(arrow)
-  categoryArrowPointers.delete(arrow)
-  if (arrow.disabled || event.pointerType === 'touch') return
-  const bounds = arrow.getBoundingClientRect()
-  const radius = Math.min(bounds.width, bounds.height) / 2
-  const inside = (x: number, y: number) => {
-    const dx = Math.max(Math.abs(x - bounds.width / 2) - (bounds.width / 2 - radius), 0)
-    const dy = Math.max(Math.abs(y - bounds.height / 2) - (bounds.height / 2 - radius), 0)
-    return dx * dx + dy * dy <= radius * radius
-  }
-  const start = { x: previous ? previous.x - bounds.left : bounds.width / 2, y: previous ? previous.y - bounds.top : bounds.height / 2 }
-  const end = { x: event.clientX - bounds.left, y: event.clientY - bounds.top }
-  // A fast move may deliver pointerleave far outside the button. Find where
-  // that segment crossed the capsule rather than using the distant pointer.
-  if (inside(start.x, start.y) && !inside(end.x, end.y)) {
-    let low = 0
-    let high = 1
-    for (let i = 0; i < 18; i++) {
-      const middle = (low + high) / 2
-      if (inside(start.x + (end.x - start.x) * middle, start.y + (end.y - start.y) * middle)) low = middle
-      else high = middle
-    }
-    end.x = start.x + (end.x - start.x) * low
-    end.y = start.y + (end.y - start.y) * low
-  }
-  arrow.style.setProperty('--arrow-origin-duration', '360ms')
-  arrow.style.setProperty('--arrow-origin-x', `${Math.max(0, Math.min(bounds.width, end.x)) - arrow.clientLeft}px`)
-  arrow.style.setProperty('--arrow-origin-y', `${Math.max(0, Math.min(bounds.height, end.y)) - arrow.clientTop}px`)
-}
-function centerCategoryArrowOrigin(event: FocusEvent) {
-  const arrow = event.currentTarget as HTMLButtonElement
-  if (!arrow.matches(':focus-visible')) return
-  arrow.style.setProperty('--arrow-origin-duration', '360ms')
-  arrow.style.setProperty('--arrow-origin-x', '50%')
-  arrow.style.setProperty('--arrow-origin-y', '50%')
-}
 function updateCategoryScroll() {
   const list = categoryList.value
   if (!list) return
@@ -396,29 +293,17 @@ function revealActiveCategory() {
   if (left < list.scrollLeft) list.scrollTo({ left, behavior: categoryScrollBehavior() })
   else if (right > list.scrollLeft + list.clientWidth) list.scrollTo({ left: right - list.clientWidth, behavior: categoryScrollBehavior() })
   updateCategoryScroll()
+  motion.activeCategory(list, categoryIndicator.value)
 }
 watch(activeCategory, async () => { await nextTick(); revealActiveCategory() })
-watch(totalPostCount, async () => { await nextTick(); updateCategoryScroll() })
+watch(totalPostCount, async () => { await nextTick(); revealActiveCategory() })
 onMounted(() => {
   categoryResize = new ResizeObserver(revealActiveCategory)
   if (categoryList.value) categoryResize.observe(categoryList.value)
   revealActiveCategory()
   document.fonts.ready.then(() => { if (!categoryDisposed) revealActiveCategory() })
 })
-onBeforeUnmount(() => { categoryDisposed = true; categoryResize?.disconnect() })
-type SortMode = 'latest' | 'active' | 'views' | 'likes'
-const sortMode = computed<SortMode>({
-  get: () =>
-    ['latest', 'active', 'views', 'likes'].includes(String(route.query.sort)) &&
-    typeof route.query.sort === 'string'
-      ? (route.query.sort as SortMode)
-      : 'latest',
-  set: (sort) => {
-    void router.push({
-      query: { ...route.query, sort: sort === 'latest' ? undefined : sort },
-    })
-  },
-})
+onBeforeUnmount(() => { categoryDisposed = true; categoryResize?.disconnect(); composing.value = false })
 const hasFilters = computed(
   () =>
     !!searchQuery.value ||
@@ -436,13 +321,6 @@ function clearFilters() {
   })
 }
 const showAdminPanel = ref(false)
-
-const sortOptions = [
-  { value: 'latest' as const, label: '最新发布', icon: '🕐' },
-  { value: 'active' as const, label: '讨论最多', icon: '💬' },
-  { value: 'views' as const, label: '浏览最多', icon: '👁' },
-  { value: 'likes' as const, label: '点赞最多', icon: '👍' },
-]
 
 const hotPosts = computed(() =>
   [...posts.value]
@@ -502,7 +380,4 @@ function getCategoryCount(category: ForumCategory | 'all') {
   return posts.value.filter((post) => post.category === category).length
 }
 
-function clearSearch() {
-  searchQuery.value = ''
-}
 </script>

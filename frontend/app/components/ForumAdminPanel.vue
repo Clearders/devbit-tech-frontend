@@ -1,7 +1,7 @@
 <template>
   <div class="admin-panel">
     <div class="admin-panel__header">
-      <h2 class="admin-panel__title">🛡️ 管理面板</h2>
+      <h2 class="admin-panel__title">管理面板</h2>
       <p class="admin-panel__subtitle">管理论坛内容与用户</p>
     </div>
     <div v-if="actionError" class="form-error form-error--global">{{ actionError }}</div>
@@ -66,21 +66,21 @@
                 :title="post.isPinned ? '取消置顶' : '置顶'"
                 @click="handleTogglePin(post.id)"
               >
-                {{ post.isPinned ? '📌↓' : '📌' }}
+                <component :is="post.isPinned ? PinOff : Pin" :size="16" :stroke-width="1.75" />
               </button>
               <button
                 class="admin-panel__action-btn"
                 :title="post.isLocked ? '解锁' : '锁定'"
                 @click="handleToggleLock(post.id)"
               >
-                {{ post.isLocked ? '🔓' : '🔒' }}
+                <component :is="post.isLocked ? LockKeyholeOpen : LockKeyhole" :size="16" :stroke-width="1.75" />
               </button>
               <button
                 class="admin-panel__action-btn admin-panel__action-btn--danger"
                 title="删除"
                 @click="handleDeletePost(post.id)"
               >
-                🗑️
+                <Trash2 :size="16" :stroke-width="1.75" />
               </button>
             </td>
           </tr>
@@ -121,7 +121,7 @@
                 title="删除"
                 @click="handleDeleteComment(comment.id)"
               >
-                🗑️
+                <Trash2 :size="16" :stroke-width="1.75" />
               </button>
             </td>
           </tr>
@@ -148,7 +148,7 @@
             <td>
               <AvatarImage
                 :avatar-url="u.avatarUrl"
-                :avatar="u.avatar"
+                :avatar="u.name.slice(0, 2).toUpperCase()"
                 :name="u.name"
                 size="sm"
               />
@@ -168,6 +168,7 @@
 </template>
 
 <script setup lang="ts">
+import { Pin, PinOff, LockKeyhole, LockKeyholeOpen, Trash2 } from '@lucide/vue'
 import type { ForumCategory } from '~~/shared/forum'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
@@ -179,9 +180,9 @@ const { posts, comments, users, deletePost, deleteComment, togglePinPost, toggle
 const activeTab = ref<'posts' | 'comments' | 'users'>('posts')
 const actionError = ref('')
 const tabs = [
-  { key: 'posts' as const, label: '📝 帖子管理' },
-  { key: 'comments' as const, label: '💬 评论管理' },
-  { key: 'users' as const, label: '👥 用户管理' },
+  { key: 'posts' as const, label: '帖子管理' },
+  { key: 'comments' as const, label: '评论管理' },
+  { key: 'users' as const, label: '用户管理' },
 ]
 
 const allPosts = computed(() =>

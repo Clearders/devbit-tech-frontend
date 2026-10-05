@@ -1,84 +1,95 @@
 <template>
   <nav class="navbar" aria-label="主导航" @keydown.esc="closeMenu">
-    <div ref="island" class="container navbar__island" :class="{ 'navbar__island--open': isMenuOpen }">
-      <NuxtLink to="/" class="navbar__brand">
-        <span>Dev</span>Bit Tech
-      </NuxtLink>
-      <button
-        class="navbar__menu-toggle"
-        type="button"
-        :aria-expanded="isMenuOpen"
-        aria-controls="navigation-account"
-        :aria-label="isMenuOpen ? '收起账户菜单' : '展开账户菜单'"
-        @click="isMenuOpen = !isMenuOpen"
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      <div class="navbar__right">
-        <div ref="tabs" class="navbar__tabs">
-          <span ref="activeBubble" class="navbar__indicator" :class="{ 'navbar__indicator--ready': indicator.ready }" :style="indicatorStyle" aria-hidden="true">
-            <span :key="activePath" class="navbar__indicator-shine"></span>
-          </span>
-          <ul class="navbar__links">
-            <li v-for="item in visibleItems" :key="item.path">
-              <NuxtLink :to="item.path" :class="{ 'is-selected': activePath === item.path }" :aria-current="activePath === item.path ? 'page' : undefined"
-                @pointerenter="onTabMagnetMove" @pointermove="onTabMagnetMove"
-                @pointerleave="resetTabMagnet" @pointercancel="resetTabMagnet" @blur="resetTabMagnet" @click="closeMenu">
-                <span class="navbar__label"><span class="navbar__label-text">{{ item.label }}</span></span>
-              </NuxtLink>
-            </li>
-          </ul>
-        </div>
+    <div class="navbar__group" :class="{ 'navbar__group--forum': forumEnabled }">
+      <div ref="island" class="container navbar__island" :class="{ 'navbar__island--open': isMenuOpen }">
+        <NuxtLink to="/" class="navbar__brand">
+          <span>Dev</span>Bit Tech
+        </NuxtLink>
+        <button
+          class="navbar__menu-toggle"
+          type="button"
+          :aria-expanded="isMenuOpen"
+          aria-controls="navigation-account"
+          :aria-label="isMenuOpen ? '收起账户菜单' : '展开账户菜单'"
+          @click="isMenuOpen = !isMenuOpen"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div class="navbar__right">
+          <div ref="tabs" class="navbar__tabs">
+            <span ref="activeBubble" class="navbar__indicator" :class="{ 'navbar__indicator--ready': indicator.ready }" :style="indicatorStyle" aria-hidden="true">
+              <span :key="activePath" class="navbar__indicator-shine"></span>
+            </span>
+            <ul class="navbar__links">
+              <template v-for="item in visibleItems" :key="item.path">
+                <li>
+                  <NuxtLink :to="item.path" :class="{ 'is-selected': activePath === item.path }" :aria-current="activePath === item.path ? 'page' : undefined"
+                    @pointerenter="onTabMagnetMove" @pointermove="onTabMagnetMove"
+                    @pointerleave="resetTabMagnet" @pointercancel="resetTabMagnet" @blur="resetTabMagnet" @click="closeMenu">
+                    <span class="navbar__label"><span class="navbar__label-text">{{ item.label }}</span></span>
+                  </NuxtLink>
+                </li>
+                <li v-if="item.path === '/' && forumEnabled && searchDocked" class="navbar__search-slot">
+                  <ForumNavbarSearch />
+                </li>
+              </template>
+            </ul>
+          </div>
 
-        <div id="navigation-account" class="navbar__auth">
-          <template v-if="isResolving">
-            <span class="navbar__user">Checking session...</span>
-          </template>
-          <template v-else-if="isAuthenticated">
-            <div class="navbar__user-area">
-              <NuxtLink to="/settings" class="navbar__avatar-link" title="账户设置">
-                <AvatarImage
-                  :avatar-url="user?.avatarUrl"
-                  :avatar="userInitials"
-                  :name="user?.name ?? ''"
-                  size="sm"
-                />
+          <div id="navigation-account" class="navbar__auth">
+            <template v-if="isResolving">
+              <span class="navbar__user">Checking session...</span>
+            </template>
+            <template v-else-if="isAuthenticated">
+              <div class="navbar__user-area">
+                <NuxtLink to="/settings" class="navbar__avatar-link" title="账户设置">
+                  <AvatarImage
+                    :avatar-url="user?.avatarUrl"
+                    :avatar="userInitials"
+                    :name="user?.name ?? ''"
+                    size="sm"
+                  />
+                </NuxtLink>
+                <span class="navbar__user">{{ user?.name }}</span>
+              </div>
+              <button
+                class="btn btn--outline navbar__logout navbar__magnetic"
+                @pointermove="onMagnetMove"
+                @pointerleave="resetMagnet"
+                @pointerdown="onPointerDown"
+                @click="logout"
+              >
+                Logout
+              </button>
+            </template>
+            <template v-else>
+              <NuxtLink
+                to="/login"
+                class="btn btn--outline navbar__cta navbar__magnetic"
+                @pointermove="onMagnetMove"
+                @pointerleave="resetMagnet"
+                @pointerdown="onPointerDown"
+              >
+                Login
               </NuxtLink>
-              <span class="navbar__user">{{ user?.name }}</span>
-            </div>
-            <button
-              class="btn btn--outline navbar__logout navbar__magnetic"
-              @pointermove="onMagnetMove"
-              @pointerleave="resetMagnet"
-              @pointerdown="onPointerDown"
-              @click="logout"
-            >
-              Logout
-            </button>
-          </template>
-          <template v-else>
-            <NuxtLink
-              to="/login"
-              class="btn btn--outline navbar__cta navbar__magnetic"
-              @pointermove="onMagnetMove"
-              @pointerleave="resetMagnet"
-              @pointerdown="onPointerDown"
-            >
-              Login
-            </NuxtLink>
-            <NuxtLink
-              to="/register"
-              class="btn btn--primary navbar__cta navbar__magnetic"
-              @pointermove="onMagnetMove"
-              @pointerleave="resetMagnet"
-              @pointerdown="onPointerDown"
-            >
-              Register
-            </NuxtLink>
-          </template>
+              <NuxtLink
+                to="/register"
+                class="btn btn--primary navbar__cta navbar__magnetic"
+                @pointermove="onMagnetMove"
+                @pointerleave="resetMagnet"
+                @pointerdown="onPointerDown"
+              >
+                Register
+              </NuxtLink>
+            </template>
+          </div>
         </div>
+      </div>
+      <div v-if="forumEnabled" ref="sortTarget" class="navbar__sort-slot" :class="{ 'is-docked': sortDocked }"
+        :inert="!sortDocked" :aria-hidden="!sortDocked">
+        <ForumSortMenu v-model="sortMode" compact :active="sortDocked" :dismiss="popup === 'search'" @open-change="controls.setSortOpen" />
       </div>
     </div>
   </nav>
@@ -95,7 +106,8 @@ const { onPointerDown, onMagnetMove, resetMagnet } = useMagneticButton()
 const isMenuOpen = ref(false)
 const router = useRouter()
 const route = router.currentRoute
-const island = ref<HTMLElement>()
+const controls = useForumControls()
+const { enabled: forumEnabled, navigation: island, searchDocked, sortDocked, sortTarget, sortMode, popup } = controls
 const tabs = ref<HTMLElement>()
 const activeBubble = ref<HTMLElement>()
 const visibleItems = computed(() => navigationItems.filter(item => !item.authenticated || isAuthenticated.value))

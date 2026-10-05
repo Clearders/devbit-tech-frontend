@@ -16,6 +16,8 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@lucide/vue": "^1.52.0",
+    "gsap": "^3.15.0",
     "katex": "^0.16.25",
     "markdown-it": "^14.2.0",
     "markdown-it-texmath": "^1.0.0",

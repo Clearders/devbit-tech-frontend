@@ -4,6 +4,7 @@ import AppFooter from "~/components/AppFooter.vue"
 
 const { isAuthenticated } = useAuth()
 const mainContent = ref<HTMLElement>()
+provideForumControls()
 useScrollReveal(mainContent)
 </script>
 

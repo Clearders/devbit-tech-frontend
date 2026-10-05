@@ -1,4 +1,6 @@
 <template>
+  <div class="forum-detail-route">
+  <Transition name="forum-detail-content" mode="out-in">
   <div v-if="isLoadingPost" class="forum-detail forum-detail--loading">
     <section class="page-header">
       <ScrollReveal>
@@ -379,6 +381,8 @@
       </ScrollReveal>
     </section>
   </div>
+  </Transition>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -444,7 +448,7 @@ async function copyPostLink() {
 const postComments = computed(() => getCommentsByPostId(postId.value))
 const newComment = ref('')
 const actionError = ref('')
-const isLoadingPost = ref(true)
+const isLoadingPost = ref(!post.value)
 const submittingComment = ref(false)
 
 // Update SEO title dynamically
@@ -490,18 +494,20 @@ async function loadCurrentPost(id: number) {
     return
   }
 
-  isLoadingPost.value = true
+  // The list already holds the full post. Keep it visible while refreshing,
+  // so route entry is not interrupted by a skeleton replacing the page root.
+  isLoadingPost.value = !getPostById(id)
   try {
     await ensureInit()
     await loadPost(id)
     await loadCommentsForPost(id)
   } catch (error: unknown) {
-    actionError.value = extractApiErrorMessage(
+    if (postId.value === id) actionError.value = extractApiErrorMessage(
       error,
       '帖子加载失败，请稍后重试。',
     )
   } finally {
-    isLoadingPost.value = false
+    if (postId.value === id) isLoadingPost.value = false
   }
 }
 

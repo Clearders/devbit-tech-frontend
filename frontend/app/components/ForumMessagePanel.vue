@@ -19,7 +19,7 @@
         @dblclick="toggleMinimize"
       >
         <div class="msg-window__titlebar-left">
-          <span class="msg-window__title-icon">💬</span>
+          <span class="msg-window__title-icon"><MessageSquare :size="18" :stroke-width="1.75" aria-hidden="true" /></span>
           <span class="msg-window__title-text">{{ windowTitle }}</span>
           <span v-if="unreadCount > 0" class="msg-window__title-badge">{{ unreadCount }}</span>
         </div>
@@ -27,7 +27,7 @@
           <!-- Dock menu -->
           <div class="msg-window__dock-menu" @pointerdown.stop>
             <button class="msg-window__titlebar-btn" title="停靠位置" @click="showDockMenu = !showDockMenu">
-              📌
+              <Pin :size="18" :stroke-width="1.75" aria-hidden="true" />
             </button>
             <div v-if="showDockMenu" class="msg-window__dock-dropdown">
               <button
@@ -45,7 +45,7 @@
                 :class="{ 'msg-window__dock-item--active': windowState.mode === 'centered' }"
                 @click="centerWindow(); showDockMenu = false"
               >
-                <span>🎯</span>
+                <span><Focus :size="18" :stroke-width="1.75" aria-hidden="true" /></span>
                 <span>居中</span>
               </button>
             </div>
@@ -54,7 +54,7 @@
             {{ windowState.isMinimized ? '□' : '─' }}
           </button>
           <button class="msg-window__titlebar-btn msg-window__titlebar-btn--close" title="关闭" @click.stop="closeWindow">
-            ✕
+            <X :size="18" :stroke-width="1.75" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -68,21 +68,21 @@
             :class="{ 'msg-window__tab--active': messagePanelTab === 'messages' }"
             @click="messagePanelTab = 'messages'"
           >
-            💬 私信
+            <MessageSquare :size="18" :stroke-width="1.75" aria-hidden="true" /> 私信
           </button>
           <button
             class="msg-window__tab"
             :class="{ 'msg-window__tab--active': messagePanelTab === 'friends' }"
             @click="messagePanelTab = 'friends'"
           >
-            👥 好友
+            好友
           </button>
           <button
             class="msg-window__tab"
             :class="{ 'msg-window__tab--active': messagePanelTab === 'addFriend' }"
             @click="messagePanelTab = 'addFriend'"
           >
-            ➕ 添加
+            添加
           </button>
         </div>
 
@@ -93,7 +93,7 @@
           <!-- Conversation list -->
           <div v-if="!activeMessagePartner" class="msg-window__conversations">
             <div v-if="conversations.length === 0" class="msg-window__empty">
-              <div class="msg-window__empty-icon">📭</div>
+              <div class="msg-window__empty-icon"><Inbox :size="18" :stroke-width="1.75" aria-hidden="true" /></div>
               <p>暂无消息</p>
             </div>
             <div
@@ -106,7 +106,7 @@
               <span class="msg-window__conv-avatar">
                 <AvatarImage
                   :avatar-url="conv.partner.avatarUrl"
-                  :avatar="conv.partner.avatar"
+                  :avatar="conv.partner.name.slice(0, 2).toUpperCase()"
                   :name="conv.partner.name"
                   size="sm"
                 />
@@ -128,7 +128,7 @@
               <button class="msg-window__back" @click="activeMessagePartner = null">← 返回</button>
               <span class="msg-window__chat-partner">{{ activePartnerName }}</span>
               <button class="msg-window__chat-action" title="清除聊天记录" @click="clearChatWithPartner(activeMessagePartner)">
-                🗑️
+                <Trash2 :size="18" :stroke-width="1.75" aria-hidden="true" />
               </button>
             </div>
             <div class="msg-window__chat-messages" ref="chatMessagesRef">
@@ -152,7 +152,7 @@
                     :download="extractFileName(msg.content)"
                     target="_blank"
                   >
-                    <span class="msg-window__msg-file-icon">📎</span>
+                    <span class="msg-window__msg-file-icon"><Paperclip :size="18" :stroke-width="1.75" aria-hidden="true" /></span>
                     <span class="msg-window__msg-file-name">{{ extractFileName(msg.content) }}</span>
                     <span class="msg-window__msg-file-dl">⬇</span>
                   </a>
@@ -166,7 +166,7 @@
                 <div class="msg-window__msg-time">{{ formatRelativeTime(msg.createdAt) }}</div>
               </div>
               <div v-if="activeMessages.length === 0" class="msg-window__empty">
-                <div class="msg-window__empty-icon">💬</div>
+                <div class="msg-window__empty-icon"><MessageSquare :size="18" :stroke-width="1.75" aria-hidden="true" /></div>
                 <p>暂无消息，发送第一条消息吧！</p>
               </div>
             </div>
@@ -175,9 +175,9 @@
             <div v-if="pendingAttachments.length > 0" class="msg-window__attachments-preview">
               <div v-for="(att, idx) in pendingAttachments" :key="idx" class="msg-window__attachment-item">
                 <img v-if="att.type === 'image'" :src="att.dataUrl" alt="preview" class="msg-window__attachment-thumb" />
-                <span v-else class="msg-window__attachment-file-icon">📄</span>
+                <span v-else class="msg-window__attachment-file-icon"><File :size="18" :stroke-width="1.75" aria-hidden="true" /></span>
                 <span class="msg-window__attachment-name">{{ att.name }}</span>
-                <button class="msg-window__attachment-remove" @click="removeAttachment(idx)">✕</button>
+                <button class="msg-window__attachment-remove" @click="removeAttachment(idx)"><X :size="18" :stroke-width="1.75" aria-hidden="true" /></button>
               </div>
             </div>
 
@@ -190,7 +190,7 @@
                   title="表情"
                   @click="showEmojiPicker = !showEmojiPicker"
                 >
-                  😊
+                  <CircleEllipsis :size="18" :stroke-width="1.75" aria-hidden="true" />
                 </button>
                 <div v-if="showEmojiPicker" class="msg-window__emoji-picker" @pointerdown.stop>
                   <div class="msg-window__emoji-search">
@@ -233,7 +233,7 @@
                 title="发送图片/文件"
                 @click="triggerFileInput"
               >
-                🖼️
+                <Image :size="18" :stroke-width="1.75" aria-hidden="true" />
               </button>
               <input
                 ref="fileInputRef"
@@ -272,7 +272,7 @@
         <template v-if="messagePanelTab === 'friends'">
           <div class="msg-window__conversations">
             <div v-if="friendsList.length === 0" class="msg-window__empty">
-              <div class="msg-window__empty-icon">👥</div>
+              <div class="msg-window__empty-icon"><Users :size="24" :stroke-width="1.75" /></div>
               <p>暂无好友，去「添加」标签页搜索并添加好友吧</p>
             </div>
             <div
@@ -284,7 +284,7 @@
               <span class="msg-window__conv-avatar">
                 <AvatarImage
                   :avatar-url="friend.user.avatarUrl"
-                  :avatar="friend.user.avatar"
+                  :avatar="friend.user.name.slice(0, 2).toUpperCase()"
                   :name="friend.user.name"
                   size="sm"
                 />
@@ -297,7 +297,7 @@
                 title="删除好友"
                 @click.stop="handleRemoveFriend(friend.user.id)"
               >
-                ✕
+                <X :size="18" :stroke-width="1.75" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -331,7 +331,7 @@
                 <span class="msg-window__conv-avatar">
                   <AvatarImage
                     :avatar-url="resultUser.avatarUrl"
-                    :avatar="resultUser.avatar"
+                    :avatar="resultUser.name.slice(0, 2).toUpperCase()"
                     :name="resultUser.name"
                     size="sm"
                   />
@@ -374,7 +374,7 @@
       <Teleport to="body">
         <div v-if="previewImageUrl" class="msg-window__image-overlay" @click="previewImageUrl = null">
           <img :src="previewImageUrl" alt="preview" class="msg-window__image-preview" @click.stop />
-          <button class="msg-window__image-close" @click="previewImageUrl = null">✕</button>
+          <button class="msg-window__image-close" @click="previewImageUrl = null"><X :size="18" :stroke-width="1.75" aria-hidden="true" /></button>
         </div>
       </Teleport>
     </div>
@@ -390,13 +390,15 @@
       @pointerdown.prevent="onTogglePointerDown"
       @click="onToggleClick"
     >
-      <span class="msg-window__toggle-icon">💬</span>
+      <span class="msg-window__toggle-icon"><MessageSquare :size="22" :stroke-width="1.75" aria-hidden="true" /></span>
       <span v-if="unreadCount > 0" class="msg-window__badge">{{ unreadCount }}</span>
     </button>
   </Teleport>
 </template>
 
 <script setup lang="ts">
+import { MessageSquare, Pin, Focus, Inbox, Trash2, Paperclip, File, CircleEllipsis, Image, X, Users } from '@lucide/vue'
+
 import type { ForumMessage, ForumUser } from '~~/shared/forum'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
@@ -489,12 +491,12 @@ const currentUserId = computed(() => user.value?.id ?? 0)
 
 const windowTitle = computed(() => {
   if (activeMessagePartner.value && messagePanelTab.value === 'messages') {
-    return `💬 ${activePartnerName.value}`
+    return activePartnerName.value
   }
   switch (messagePanelTab.value) {
-    case 'friends': return '👥 好友列表'
-    case 'addFriend': return '➕ 添加好友'
-    default: return '💬 私信'
+    case 'friends': return '好友列表'
+    case 'addFriend': return '添加好友'
+    default: return '私信'
   }
 })
 
