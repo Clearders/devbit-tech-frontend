@@ -2,6 +2,7 @@
   <nav class="navbar" aria-label="主导航" @keydown.esc="closeMenu">
     <div class="navbar__group" :class="{ 'navbar__group--forum': forumEnabled }">
       <div ref="island" class="container navbar__island" :class="{ 'navbar__island--open': isMenuOpen }">
+        <span class="navbar__skin" aria-hidden="true"></span>
         <NuxtLink to="/" class="navbar__brand">
           <span>Dev</span>Bit Tech
         </NuxtLink>
@@ -179,6 +180,7 @@ watch(activePath, async () => {
   }
 })
 watch(visibleItems, async () => { await nextTick(); updateIndicator() })
+watch(searchDocked, async () => { await nextTick(); updateIndicator() })
 onMounted(() => {
   magneticMedia = window.matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)')
   magneticMedia.addEventListener('change', resetTabMagnet)

@@ -60,9 +60,11 @@
 .forum-navbar-search[hidden] { display: none; }
 .forum-navbar-search[inert] { pointer-events: none; }
 .forum-navbar-search :is(input, button):focus-visible { outline: 2px solid var(--color-primary); outline-offset: -3px; }
-.forum-dock-flight { position: fixed; z-index: 170; display: flex; align-items: center; padding-left: 14px; overflow: hidden; pointer-events: none;
+.forum-dock-flight { position: fixed; z-index: 170; overflow: hidden; pointer-events: none;
   border: 1px solid var(--color-border); border-radius: 8px; background: rgb(255 255 255 / .94); color: var(--color-text-secondary); box-shadow: 0 4px 14px rgb(30 30 46 / .06); }
-.forum-dock-flight svg { flex-shrink: 0; width: 18px; height: 18px; }
+.forum-dock-flight__icon { position: absolute; top: 50%; translate: 0 -50%; display: flex; width: 18px; height: 18px; }
+.forum-dock-flight svg { width: 18px; height: 18px; }
+.forum-dock-flight__label { position: absolute; left: 42px; top: 50%; translate: 0 -50%; white-space: nowrap; font-size: 14px; }
 .forum-search-clear-enter-active, .forum-search-clear-leave-active { transition: opacity 160ms, transform 160ms; }
 .forum-search-clear-enter-from, .forum-search-clear-leave-to { opacity: 0; transform: scale(.8); }
 .forum-sort-menu__popup {
