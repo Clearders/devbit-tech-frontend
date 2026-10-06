@@ -48,18 +48,18 @@ watch(open, async active => {
     position()
     if (!timeline) context = gsap.context(() => {
       timeline = gsap.timeline({ paused: true, onReverseComplete: () => { if (!open.value) rendered.value = false } })
-        .fromTo(panel.value!, { opacity: 0, y: -14, scaleY: .88 },
-          { opacity: 1, y: 0, scaleY: 1, duration: .38, ease: 'back.out(1.4)' })
+        .fromTo(panel.value!, { opacity: 0, y: -8 },
+          { opacity: 1, y: 0, duration: .24, ease: 'power3.out' })
     }, panel.value)
     if (reduced) timeline?.progress(1).pause()
-    else timeline?.play()
+    else timeline?.timeScale(1).play()
     field.value?.focus()
   } else {
     composing.value = false
     if (reduced || !timeline || timeline.progress() === 0) {
       timeline?.progress(0).pause()
       rendered.value = false
-    } else timeline.reverse()
+    } else timeline.timeScale(1.35).reverse()
   }
 })
 let resize: ResizeObserver | undefined

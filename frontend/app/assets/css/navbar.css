@@ -1,4 +1,4 @@
-/* A floating island; navigation remains visible even on small screens. */
+/* A floating island with collapsible navigation on small screens. */
 .navbar {
   position: sticky;
   top: max(16px, env(safe-area-inset-top));
@@ -44,11 +44,10 @@
 }
 .navbar__group { display: flex; align-items: center; gap: 8px; width: fit-content; max-width: 100%; margin-inline: auto; }
 .navbar__group--forum .navbar__island { max-width: calc(100% - 52px); margin-inline: 0; }
-.navbar__group--forum .navbar__links { min-height: 50px; }
 .navbar__sort-slot { flex: 0 0 44px; width: 44px; height: 44px; pointer-events: auto; }
 .navbar__sort-slot:not(.is-docked) { visibility: hidden; pointer-events: none; }
 .navbar__sort-slot button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
-.navbar__search { display: grid; place-items: center; width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 50%;
+.navbar__search { display: grid; place-items: center; width: 44px; min-height: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%;
   background: transparent; color: var(--color-text-secondary); cursor: pointer; transition: color 160ms, background-color 160ms; }
 .navbar__search:hover, .navbar__search[aria-expanded='true'] { color: var(--color-primary-dark); background: var(--color-primary-o08); }
 .navbar__brand span { color: var(--color-primary); }
@@ -136,6 +135,9 @@
 .navbar__avatar-link { display: flex; flex-shrink: 0; border-radius: 50%; }
 .navbar :is(a, button):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .navbar__menu-toggle { display: none; }
+.navbar__mobile-search { display: none; }
+.navbar__indicator { translate: var(--navbar-dock-x, 0px) 0; }
+.navbar__island[data-docking] .navbar__indicator { transition: opacity 180ms, transform 480ms var(--ease-spring); }
 @keyframes island-label {
   0% { transform: translateY(3px) scale(.93); filter: blur(2px); }
   55% { transform: translateY(-2px) scale(1.04); filter: blur(0); }
@@ -159,17 +161,27 @@
   .navbar .navbar__island { gap: 8px; padding-left: 14px; }
   .navbar__links a { padding-inline: 8px; }
 }
+@media (min-width: 761px) {
+  /* Center the navigation itself; the external sort button reserves equal clearance on both sides. */
+  .navbar__group--forum { position: relative; max-width: calc(100% - 104px); }
+  .navbar__group--forum .navbar__island { max-width: 100%; }
+  .navbar__sort-slot { position: absolute; left: calc(100% + 8px); top: 50%; translate: 0 -50%; }
+}
 @media (max-width: 760px) {
   .navbar { top: max(10px, env(safe-area-inset-top)); margin-top: 10px; padding: 0 12px; }
-  .navbar .navbar__island { width: 420px; max-width: 100%; flex-wrap: wrap; gap: 2px; padding: 6px 10px; border-radius: 24px; }
+  .navbar .navbar__island { width: 420px; max-width: 100%; min-height: 48px; gap: 6px; padding: 2px 6px 2px 12px; border-radius: 24px; }
   .navbar__group { width: 420px; }
-  .navbar__group--forum { width: 472px; }
-  .navbar__group--forum .navbar__island { width: calc(100% - 52px); max-width: calc(100% - 52px); }
+  .navbar__group--forum { width: 476px; }
+  .navbar__group--forum .navbar__island { width: calc(100% - 56px); max-width: calc(100% - 56px); }
+  .navbar__sort-slot { flex-basis: 48px; width: 48px; height: 48px; }
+  .navbar .navbar__sort-slot .forum-sort-menu__trigger { width: 48px; height: 48px; }
   .navbar__links .navbar__search-slot { flex: 0 0 44px; }
-  .navbar__brand { padding-left: 10px; font-size: 1rem; }
+  .navbar__brand { padding-left: 0; margin-right: auto; font-size: .88rem; }
+  .navbar__mobile-search { display: grid; order: 1; width: 38px; min-height: 38px; }
+  .navbar__mobile-search .navbar__search { width: 38px; min-height: 38px; height: 38px; }
   .navbar__menu-toggle {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 4px; margin-left: auto; width: 32px; height: 32px;
+    gap: 4px; margin-left: 0; order: 2; flex-shrink: 0; width: 38px; height: 38px;
     color: var(--color-text-secondary); background: var(--color-surface);
     border: 1px solid var(--color-border); border-radius: 50%; cursor: pointer;
   }
@@ -177,12 +189,14 @@
   .navbar__island--open .navbar__menu-toggle span:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
   .navbar__island--open .navbar__menu-toggle span:nth-child(2) { opacity: 0; }
   .navbar__island--open .navbar__menu-toggle span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
-  .navbar__right { display: flex; flex-direction: column; align-items: stretch; gap: 0; width: 100%; }
-  .navbar__tabs { overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .navbar__right { position: absolute; top: calc(100% + 8px); left: 0; right: 0; display: none; flex-direction: column; align-items: stretch; gap: 0; width: 100%; padding: 8px;
+    border: 1px solid var(--color-border-light); border-radius: 18px; background: rgb(255 255 255 / .97); box-shadow: 0 8px 28px rgb(30 30 46 / .12); }
+  .navbar__island--open .navbar__right { display: flex; }
+  .navbar__tabs { border-radius: 12px; }
   .navbar__tabs::-webkit-scrollbar { display: none; }
-  .navbar__links { width: max-content; min-width: 100%; gap: 0; }
-  .navbar__links li { flex: 1 0 auto; }
-  .navbar__links a { min-height: 38px; padding-inline: 12px; font-size: .8rem; }
+  .navbar__links { flex-direction: column; align-items: stretch; width: 100%; gap: 2px; }
+  .navbar__links li { flex: 0 0 auto; }
+  .navbar__links a { justify-content: flex-start; min-height: 40px; padding-inline: 12px; font-size: .8rem; }
   .navbar__auth {
     border-left: 0; border-top: 1px solid transparent; padding: 0 4px;
     max-height: 0; opacity: 0; visibility: hidden; overflow: hidden;

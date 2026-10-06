@@ -29,14 +29,17 @@ let disposed = false
 function position() {
   if (!trigger.value || !menu.value) return
   const bounds = trigger.value.getBoundingClientRect()
+  const navigation = root.value?.closest('.navbar__group')?.getBoundingClientRect()
   const viewportWidth = document.documentElement.clientWidth
   const width = Math.min(Math.max(bounds.width, 208), viewportWidth - 24)
-  const height = Math.min(menu.value.scrollHeight, window.innerHeight - 24)
-  const above = bounds.bottom + 8 + height > window.innerHeight - 12 && bounds.top > height + 12
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+  const bottom = Math.max(bounds.bottom, navigation?.bottom ?? bounds.bottom)
+  const height = Math.min(menu.value.scrollHeight, viewportHeight - 24)
+  const above = !navigation && bottom + 8 + height > viewportHeight - 12 && bounds.top > height + 12
   Object.assign(menu.value.style, {
     width: `${width}px`, left: `${Math.max(12, Math.min(bounds.right - width, viewportWidth - width - 12))}px`,
-    top: `${above ? bounds.top - height - 8 : Math.min(bounds.bottom + 8, window.innerHeight - height - 12)}px`,
-    maxHeight: `${window.innerHeight - 24}px`, transformOrigin: above ? 'bottom right' : 'top right',
+    top: `${above ? bounds.top - height - 8 : bottom + 8}px`,
+    maxHeight: `${Math.max(44, above ? bounds.top - 20 : viewportHeight - bottom - 20)}px`, transformOrigin: above ? 'bottom right' : 'top right',
   })
 }
 function schedulePosition() {
@@ -60,15 +63,15 @@ async function show(index = choices.findIndex(choice => choice.value === props.m
   if (!timeline) {
     context = gsap.context(() => {
       timeline = gsap.timeline({ paused: true, onReverseComplete: () => { if (!open.value) rendered.value = false } })
-        .fromTo(menu.value!, { opacity: 0, y: -6, scale: .97 },
-          { opacity: 1, y: 0, scale: 1, duration: .3, ease: 'back.out(1.1)' }, 0)
-        .to(chevron.value!, { rotation: 180, duration: .25, ease: 'power2.inOut' }, 0)
-        .fromTo(menu.value!.querySelectorAll('[role="option"]'), { opacity: 0, y: -3 },
-          { opacity: 1, y: 0, duration: .16, stagger: .025, ease: 'power2.out' }, .06)
+        .fromTo(menu.value!, { opacity: 0, y: -6 },
+          { opacity: 1, y: 0, duration: .24, ease: 'power3.out' }, 0)
+        .to(chevron.value!, { rotation: 180, duration: .2, ease: 'power2.inOut' }, 0)
+        .fromTo(menu.value!.querySelectorAll('[role="option"]'), { opacity: 0 },
+          { opacity: 1, duration: .14, stagger: .018, ease: 'power2.out' }, .04)
     }, menu.value)
   }
   if (reduced) timeline?.progress(1).pause()
-  else timeline?.play()
+  else timeline?.timeScale(1).play()
   focusOption(activeIndex.value)
 }
 function close(returnFocus = false) {
@@ -79,7 +82,7 @@ function close(returnFocus = false) {
   if (reduced || !timeline || timeline.progress() === 0) {
     timeline?.progress(0).pause()
     rendered.value = false
-  } else timeline.reverse()
+  } else timeline.timeScale(1.35).reverse()
 }
 function select(index: number) {
   emit('update:modelValue', choices[index]!.value)
@@ -119,6 +122,7 @@ onMounted(() => {
   document.addEventListener('focusin', outside)
   window.addEventListener('resize', schedulePosition)
   window.addEventListener('scroll', schedulePosition, true)
+  window.visualViewport?.addEventListener('resize', schedulePosition)
   resize = new ResizeObserver(schedulePosition)
   if (trigger.value) resize.observe(trigger.value)
   const navigation = root.value?.closest('.navbar__group')
@@ -133,6 +137,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('focusin', outside)
   window.removeEventListener('resize', schedulePosition)
   window.removeEventListener('scroll', schedulePosition, true)
+  window.visualViewport?.removeEventListener('resize', schedulePosition)
   media?.revert()
   context?.revert()
 })

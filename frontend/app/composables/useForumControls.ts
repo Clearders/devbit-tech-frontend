@@ -12,7 +12,8 @@ const key: InjectionKey<ForumControls> = Symbol('forum-controls')
 export function provideForumControls() {
   const route = useRoute()
   const router = useRouter()
-  const enabled = computed(() => route.path.replace(/\/$/, '') === '/forum')
+  const nuxtApp = useNuxtApp()
+  const enabled = computed(() => router.currentRoute.value.path.replace(/\/$/, '') === '/forum')
   const navigation = shallowRef<HTMLElement>()
   const searchSource = shallowRef<HTMLElement>()
   const sortSource = shallowRef<HTMLElement>()
@@ -20,6 +21,7 @@ export function provideForumControls() {
   const sortTarget = shallowRef<HTMLElement>()
   const searchDocked = ref(false)
   const sortDocked = ref(false)
+  const navbarTransitioning = ref(false)
   const composing = ref(false)
   const popup = ref<'search' | 'sort' | null>(null)
   const searchQuery = computed<string>({
@@ -38,6 +40,8 @@ export function provideForumControls() {
   let motion: MediaQueryList | undefined
   const dockMotion = createForumDockMotion(() => navigation.value, () => !!motion?.matches)
   const revisions = { search: 0, sort: 0 }
+  let navbarRevision = 0
+  const routeDisposers: (() => void)[] = []
   const popupLayout = createForumPopupLayout(() => controller?.schedule())
   watch(popup, owner => {
     if (!owner) { popupLayout.release(enabled.value ? 400 : 0); return }
@@ -47,16 +51,27 @@ export function provideForumControls() {
   const source = (control: DockControl) => control === 'search' ? searchSource.value : sortSource.value
   const target = (control: DockControl) => control === 'search' ? searchTarget.value
     : sortTarget.value?.querySelector<HTMLButtonElement>('button') ?? undefined
-  function stopFlights() { dockMotion.stopAll() }
-  async function change(control: DockControl, docked: boolean) {
+  function stopFlights() {
+    navbarRevision++
+    navbarTransitioning.value = false
+    dockMotion.stopAll()
+  }
+  async function change(control: DockControl, docked: boolean, animate = true) {
     const revision = ++revisions[control]
+    if (!enabled.value) return
+    if (!animate) stopFlights()
+    if (control === 'search') {
+      navbarRevision++
+      navbarTransitioning.value = false
+    }
     const from = docked ? source(control) : target(control)
-    const snapshot = dockMotion.capture(control, from)
+    const snapshot = animate ? dockMotion.capture(control, from) : undefined
     const focused = !!from?.contains(document.activeElement)
       || popup.value === control && !!document.activeElement?.closest('[data-forum-popup]')
     if (popup.value === control) popup.value = null
     if (control === 'search') searchDocked.value = docked
     else sortDocked.value = docked
+    if (!animate) return
     await nextTick()
     if (disposed || revisions[control] !== revision || !enabled.value) return
     const destination = docked ? target(control) : source(control)?.querySelector<HTMLElement>('input, button')
@@ -73,21 +88,52 @@ export function provideForumControls() {
     window.addEventListener('resize', stopFlights, { passive: true })
     window.visualViewport?.addEventListener('resize', stopFlights, { passive: true })
     controller = createForumDockController({ navigation: () => navigation.value, source,
-      enabled: () => enabled.value, composing: () => composing.value, change })
+      enabled: () => enabled.value, composing: () => composing.value, change,
+      docked: control => control === 'search' ? searchDocked.value : sortDocked.value,
+      ready: () => !enabled.value || !!searchSource.value?.isConnected && !!sortSource.value?.isConnected
+        && route.path === router.currentRoute.value.path,
+      blocked: () => !!navigation.value?.closest('.site-layout')?.querySelector(
+        '.site-layout__main [data-route-direction], .site-layout__main .page-enter-active, .site-layout__main .page-leave-active'),
+    })
+    const resume = () => controller?.resume()
+    routeDisposers.push(
+      router.beforeResolve((to, from) => { if (to.path !== from.path) controller?.suspend() }),
+      router.afterEach((to, from, failure) => { if (failure || to.path !== from.path) resume() }),
+      router.onError(resume),
+      nuxtApp.hook('page:finish', resume),
+      nuxtApp.hook('page:transition:finish', resume),
+      nuxtApp.hook('app:error', resume),
+    )
+    controller.suspend()
+    controller.resume()
   })
-  watch([navigation, searchSource, sortSource, enabled], () => controller?.refresh(), { flush: 'post' })
+  watch([navigation, searchSource, sortSource, enabled, () => route.path], () => controller?.refresh(), { flush: 'post' })
   watch(composing, () => controller?.schedule(), { flush: 'post' })
-  watch(enabled, active => {
+  watch(enabled, async active => {
+    // Capture the current paint before Vue removes the docked controls.
+    const snapshot = dockMotion.captureNavbar()
+    stopFlights()
+    const revision = navbarRevision
+    revisions.search++
+    revisions.sort++
+    searchDocked.value = false
+    sortDocked.value = false
     if (!active) {
       popup.value = null
       composing.value = false
       popupLayout.release()
-      stopFlights()
     }
+    navbarTransitioning.value = !!snapshot
+    await nextTick()
+    if (disposed || revision !== navbarRevision) return
+    dockMotion.animateNavbar(snapshot, () => {
+      if (revision === navbarRevision) navbarTransitioning.value = false
+    })
   })
   onBeforeUnmount(() => {
     disposed = true
     controller?.dispose()
+    routeDisposers.forEach(dispose => dispose())
     motion?.removeEventListener('change', stopFlights)
     window.removeEventListener('resize', stopFlights)
     window.visualViewport?.removeEventListener('resize', stopFlights)
@@ -95,7 +141,7 @@ export function provideForumControls() {
     popupLayout.dispose()
   })
   const controls = { enabled, navigation, searchSource, sortSource, searchTarget, sortTarget,
-    searchDocked, sortDocked, composing, popup, searchQuery, sortMode, setSortOpen }
+    searchDocked, sortDocked, navbarTransitioning, composing, popup, searchQuery, sortMode, setSortOpen }
   provide(key, controls)
   return controls
 }

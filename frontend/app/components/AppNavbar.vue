@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar" aria-label="主导航" @keydown.esc="closeMenu">
+  <nav class="navbar" aria-label="主导航" @keydown.esc="dismissMenu">
     <div class="navbar__group" :class="{ 'navbar__group--forum': forumEnabled }">
       <div ref="island" class="container navbar__island" :class="{ 'navbar__island--open': isMenuOpen }">
         <span class="navbar__skin" aria-hidden="true"></span>
@@ -7,18 +7,20 @@
           <span>Dev</span>Bit Tech
         </NuxtLink>
         <button
+          ref="menuToggle"
           class="navbar__menu-toggle"
           type="button"
           :aria-expanded="isMenuOpen"
-          aria-controls="navigation-account"
-          :aria-label="isMenuOpen ? '收起账户菜单' : '展开账户菜单'"
-          @click="isMenuOpen = !isMenuOpen"
+          aria-controls="navigation-menu"
+          :aria-label="isMenuOpen ? '收起导航菜单' : '展开导航菜单'"
+          @click="toggleMenu"
         >
           <span></span>
           <span></span>
           <span></span>
         </button>
-        <div class="navbar__right">
+        <div v-if="forumEnabled && searchDocked && isMobile" class="navbar__mobile-search"><ForumNavbarSearch /></div>
+        <div id="navigation-menu" class="navbar__right">
           <div ref="tabs" class="navbar__tabs">
             <span ref="activeBubble" class="navbar__indicator" :class="{ 'navbar__indicator--ready': indicator.ready }" :style="indicatorStyle" aria-hidden="true">
               <span :key="activePath" class="navbar__indicator-shine"></span>
@@ -32,7 +34,7 @@
                     <span class="navbar__label"><span class="navbar__label-text">{{ item.label }}</span></span>
                   </NuxtLink>
                 </li>
-                <li v-if="item.path === '/' && forumEnabled && searchDocked" class="navbar__search-slot">
+                <li v-if="item.path === '/' && forumEnabled && searchDocked && !isMobile" class="navbar__search-slot">
                   <ForumNavbarSearch />
                 </li>
               </template>
@@ -105,10 +107,11 @@ const { windowWidth } = useBreakpoint()
 const isMobile = computed(() => windowWidth.value <= 760)
 const { onPointerDown, onMagnetMove, resetMagnet } = useMagneticButton()
 const isMenuOpen = ref(false)
+const menuToggle = ref<HTMLButtonElement>()
 const router = useRouter()
 const route = router.currentRoute
 const controls = useForumControls()
-const { enabled: forumEnabled, navigation: island, searchDocked, sortDocked, sortTarget, sortMode, popup } = controls
+const { enabled: forumEnabled, navigation: island, searchDocked, sortDocked, sortTarget, sortMode, popup, navbarTransitioning } = controls
 const tabs = ref<HTMLElement>()
 const activeBubble = ref<HTMLElement>()
 const visibleItems = computed(() => navigationItems.filter(item => !item.authenticated || isAuthenticated.value))
@@ -167,20 +170,20 @@ function updateIndicator() {
   }
 }
 
-watch(activePath, async () => {
+watch(activePath, () => {
   resetTabMagnet()
-  await nextTick()
   updateIndicator()
   islandAnimation?.cancel()
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (!navbarTransitioning.value && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     islandAnimation = island.value?.animate([
       { transform: 'scale(1)' }, { transform: 'scale(1.012, 0.97)', offset: 0.3 },
       { transform: 'scale(0.998, 1.015)', offset: 0.65 }, { transform: 'scale(1)' },
     ], { duration: 520, easing: 'cubic-bezier(.22,1,.36,1)' })
   }
-})
+}, { flush: 'post' })
 watch(visibleItems, async () => { await nextTick(); updateIndicator() })
-watch(searchDocked, async () => { await nextTick(); updateIndicator() })
+watch(searchDocked, updateIndicator, { flush: 'post' })
+watch(isMenuOpen, async () => { await nextTick(); updateIndicator() })
 onMounted(() => {
   magneticMedia = window.matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)')
   magneticMedia.addEventListener('change', resetTabMagnet)
@@ -189,6 +192,8 @@ onMounted(() => {
   if (tabs.value) resizeObserver.observe(tabs.value)
   if (island.value) resizeObserver.observe(island.value)
   document.fonts.ready.then(() => { if (!disposed) updateIndicator() })
+  document.addEventListener('pointerdown', onOutsideMenu)
+  document.addEventListener('focusin', onOutsideMenu)
 })
 
 const userInitials = computed(() => {
@@ -220,9 +225,24 @@ onBeforeUnmount(() => {
   islandAnimation?.cancel()
   magneticMedia?.removeEventListener('change', resetTabMagnet)
   resetTabMagnet()
+  document.removeEventListener('pointerdown', onOutsideMenu)
+  document.removeEventListener('focusin', onOutsideMenu)
 })
 
 function closeMenu() {
   isMenuOpen.value = false
 }
+function dismissMenu() {
+  if (!isMenuOpen.value) return
+  closeMenu()
+  menuToggle.value?.focus({ preventScroll: true })
+}
+function toggleMenu() {
+  popup.value = null
+  isMenuOpen.value = !isMenuOpen.value
+}
+function onOutsideMenu(event: Event) {
+  if (isMenuOpen.value && !island.value?.contains(event.target as Node)) closeMenu()
+}
+watch(popup, value => { if (value) closeMenu() })
 </script>
