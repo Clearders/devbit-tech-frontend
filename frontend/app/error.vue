@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { SearchX, TriangleAlert, ArrowLeft, RotateCw } from '@lucide/vue'
 import type { NuxtError } from '#app'
 
 const props = defineProps<{
@@ -18,11 +19,11 @@ const handleClearError = () => clearError({ redirect: '/' })
 </script>
 
 <template>
-  <div class="error-page">
+  <div class="inner-page error-page">
     <div class="container">
       <div class="error-card">
         <div class="error-card__icon">
-          {{ is404 ? '🔍' : '⚠️' }}
+          <component :is="is404 ? SearchX : TriangleAlert" :size="40" :stroke-width="1.75" aria-hidden="true" />
         </div>
         <h1 class="error-card__code">
           {{ error?.statusCode || 500 }}
@@ -41,14 +42,14 @@ const handleClearError = () => clearError({ redirect: '/' })
             class="btn btn--primary"
             @click="handleClearError"
           >
-            ← Back to Home
+            <ArrowLeft :size="18" :stroke-width="1.75" aria-hidden="true" />Back to Home
           </button>
           <button
             v-if="!is404"
             class="btn btn--outline"
             @click="handleClearError"
           >
-            Try Again
+            <RotateCw :size="18" :stroke-width="1.75" aria-hidden="true" />Try Again
           </button>
         </div>
       </div>
@@ -70,12 +71,12 @@ const handleClearError = () => clearError({ redirect: '/' })
   max-width: 520px;
   margin: 0 auto;
   padding: 2rem;
+  border: 1px solid var(--color-border-light); border-radius: 12px; background: var(--color-surface);
 }
 
 .error-card__icon {
-  font-size: 4rem;
+  display: flex; justify-content: center; color: var(--color-primary-dark);
   margin-bottom: 1rem;
-  animation: error-float 3s ease-in-out infinite;
 }
 
 .error-card__code {
@@ -96,6 +97,7 @@ const handleClearError = () => clearError({ redirect: '/' })
 }
 
 .error-card__message {
+  overflow-wrap: anywhere;
   color: var(--color-text-muted);
   font-size: 0.95rem;
   line-height: 1.6;

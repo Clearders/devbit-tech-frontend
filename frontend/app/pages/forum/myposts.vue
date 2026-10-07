@@ -1,15 +1,20 @@
 <template>
-  <div class="myposts-page">
+  <div class="inner-page myposts-page">
     <!-- Header -->
-    <section class="page-header">
-      <ScrollReveal>
-        <div class="container" data-transition-group="title">
-          <NuxtLink to="/forum" class="forum-detail__back">← 返回论坛</NuxtLink>
-          <h1 class="page-header__title">📋 我的帖子</h1>
-          <p class="page-header__subtitle">管理你发布的所有帖子</p>
-        </div>
-      </ScrollReveal>
-    </section>
+    <InnerPageHeader title="我的帖子" description="管理你发布的所有帖子" :icon="Files" back-to="/forum" back-label="返回论坛">
+      <template #actions>
+        <InfoPopover label="我的统计" :icon="BarChart3">
+          <p v-if="isLoading">正在加载统计…</p>
+          <p v-else-if="loadError">{{ loadError }}</p>
+          <dl v-else class="panel-stats">
+            <div><dt>帖子</dt><dd>{{ myPosts.length }}</dd></div>
+            <div><dt>收到评论</dt><dd>{{ totalComments }}</dd></div>
+            <div><dt>获赞</dt><dd>{{ totalLikes }}</dd></div>
+          </dl>
+        </InfoPopover>
+        <NuxtLink to="/forum/new" class="btn btn--primary"><Plus :size="18" :stroke-width="1.75" aria-hidden="true" />发布新帖</NuxtLink>
+      </template>
+    </InnerPageHeader>
 
     <!-- Content -->
     <section class="forum-content">
@@ -47,7 +52,7 @@
               v-else-if="!loadError && myPosts.length === 0"
               class="forum-empty"
             >
-              <div class="forum-empty__icon">📝</div>
+              <div class="forum-empty__icon"><FilePenLine :size="36" :stroke-width="1.75" aria-hidden="true" /></div>
               <h3 class="forum-empty__title">你还没有发布过帖子</h3>
               <p class="forum-empty__desc">去论坛分享你的想法吧！</p>
               <NuxtLink to="/forum/new" class="btn btn--primary"
@@ -57,24 +62,11 @@
 
             <div v-else-if="!loadError" class="forum-post-list">
               <ScrollReveal>
-                <div class="page-tools" data-transition-group="content">
-                  <label
-                    >搜索我的帖子<input
-                      v-model="query"
-                      class="form-control"
-                      type="search"
-                      placeholder="标题、正文或标签" /></label
-                  ><label
-                    >排序<select
-                      v-model="sort"
-                      aria-label="排序"
-                      class="form-control"
-                    >
-                      <option value="latest">最新发布</option>
-                      <option value="likes">获赞最多</option>
-                      <option value="comments">评论最多</option>
-                    </select></label
-                  >
+                <div class="my-post-tools" data-transition-group="content">
+                  <div class="my-post-search">
+                    <ForumSearchField v-model="query" label="搜索我的帖子" placeholder="搜索标题、正文或标签" />
+                  </div>
+                  <ForumSortMenu v-model="sort" :choices="sortChoices" />
                 </div>
               </ScrollReveal>
               <ScrollReveal>
@@ -82,9 +74,6 @@
                   <span
                     >共 {{ myPosts.length }} 篇帖子 · 当前显示
                     {{ visiblePosts.length }} 篇</span
-                  >
-                  <NuxtLink to="/forum/new" class="btn btn--primary btn--sm"
-                    >✏️ 发布新帖</NuxtLink
                   >
                 </div>
               </ScrollReveal>
@@ -96,53 +85,21 @@
                   清除搜索
                 </button>
               </p>
-              <ScrollReveal v-for="post in visiblePosts" :key="post.id">
-                <ForumPostCard data-transition-group="card"
-                  :post="post"
-                />
-              </ScrollReveal>
+              <TransitionGroup name="my-post-result" tag="div" class="my-post-results">
+                <ScrollReveal v-for="post in visiblePosts" :key="post.id">
+                  <ForumPostCard data-transition-group="card" :post="post" />
+                </ScrollReveal>
+              </TransitionGroup>
             </div>
           </div>
 
-          <aside class="forum-layout__sidebar">
-            <ScrollReveal>
-              <div class="forum-sidebar-card" data-transition-group="card">
-                <h3 class="forum-sidebar-card__title">📊 我的统计</h3>
-                <div class="forum-sidebar-card__stats">
-                  <div class="forum-sidebar-card__stat">
-                    <span class="forum-sidebar-card__stat-value">{{
-                      myPosts.length
-                    }}</span>
-                    <span class="forum-sidebar-card__stat-label">帖子</span>
-                  </div>
-                  <div class="forum-sidebar-card__stat">
-                    <span class="forum-sidebar-card__stat-value">{{
-                      totalComments
-                    }}</span>
-                    <span class="forum-sidebar-card__stat-label">收到评论</span>
-                  </div>
-                  <div class="forum-sidebar-card__stat">
-                    <span class="forum-sidebar-card__stat-value">{{
-                      totalLikes
-                    }}</span>
-                    <span class="forum-sidebar-card__stat-label">获赞</span>
-                  </div>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal>
-              <div class="forum-sidebar-card" data-transition-group="card">
-                <h3 class="forum-sidebar-card__title">💡 提示</h3>
-                <ul class="forum-sidebar-card__rules">
-                  <li>你可以编辑和删除自己的帖子</li>
-                  <li>编辑帖子仅支持修改内容</li>
-                  <li>删除帖子会同时删除所有评论</li>
-                  <li>分享清晰的过程，更有助于交流</li>
-                </ul>
-              </div>
-            </ScrollReveal>
-          </aside>
+          <InfoDisclosure title="帖子管理提示">
+            <ul class="guide-steps">
+              <li>你可以编辑和删除自己的帖子；编辑仅支持修改内容。</li>
+              <li>删除帖子会同时删除所有评论。</li>
+              <li>分享清晰的过程，更有助于交流。</li>
+            </ul>
+          </InfoDisclosure>
         </div>
       </div>
     </section>
@@ -150,6 +107,7 @@
 </template>
 
 <script setup lang="ts">
+import { Files, BarChart3, Plus, FilePenLine } from '@lucide/vue'
 import type { ForumPost } from '~~/shared/forum'
 
 definePageMeta({
@@ -168,7 +126,13 @@ const myPosts = ref<ForumPost[]>([])
 const isLoading = ref(true)
 const loadError = ref('')
 const query = ref('')
-const sort = ref('latest')
+type MyPostSort = 'latest' | 'likes' | 'comments'
+const sort = ref<MyPostSort>('latest')
+const sortChoices: { value: MyPostSort; label: string }[] = [
+  { value: 'latest', label: '最新发布' },
+  { value: 'likes', label: '获赞最多' },
+  { value: 'comments', label: '评论最多' },
+]
 const visiblePosts = computed(() => {
   const term = query.value.trim().toLocaleLowerCase()
   return myPosts.value

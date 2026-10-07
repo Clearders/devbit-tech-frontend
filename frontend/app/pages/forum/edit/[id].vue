@@ -1,15 +1,7 @@
 <template>
-  <div class="post-editor-page">
+  <div class="inner-page post-editor-page">
     <!-- Header -->
-    <section class="page-header">
-      <ScrollReveal>
-        <div class="container" data-transition-group="title">
-          <NuxtLink :to="`/forum/${postId}`" class="post-editor__back">← 返回帖子</NuxtLink>
-          <h1 class="page-header__title">✏️ 编辑帖子</h1>
-          <p class="page-header__subtitle">修改你的帖子内容</p>
-        </div>
-      </ScrollReveal>
-    </section>
+    <InnerPageHeader title="编辑帖子" description="修改你的帖子内容" :icon="FilePenLine" :back-to="`/forum/${postId}`" back-label="返回帖子" />
 
     <!-- Loading -->
     <section v-if="isLoadingPost" class="post-editor__content" data-transition-group="content">
@@ -22,7 +14,7 @@
     <!-- Forbidden -->
     <section v-else-if="forbidden" class="post-editor__content" data-transition-group="content">
       <div class="container" style="text-align: center; padding: 4rem;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">🚫</div>
+        <div style="margin-bottom: 1rem;"><ShieldAlert :size="36" :stroke-width="1.75" aria-hidden="true" /></div>
         <h2>没有编辑权限</h2>
         <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">
           {{ forbidden }}
@@ -64,7 +56,12 @@
                 />
               </div>
 
-              <!-- Tags (read-only) -->
+
+            </div>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal><InfoDisclosure title="帖子标签">              <!-- Tags (read-only) -->
               <div class="form-group">
                 <label class="form-label">标签</label>
                 <input
@@ -73,11 +70,7 @@
                   :value="originalPost?.tags.join(', ') || ''"
                   disabled
                 />
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-
+              </div></InfoDisclosure></ScrollReveal>
         <!-- Markdown Editor -->
         <ScrollReveal>
           <div class="post-editor__editor-wrapper">
@@ -95,14 +88,14 @@
 
         <!-- Diff hint -->
         <div v-if="content !== originalPost?.content" class="post-editor__diff-hint">
-          📝 内容已修改，请提交保存更新。
+          <FilePenLine :size="18" :stroke-width="1.75" aria-hidden="true" />内容已修改，请提交保存更新。
         </div>
 
         <!-- Actions -->
         <ScrollReveal>
           <div class="post-editor__actions">
             <NuxtLink :to="`/forum/${postId}`" class="btn btn--outline btn--lg">
-              ← 取消
+              <ArrowLeft :size="18" :stroke-width="1.75" aria-hidden="true" />取消
             </NuxtLink>
             <div class="post-editor__actions-right">
               <button
@@ -111,7 +104,7 @@
                 :disabled="submitting || content === originalPost?.content"
                 @click="handleSubmit"
               >
-                {{ submitting ? '保存中…' : '💾 保存修改' }}
+                <Save :size="18" :stroke-width="1.75" aria-hidden="true" />{{ submitting ? '保存中…' : '保存修改' }}
               </button>
             </div>
           </div>
@@ -122,6 +115,7 @@
 </template>
 
 <script setup lang="ts">
+import { FilePenLine, ArrowLeft, Save, ShieldAlert } from '@lucide/vue'
 import type { ForumPost } from '~~/shared/forum'
 import { useForum } from '~/composables/useForum'
 import MarkdownEditor from '~/components/MarkdownEditor.vue'
@@ -154,7 +148,7 @@ const editorRef = ref<InstanceType<typeof MarkdownEditor> | null>(null)
 const categoryLabel = computed(() => {
   if (!originalPost.value) return ''
   const cat = getForumCategory(originalPost.value.category)
-  return cat ? `${cat.icon} ${cat.label}` : originalPost.value.category
+  return cat ? cat.label : originalPost.value.category
 })
 
 async function loadPostData() {

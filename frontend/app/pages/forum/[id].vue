@@ -1,11 +1,11 @@
 <template>
-  <div class="forum-detail-route">
+  <div class="inner-page forum-detail-route">
   <Transition name="forum-detail-content" mode="out-in">
   <div v-if="isLoadingPost" class="forum-detail forum-detail--loading">
     <section class="page-header">
       <ScrollReveal>
         <div class="container" data-transition-group="title">
-          <NuxtLink to="/forum" class="forum-detail__back">← 返回论坛</NuxtLink>
+          <NuxtLink to="/forum" class="forum-detail__back"><ArrowLeft :size="18" :stroke-width="1.75" aria-hidden="true" />返回论坛</NuxtLink>
           <!-- Skeleton detail view -->
           <div
             class="skeleton skeleton--title"
@@ -51,23 +51,94 @@
     <section class="page-header">
       <ScrollReveal>
         <div class="container" data-transition-group="title">
-          <NuxtLink to="/forum" class="forum-detail__back">← 返回论坛</NuxtLink>
+          <NuxtLink to="/forum" class="forum-detail__back"><ArrowLeft :size="18" :stroke-width="1.75" aria-hidden="true" />返回论坛</NuxtLink>
           <div class="forum-detail__header">
+            <div class="detail-header-tools">
             <div class="forum-detail__header-top">
               <span class="forum-detail__category">
-                <span>{{ categoryInfo?.icon }}</span>
+                <component :is="categoryIcon" :size="16" :stroke-width="1.75" aria-hidden="true" />
                 {{ categoryInfo?.label }}
               </span>
               <span
                 v-if="post.isPinned"
                 class="forum-detail__badge forum-detail__badge--pin"
-                >📌 置顶</span
+                ><Pin :size="14" :stroke-width="1.75" aria-hidden="true" />置顶</span
               >
               <span
                 v-if="post.isLocked"
                 class="forum-detail__badge forum-detail__badge--lock"
-                >🔒 已锁定</span
+                ><LockKeyhole :size="14" :stroke-width="1.75" aria-hidden="true" />已锁定</span
               >
+            </div>
+
+              <div class="detail-header-tools__actions">
+                <InfoPopover v-slot="{ close }" label="帖子信息" :icon="Info">
+                  <InfoPanelTabs :items="infoSections" label="帖子扩展信息">
+                    <template #author>
+                      <div class="panel-author">
+                        <AvatarImage :avatar-url="post.author.avatarUrl" :avatar="post.author.avatar" :name="post.author.name" size="md" />
+                        <div>{{ post.author.name }}<p v-if="post.author.isAdmin">管理员</p></div>
+                      </div>
+                      <button v-if="isAuthenticated && user?.id !== post.author.id" type="button" class="btn btn--outline"
+                        @click="close(false); openMessagePanel(post.author.id)"><MessageSquare :size="18" :stroke-width="1.75" aria-hidden="true" />发送私信</button>
+                    </template>
+                    <template #stats>
+                      <ul class="panel-info">
+                        <li><span>分类</span><span>{{ categoryInfo?.label }}</span></li>
+                        <li><span>浏览</span><span>{{ formatCount(post.viewCount) }}</span></li>
+                        <li><span>点赞</span><span>{{ post.likeCount }}</span></li>
+                        <li><span>评论</span><span>{{ post.commentCount }}</span></li>
+                        <li><span>发布</span><span>{{ formatRelativeTime(post.createdAt) }}</span></li>
+                        <li v-if="post.updatedAt !== post.createdAt"><span>编辑</span><span>{{ formatRelativeTime(post.updatedAt) }}</span></li>
+                      </ul>
+                    </template>
+                    <template #related>
+                      <ul v-if="relatedPosts.length" class="panel-links">
+                        <li v-for="related in relatedPosts" :key="related.id"><NuxtLink :to="`/forum/${related.id}`">
+                          <span>{{ related.title }}</span><span>{{ related.commentCount }} 评论</span>
+                        </NuxtLink></li>
+                      </ul>
+                      <p v-else>暂无相关帖子。</p>
+                    </template>
+                  </InfoPanelTabs>
+                </InfoPopover>
+                <InfoPopover v-if="canDeletePost || isAdmin" v-slot="{ close }" label="帖子操作" :icon="Ellipsis">
+<div class="panel-actions">
+              <button
+                v-if="isAdmin"
+                class="btn btn--sm"
+                :class="post.isPinned ? 'btn--warning' : 'btn--outline'"
+                @click="close(); handleTogglePin()"
+              >
+                <Pin :size="18" :stroke-width="1.75" aria-hidden="true" />{{ post.isPinned ? '取消置顶' : '置顶' }}
+              </button>
+              <button
+                v-if="isAdmin"
+                class="btn btn--sm"
+                :class="post.isLocked ? 'btn--warning' : 'btn--outline'"
+                @click="close(); handleToggleLock()"
+              >
+                <component :is="post.isLocked ? UnlockKeyhole : LockKeyhole" :size="18" :stroke-width="1.75" aria-hidden="true" />{{ post.isLocked ? '解锁' : '锁定' }}
+              </button>
+              <NuxtLink
+                v-if="canEditPost"
+                :to="`/forum/edit/${post.id}`"
+                @click="close(false)"
+                class="btn btn--sm btn--outline"
+              >
+                <FilePenLine :size="18" :stroke-width="1.75" aria-hidden="true" />编辑
+              </NuxtLink>
+              <button
+                v-if="canDeletePost"
+                class="btn btn--sm btn--danger"
+                @click="close(); handleDeletePost()"
+              >
+                <Trash2 :size="18" :stroke-width="1.75" aria-hidden="true" />删除
+              </button>
+            </div>
+
+                </InfoPopover>
+              </div>
             </div>
             <h1 class="forum-detail__title">{{ post.title }}</h1>
             <div class="forum-detail__meta">
@@ -86,52 +157,11 @@
                 </span>
               </div>
               <div class="forum-detail__stats">
-                <span>🕐 {{ formatRelativeTime(post.createdAt) }}</span>
-                <span v-if="post.updatedAt !== post.createdAt">
-                  (编辑于 {{ formatRelativeTime(post.updatedAt) }})
-                </span>
-                <span>👁 {{ formatCount(post.viewCount) }} 浏览</span>
-                <span>👍 {{ post.likeCount }} 赞</span>
-                <span>💬 {{ post.commentCount }} 评论</span>
+                <span><Clock3 :size="15" :stroke-width="1.75" aria-hidden="true" />{{ formatRelativeTime(post.createdAt) }}</span>
+                <span><MessageSquare :size="15" :stroke-width="1.75" aria-hidden="true" />{{ post.commentCount }} 评论</span>
               </div>
             </div>
 
-            <!-- Admin actions -->
-            <div
-              v-if="canDeletePost || isAdmin"
-              class="forum-detail__admin-actions"
-            >
-              <button
-                v-if="isAdmin"
-                class="btn btn--sm"
-                :class="post.isPinned ? 'btn--warning' : 'btn--outline'"
-                @click="handleTogglePin"
-              >
-                {{ post.isPinned ? '📌 取消置顶' : '📌 置顶' }}
-              </button>
-              <button
-                v-if="isAdmin"
-                class="btn btn--sm"
-                :class="post.isLocked ? 'btn--warning' : 'btn--outline'"
-                @click="handleToggleLock"
-              >
-                {{ post.isLocked ? '🔓 解锁' : '🔒 锁定' }}
-              </button>
-              <NuxtLink
-                v-if="canEditPost"
-                :to="`/forum/edit/${post.id}`"
-                class="btn btn--sm btn--outline"
-              >
-                ✏️ 编辑
-              </NuxtLink>
-              <button
-                v-if="canDeletePost"
-                class="btn btn--sm btn--danger"
-                @click="handleDeletePost"
-              >
-                🗑️ 删除
-              </button>
-            </div>
             <div v-if="actionError" class="form-error form-error--global">
               {{ actionError }}
             </div>
@@ -157,7 +187,7 @@
                   复制链接
                 </button>
                 <a href="#post-comments" class="btn btn--outline btn--sm"
-                  >跳到评论 ↓</a
+                  >跳到评论 <MessageSquare :size="16" :stroke-width="1.75" aria-hidden="true" /></a
                 >
               </div>
             </ScrollReveal>
@@ -192,7 +222,7 @@
                 :disabled="!isAuthenticated"
                 :title="!isAuthenticated ? '请先登录' : ''"
               >
-                👍 点赞 ({{ post.likeCount }})
+                <ThumbsUp :size="18" :stroke-width="1.75" aria-hidden="true" />点赞 ({{ post.likeCount }})
               </button>
             </div>
 
@@ -204,7 +234,7 @@
             >
               <ScrollReveal>
                 <h2 class="forum-detail__comments-title">
-                  💬 评论 ({{ postComments.length }})
+                  <MessageSquare :size="22" :stroke-width="1.75" aria-hidden="true" />评论 ({{ postComments.length }})
                   <span v-if="post.isLocked" class="forum-detail__locked-hint"
                     >— 帖子已锁定，无法添加新评论</span
                   >
@@ -266,7 +296,7 @@
                 </div>
               </ScrollReveal>
               <div v-else-if="post.isLocked" class="forum-detail__locked-msg">
-                🔒 该帖子已被锁定，无法添加评论
+                <LockKeyhole :size="18" :stroke-width="1.75" aria-hidden="true" />该帖子已被锁定，无法添加评论
               </div>
               <div v-else class="forum-detail__login-prompt">
                 <NuxtLink to="/login" class="btn btn--outline"
@@ -276,87 +306,7 @@
             </div>
           </div>
 
-          <!-- Sidebar -->
-          <aside class="forum-detail__sidebar">
-            <ScrollReveal>
-              <div class="forum-sidebar-card" data-transition-group="card">
-                <h3 class="forum-sidebar-card__title">👤 作者</h3>
-                <div class="forum-detail__author-card">
-                  <AvatarImage
-                    :avatar-url="post.author.avatarUrl"
-                    :avatar="post.author.avatar"
-                    :name="post.author.name"
-                    size="md"
-                  />
-                  <span class="forum-detail__author-card-name">
-                    {{ post.author.name }}
-                    <span
-                      v-if="post.author.isAdmin"
-                      class="forum-detail__admin-tag"
-                      >管理员</span
-                    >
-                  </span>
-                  <button
-                    v-if="isAuthenticated && user?.id !== post.author.id"
-                    class="btn btn--outline btn--sm"
-                    style="margin-top: 0.5rem; width: 100%"
-                    @click="openMessagePanel(post.author.id)"
-                  >
-                    💬 发送私信
-                  </button>
-                </div>
-              </div>
-            </ScrollReveal>
 
-            <ScrollReveal>
-              <div class="forum-sidebar-card" data-transition-group="card">
-                <h3 class="forum-sidebar-card__title">📊 帖子信息</h3>
-                <ul class="forum-sidebar-card__info-list">
-                  <li>
-                    <span>分类</span
-                    ><span
-                      >{{ categoryInfo?.icon }} {{ categoryInfo?.label }}</span
-                    >
-                  </li>
-                  <li>
-                    <span>浏览</span
-                    ><span>{{ formatCount(post.viewCount) }}</span>
-                  </li>
-                  <li>
-                    <span>点赞</span><span>{{ post.likeCount }}</span>
-                  </li>
-                  <li>
-                    <span>评论</span><span>{{ post.commentCount }}</span>
-                  </li>
-                  <li>
-                    <span>发布</span
-                    ><span>{{ formatRelativeTime(post.createdAt) }}</span>
-                  </li>
-                </ul>
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal>
-              <div class="forum-sidebar-card" data-transition-group="card">
-                <h3 class="forum-sidebar-card__title">🔥 相关帖子</h3>
-                <ul class="forum-sidebar-card__hot-list">
-                  <li v-for="related in relatedPosts" :key="related.id">
-                    <NuxtLink
-                      :to="`/forum/${related.id}`"
-                      class="forum-sidebar-card__hot-link"
-                    >
-                      <span class="forum-sidebar-card__hot-title">{{
-                        related.title
-                      }}</span>
-                      <span class="forum-sidebar-card__hot-meta"
-                        >💬 {{ related.commentCount }}</span
-                      >
-                    </NuxtLink>
-                  </li>
-                </ul>
-              </div>
-            </ScrollReveal>
-          </aside>
         </div>
       </div>
     </section>
@@ -367,7 +317,7 @@
     <section class="page-header">
       <ScrollReveal>
         <div class="container" data-transition-group="title" style="text-align: center">
-          <h1 class="page-header__title">😕 帖子未找到</h1>
+          <h1 class="page-header__title"><CircleHelp :size="28" :stroke-width="1.75" aria-hidden="true" />帖子未找到</h1>
           <p class="page-header__subtitle">
             {{ actionError || '该帖子可能已被删除或不存在。' }}
           </p>
@@ -375,7 +325,7 @@
             to="/forum"
             class="btn btn--primary"
             style="margin-top: 1.5rem"
-            >← 返回论坛</NuxtLink
+            ><ArrowLeft :size="18" :stroke-width="1.75" aria-hidden="true" />返回论坛</NuxtLink
           >
         </div>
       </ScrollReveal>
@@ -386,6 +336,7 @@
 </template>
 
 <script setup lang="ts">
+import { ArrowLeft, MessageSquare, Info, Ellipsis, Pin, LockKeyhole, UnlockKeyhole, FilePenLine, Trash2, Clock3, ThumbsUp, CircleHelp, Code2, Diamond, Layers, Megaphone } from '@lucide/vue'
 import ForumComment from '~/components/ForumComment.vue'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
@@ -395,6 +346,10 @@ import {
   formatRelativeTime,
   getForumCategory,
 } from '~/utils/forum'
+
+const infoSections = [{ id: 'author', label: '作者' }, { id: 'stats', label: '统计' }, { id: 'related', label: '相关帖子' }] as const
+const categoryIcon = computed(() => ({ general: MessageSquare, tech: Code2, devbit: Diamond, help: CircleHelp,
+  showcase: Layers, announcement: Megaphone })[post.value?.category ?? 'general'])
 
 // Update title and description dynamically
 useSeoMeta({
@@ -511,13 +466,10 @@ async function loadCurrentPost(id: number) {
   }
 }
 
-watch(
-  postId,
-  (newId) => {
-    void loadCurrentPost(newId)
-  },
-  { immediate: true },
-)
+// Start the initial refresh after hydration. An unawaited SSR request can
+// otherwise put a post in the payload after the loading HTML was rendered.
+onMounted(() => { void loadCurrentPost(postId.value) })
+watch(postId, (newId) => { void loadCurrentPost(newId) })
 
 function canDeleteComment(comment: { author: { id: number } }) {
   if (!user.value) return false

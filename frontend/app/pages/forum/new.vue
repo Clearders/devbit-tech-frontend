@@ -1,17 +1,7 @@
 <template>
-  <div class="post-editor-page">
+  <div class="inner-page post-editor-page">
     <!-- Header -->
-    <section class="page-header">
-      <ScrollReveal>
-        <div class="container" data-transition-group="title">
-          <NuxtLink to="/forum" class="post-editor__back">← 返回论坛</NuxtLink>
-          <h1 class="page-header__title">✏️ 撰写帖子</h1>
-          <p class="page-header__subtitle">
-            分享你的技术见解、经验心得或提问求助。
-          </p>
-        </div>
-      </ScrollReveal>
-    </section>
+    <InnerPageHeader title="撰写帖子" description="分享你的技术见解、经验心得或提问求助。" :icon="FilePenLine" back-to="/forum" back-label="返回论坛" />
 
     <!-- Editor form -->
     <section class="post-editor__content" data-transition-group="content">
@@ -57,10 +47,17 @@
                     :key="cat.value"
                     :value="cat.value"
                   >
-                    {{ cat.icon }} {{ cat.label }}
+                    {{ cat.label }}
                   </option>
                 </select>
               </div>
+
+            </div>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <InfoDisclosure title="标签与正文模板">
               <div class="form-group">
                 <label class="form-label" for="post-tags">标签（逗号分隔）</label>
                 <input
@@ -71,11 +68,6 @@
                   placeholder="例如：Rust, 前端, 教程"
                 />
               </div>
-            </div>
-          </div>
-        </ScrollReveal>
-
-        <ScrollReveal>
           <div class="page-tools" role="group" aria-label="正文模板" data-transition-group="content">
             <span>从模板开始：</span>
             <button
@@ -89,6 +81,7 @@
               {{ item.name }}
             </button>
           </div>
+          </InfoDisclosure>
         </ScrollReveal>
         <p
           class="draft-status"
@@ -124,7 +117,7 @@
               :disabled="submitting"
               @click="handleCancel"
             >
-              ← 取消
+              <ArrowLeft :size="18" :stroke-width="1.75" aria-hidden="true" />取消
             </button>
             <div class="post-editor__actions-right">
               <button
@@ -133,7 +126,7 @@
                 :disabled="submitting || published"
                 @click="handleSaveDraft"
               >
-                💾 存草稿
+                <Save :size="18" :stroke-width="1.75" aria-hidden="true" />存草稿
               </button>
               <button
                 type="button"
@@ -141,7 +134,7 @@
                 :disabled="submitting || published"
                 @click="handleSubmit"
               >
-                {{ submitting ? '发布中…' : '🚀 发布帖子' }}
+                <Send :size="18" :stroke-width="1.75" aria-hidden="true" />{{ submitting ? '发布中…' : '发布帖子' }}
               </button>
             </div>
           </div>
@@ -152,6 +145,7 @@
 </template>
 
 <script setup lang="ts">
+import { FilePenLine, ArrowLeft, Save, Send } from '@lucide/vue'
 import type { ForumCategory } from '~~/shared/forum'
 import { FORUM_CATEGORIES } from '~~/shared/forum'
 import { useForum } from '~/composables/useForum'

@@ -7,10 +7,10 @@
           v-for="btn in headingButtons"
           :key="btn.label"
           class="md-editor__btn"
-          :title="btn.label"
+          :title="btn.label" :aria-label="btn.label"
           @click="insertHeading(btn.level)"
           type="button"
-        >{{ btn.icon }}</button>
+        ><component :is="btn.icon" :size="18" :stroke-width="1.75" aria-hidden="true" /></button>
       </div>
       <div class="md-editor__toolbar-divider" />
       <div class="md-editor__toolbar-group">
@@ -18,70 +18,79 @@
           v-for="btn in inlineButtons"
           :key="btn.label"
           class="md-editor__btn"
-          :title="btn.label"
+          :title="btn.label" :aria-label="btn.label"
           @click="wrapSelection(btn.syntax)"
           type="button"
-        >{{ btn.icon }}</button>
+        ><component :is="btn.icon" :size="18" :stroke-width="1.75" aria-hidden="true" /></button>
       </div>
       <div class="md-editor__toolbar-divider" />
       <div class="md-editor__toolbar-group">
         <button
           class="md-editor__btn"
           title="代码块"
+          aria-label="代码块"
           @click="insertCodeBlock"
           type="button"
-        >📋</button>
+        ><CodeSquare :size="18" :stroke-width="1.75" aria-hidden="true" /></button>
         <button
           class="md-editor__btn"
           title="引用"
+          aria-label="引用"
           @click="prefixLines('> ')"
           type="button"
-        >💬</button>
+        ><Quote :size="18" :stroke-width="1.75" aria-hidden="true" /></button>
         <button
           class="md-editor__btn"
           title="无序列表"
+          aria-label="无序列表"
           @click="prefixLines('- ')"
           type="button"
-        >•≡</button>
+        ><List :size="18" :stroke-width="1.75" aria-hidden="true" /></button>
         <button
           class="md-editor__btn"
           title="有序列表"
+          aria-label="有序列表"
           @click="prefixLines('1. ')"
           type="button"
-        >1≡</button>
+        ><ListOrdered :size="18" :stroke-width="1.75" aria-hidden="true" /></button>
         <button
           class="md-editor__btn"
           title="分割线"
+          aria-label="分割线"
           @click="insertBlock('---')"
           type="button"
-        >—</button>
+        ><Minus :size="18" :stroke-width="1.75" aria-hidden="true" /></button>
       </div>
       <div class="md-editor__toolbar-divider" />
       <div class="md-editor__toolbar-group">
         <button
           class="md-editor__btn"
           title="链接"
+          aria-label="链接"
           @click="insertLink"
           type="button"
-        >🔗</button>
+        ><Link :size="18" :stroke-width="1.75" aria-hidden="true" /></button>
         <button
           class="md-editor__btn"
           title="图片"
+          aria-label="图片"
           @click="insertImage"
           type="button"
-        >🖼</button>
+        ><Image :size="18" :stroke-width="1.75" aria-hidden="true" /></button>
       </div>
       <div class="md-editor__toolbar-divider" />
       <div class="md-editor__toolbar-group">
         <button
           class="md-editor__btn"
           title="行内公式 (inline LaTeX)"
+          aria-label="行内公式 (inline LaTeX)"
           @click="wrapSelection('$')"
           type="button"
         >𝑓ₓ</button>
         <button
           class="md-editor__btn"
           title="块级公式 (display LaTeX)"
+          aria-label="块级公式 (display LaTeX)"
           @click="insertDisplayMath"
           type="button"
         >∑∫</button>
@@ -91,11 +100,11 @@
         <button
           class="md-editor__btn md-editor__btn--toggle"
           :class="{ 'md-editor__btn--active': showPreview }"
-          :title="showPreview ? '关闭预览' : '开启预览'"
+          :title="showPreview ? '关闭预览' : '开启预览'" :aria-label="showPreview ? '关闭预览' : '开启预览'" :aria-pressed="showPreview"
           @click="showPreview = !showPreview"
           type="button"
         >
-          {{ showPreview ? '👁‍🗨 隐藏预览' : '👁 预览' }}
+          <component :is="showPreview ? EyeOff : Eye" :size="18" :stroke-width="1.75" aria-hidden="true" />{{ showPreview ? '隐藏预览' : '预览' }}
         </button>
       </div>
     </div>
@@ -130,12 +139,17 @@
     <div class="md-editor__status">
       <span>{{ charCount }} 字</span>
       <span>{{ lineCount }} 行</span>
-      <span class="md-editor__status-hint">支持 Markdown 语法 · LaTeX 公式 ($...$ / $$...$$) · Ctrl+B 加粗 · Ctrl+I 斜体 · Ctrl+U 下划线</span>
+
     </div>
+    <InfoDisclosure title="语法与快捷键" class="md-editor__help">
+      <p>支持 Markdown 语法 · LaTeX 公式 ($...$ / $...$)</p>
+      <p>Ctrl+B 加粗 · Ctrl+I 斜体 · Ctrl+U 下划线</p>
+    </InfoDisclosure>
   </div>
 </template>
 
 <script setup lang="ts">
+import { Heading1, Heading2, Heading3, Bold, Italic, Underline, Strikethrough, Code, CodeSquare, Quote, List, ListOrdered, Minus, Link, Image, Eye, EyeOff } from '@lucide/vue'
 import MarkdownRenderer from './MarkdownRenderer.vue'
 
 const props = withDefaults(defineProps<{
@@ -157,17 +171,17 @@ let isSyncing = false
 
 // Toolbar button definitions
 const headingButtons = [
-  { level: 1, label: '一级标题 (H1)', icon: 'H1' },
-  { level: 2, label: '二级标题 (H2)', icon: 'H2' },
-  { level: 3, label: '三级标题 (H3)', icon: 'H3' },
+  { level: 1, label: '一级标题 (H1)', icon: Heading1 },
+  { level: 2, label: '二级标题 (H2)', icon: Heading2 },
+  { level: 3, label: '三级标题 (H3)', icon: Heading3 },
 ]
 
 const inlineButtons = [
-  { syntax: '**', label: '加粗 (Ctrl+B)', icon: '𝐁' },
-  { syntax: '*', label: '斜体 (Ctrl+I)', icon: '𝐼' },
-  { syntax: '++', label: '下划线 (Ctrl+U)', icon: 'U̲' },
-  { syntax: '~~', label: '删除线', icon: 'S̶' },
-  { syntax: '`', label: '行内代码', icon: '<>' },
+  { syntax: '**', label: '加粗 (Ctrl+B)', icon: Bold },
+  { syntax: '*', label: '斜体 (Ctrl+I)', icon: Italic },
+  { syntax: '++', label: '下划线 (Ctrl+U)', icon: Underline },
+  { syntax: '~~', label: '删除线', icon: Strikethrough },
+  { syntax: '`', label: '行内代码', icon: Code },
 ]
 
 // Computed

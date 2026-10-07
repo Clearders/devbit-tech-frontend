@@ -1,14 +1,14 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends string">
 import { Check, ChevronDown, ArrowDownWideNarrow } from '@lucide/vue'
 import { gsap } from 'gsap'
 
-type SortMode = 'latest' | 'active' | 'views' | 'likes'
-const props = withDefaults(defineProps<{ modelValue: SortMode; compact?: boolean; active?: boolean; dismiss?: boolean }>(), { active: true })
-const emit = defineEmits<{ 'update:modelValue': [value: SortMode]; 'open-change': [open: boolean] }>()
-const choices: { value: SortMode; label: string }[] = [
+const props = withDefaults(defineProps<{ modelValue: T; choices?: { value: T; label: string }[]; compact?: boolean; active?: boolean; dismiss?: boolean }>(), { active: true })
+const emit = defineEmits<{ 'update:modelValue': [value: T]; 'open-change': [open: boolean] }>()
+const defaultChoices = [
   { value: 'latest', label: '最新发布' }, { value: 'active', label: '讨论最多' },
   { value: 'views', label: '浏览最多' }, { value: 'likes', label: '点赞最多' },
 ]
+const choices = computed(() => props.choices ?? defaultChoices as { value: T; label: string }[])
 const id = `forum-sort-${useId()}`
 const root = ref<HTMLElement>()
 const trigger = ref<HTMLButtonElement>()
@@ -18,7 +18,7 @@ const mounted = ref(false)
 const rendered = ref(false)
 const open = ref(false)
 const activeIndex = ref(0)
-const label = computed(() => choices.find(choice => choice.value === props.modelValue)?.label ?? choices[0]!.label)
+const label = computed(() => choices.value.find(choice => choice.value === props.modelValue)?.label ?? choices.value[0]!.label)
 let context: gsap.Context | undefined
 let timeline: gsap.core.Timeline | undefined
 let media: gsap.MatchMedia | undefined
@@ -48,10 +48,10 @@ function schedulePosition() {
 }
 function option(index: number) { return menu.value?.querySelectorAll<HTMLButtonElement>('[role="option"]')[index] }
 function focusOption(index: number) {
-  activeIndex.value = (index + choices.length) % choices.length
+  activeIndex.value = (index + choices.value.length) % choices.value.length
   void nextTick(() => option(activeIndex.value)?.focus({ preventScroll: true }))
 }
-async function show(index = choices.findIndex(choice => choice.value === props.modelValue)) {
+async function show(index = choices.value.findIndex(choice => choice.value === props.modelValue)) {
   if (!props.active) return
   open.value = true
   emit('open-change', true)
@@ -85,13 +85,13 @@ function close(returnFocus = false) {
   } else timeline.timeScale(1.35).reverse()
 }
 function select(index: number) {
-  emit('update:modelValue', choices[index]!.value)
+  emit('update:modelValue', choices.value[index]!.value)
   close(true)
 }
 function onTriggerKey(event: KeyboardEvent) {
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
     event.preventDefault()
-    void show(event.key === 'ArrowUp' ? choices.length - 1 : undefined)
+    void show(event.key === 'ArrowUp' ? choices.value.length - 1 : undefined)
   } else if (event.key === 'Escape') close(true)
 }
 function onMenuKey(event: KeyboardEvent) {
@@ -99,7 +99,7 @@ function onMenuKey(event: KeyboardEvent) {
   if (event.key === 'ArrowDown') focusOption(activeIndex.value + 1)
   else if (event.key === 'ArrowUp') focusOption(activeIndex.value - 1)
   else if (event.key === 'Home') focusOption(0)
-  else if (event.key === 'End') focusOption(choices.length - 1)
+  else if (event.key === 'End') focusOption(choices.value.length - 1)
   else if (event.key === 'Enter' || event.key === ' ') select(activeIndex.value)
   else if (event.key === 'Escape') close(true)
   else if (event.key === 'Tab') { trigger.value?.focus({ preventScroll: true }); close() }

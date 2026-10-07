@@ -1,9 +1,9 @@
 <template>
-  <div class="auth-page">
+  <div class="inner-page auth-page">
     <div class="container">
       <div class="auth-card">
         <ScrollReveal>
-          <h1 class="auth-card__title" data-transition-group="title">Welcome back</h1>
+          <h1 class="auth-card__title" data-transition-group="title"><LogIn :size="28" :stroke-width="1.75" aria-hidden="true" />Welcome back</h1>
         </ScrollReveal>
         <ScrollReveal>
           <p class="auth-card__subtitle" data-transition-group="content">Sign in to your DevBit Tech account</p>
@@ -58,6 +58,7 @@
 </template>
 
 <script setup lang="ts">
+import { LogIn } from '@lucide/vue'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
 definePageMeta({

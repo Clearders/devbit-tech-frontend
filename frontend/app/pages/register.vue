@@ -1,9 +1,9 @@
 <template>
-  <div class="auth-page">
+  <div class="inner-page auth-page">
     <div class="container">
       <div class="auth-card">
         <ScrollReveal>
-          <h1 class="auth-card__title" data-transition-group="title">Create an account</h1>
+          <h1 class="auth-card__title" data-transition-group="title"><UserRoundPlus :size="28" :stroke-width="1.75" aria-hidden="true" />Create an account</h1>
         </ScrollReveal>
         <ScrollReveal>
           <p class="auth-card__subtitle" data-transition-group="content">Join DevBit Tech today</p>
@@ -44,6 +44,7 @@
 
             <div class="form-group">
               <label class="form-label" for="code">Email Verification Code</label>
+              <div class="verification-row">
               <input
                 id="code"
                 v-model="form.code"
@@ -61,6 +62,7 @@
               >
                 {{ codeLoading ? 'Sending...' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Send Verification Code' }}
               </button>
+              </div>
               <span v-if="errors.code" class="form-error">{{ errors.code }}</span>
             </div>
 
@@ -109,6 +111,7 @@
 </template>
 
 <script setup lang="ts">
+import { UserRoundPlus } from '@lucide/vue'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
 definePageMeta({

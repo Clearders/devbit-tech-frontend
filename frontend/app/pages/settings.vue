@@ -1,13 +1,6 @@
 <template>
-  <div class="settings-page">
-    <section class="page-header">
-      <ScrollReveal>
-        <div class="container" data-transition-group="title">
-          <h1 class="page-header__title">⚙️ 账户设置</h1>
-          <p class="page-header__subtitle">管理你的个人资料与头像</p>
-        </div>
-      </ScrollReveal>
-    </section>
+  <div class="inner-page settings-page">
+    <InnerPageHeader title="账户设置" description="管理你的个人资料与头像" :icon="Settings"  />
 
     <section class="settings-content">
       <div class="container">
@@ -33,10 +26,9 @@
           <!-- Avatar Section -->
           <ScrollReveal>
             <div class="settings-section">
-              <h2 class="settings-section__title">🖼️ 个人头像</h2>
+              <h2 class="settings-section__title"><ImageIcon :size="18" :stroke-width="1.75" aria-hidden="true" />个人头像</h2>
               <p class="settings-section__desc">
-                上传一张图片作为你的头像。支持 PNG、JPG、GIF、WebP 格式，最大
-                2MB。
+                上传个人头像，最大 2MB。
               </p>
 
               <div class="settings-avatar-area">
@@ -54,7 +46,7 @@
                     class="btn btn--outline settings-upload-btn"
                     :class="{ 'btn--disabled': uploading }"
                   >
-                    {{ validating ? '检查图片中…' : '📁 选择图片' }}
+                    <FolderOpen :size="18" :stroke-width="1.75" aria-hidden="true" />{{ validating ? '检查图片中…' : '选择图片' }}
                     <input
                       type="file"
                       accept="image/png,image/jpeg,image/gif,image/webp"
@@ -66,6 +58,9 @@
                 </div>
               </div>
 
+              <InfoDisclosure title="图片格式与上传帮助">
+                <p>支持 PNG、JPG、GIF、WebP 格式，最大 2MB。选择图片后可以预览，确认上传后才会更新头像；取消会清除本地预览。</p>
+              </InfoDisclosure>
               <div v-if="selectedFile" class="page-tools" data-transition-group="content">
                 <span>待上传：{{ selectedFile.name }}</span>
                 <button
@@ -104,7 +99,7 @@
           <!-- Profile Info Section -->
           <ScrollReveal>
             <div class="settings-section">
-              <h2 class="settings-section__title">📋 基本信息</h2>
+              <h2 class="settings-section__title"><UserRound :size="18" :stroke-width="1.75" aria-hidden="true" />基本信息</h2>
               <div class="settings-info-grid">
                 <div class="settings-info-item">
                   <span class="settings-info-label">用户名</span>
@@ -117,7 +112,7 @@
                 <div class="settings-info-item">
                   <span class="settings-info-label">角色</span>
                   <span class="settings-info-value">
-                    {{ user?.isAdmin ? '👑 管理员' : '👤 用户' }}
+                    <component :is="user?.isAdmin ? ShieldCheck : UserRound" :size="16" :stroke-width="1.75" class="inline-icon" aria-hidden="true" /> {{ user?.isAdmin ? '管理员' : '用户' }}
                   </span>
                 </div>
               </div>
@@ -130,6 +125,7 @@
 </template>
 
 <script setup lang="ts">
+import { Settings, Image as ImageIcon, UserRound, FolderOpen, ShieldCheck } from '@lucide/vue'
 import AvatarImage from '~/components/AvatarImage.vue'
 
 definePageMeta({

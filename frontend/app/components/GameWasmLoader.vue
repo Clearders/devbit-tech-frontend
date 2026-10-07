@@ -16,6 +16,7 @@ let savedCanvas: HTMLCanvasElement | null = null
 let pendingWasmLoad: Promise<void> | null = null
 </script>
 <script setup lang="ts">
+import { TriangleAlert, RotateCw } from '@lucide/vue'
 interface Props {
   wasmPath: string
   title?: string
@@ -250,11 +251,11 @@ onUnmounted(() => {
       <!-- Error screen -->
       <div v-else-if="state === 'error'" class="wasm-loader">
         <div class="wasm-loader__inner">
-          <div class="wasm-loader__error-icon">⚠️</div>
+          <div class="wasm-loader__error-icon"><TriangleAlert :size="40" :stroke-width="1.75" aria-hidden="true" /></div>
           <p class="wasm-loader__title">游戏加载失败</p>
           <p class="wasm-loader__error">{{ errorMessage }}</p>
           <button class="wasm-loader__retry btn btn--primary" @click="retry">
-            重试
+            <RotateCw :size="18" :stroke-width="1.75" aria-hidden="true" />重试
           </button>
         </div>
       </div>
@@ -280,6 +281,7 @@ onUnmounted(() => {
 }
 
 .wasm-loader__inner {
+  max-width: 100%;
   text-align: center;
   color: rgba(255, 255, 255, 0.9);
   padding: 2rem;
@@ -334,7 +336,12 @@ onUnmounted(() => {
 }
 
 .wasm-loader__retry {
+  gap: 8px; min-height: 44px; border-radius: 8px;
   padding: 0.55rem 1.5rem;
   font-size: 0.9rem;
 }
+</style>
+
+<style scoped>
+@media (prefers-reduced-motion: reduce) { .wasm-loader__spinner { animation: none; } }
 </style>
