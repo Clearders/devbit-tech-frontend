@@ -1,0 +1,13 @@
+/* Hide horizontal tracks on mobile without clipping scrollable content. */
+@media (max-width: 767.98px) {
+  :root *::-webkit-scrollbar:horizontal { height: 0; display: none; }
+
+  /* Firefox exposes one scrollbar-width setting for both axes; apply it only
+     to the site's horizontal scrolling regions, leaving page scrollbars alone. */
+  :root :is(
+    .forum-filter-list, .navbar__tabs, .admin-panel__section,
+    .msg-window__attachments-preview, .msg-window__emoji-categories,
+    .markdown-renderer pre, .markdown-renderer table,
+    .markdown-renderer eqn, .markdown-renderer .katex-display
+  ) { scrollbar-width: none; }
+}

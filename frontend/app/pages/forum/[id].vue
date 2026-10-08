@@ -1,5 +1,5 @@
 <template>
-  <div class="inner-page forum-detail-route">
+  <div class="inner-page forum-detail-route" :class="{ 'forum-detail-route--has-post': post && !isLoadingPost }">
   <Transition name="forum-detail-content" mode="out-in">
   <div v-if="isLoadingPost" class="forum-detail forum-detail--loading">
     <section class="page-header">
@@ -101,6 +101,12 @@
                       <p v-else>暂无相关帖子。</p>
                     </template>
                   </InfoPanelTabs>
+                  <div class="forum-detail__mobile-share">
+                    <button type="button" class="btn btn--outline" @click="copyPostLink">复制链接</button>
+                    <p v-if="shareMessage" role="status">{{ shareMessage }}</p>
+                    <label v-if="shareFallback">帖子链接<input class="form-control" :value="shareFallback" readonly
+                      @focus="($event.target as HTMLInputElement).select()" /></label>
+                  </div>
                 </InfoPopover>
                 <InfoPopover v-if="canDeletePost || isAdmin" v-slot="{ close }" label="帖子操作" :icon="Ellipsis">
 <div class="panel-actions">
@@ -158,7 +164,8 @@
               </div>
               <div class="forum-detail__stats">
                 <span><Clock3 :size="15" :stroke-width="1.75" aria-hidden="true" />{{ formatRelativeTime(post.createdAt) }}</span>
-                <span><MessageSquare :size="15" :stroke-width="1.75" aria-hidden="true" />{{ post.commentCount }} 评论</span>
+                <span class="forum-detail__desktop-comment-count"><MessageSquare :size="15" :stroke-width="1.75" aria-hidden="true" />{{ post.commentCount }} 评论</span>
+                <span class="forum-detail__mobile-reading">预计阅读 {{ readingMinutes }} 分钟</span>
               </div>
             </div>
 
@@ -191,8 +198,8 @@
                 >
               </div>
             </ScrollReveal>
-            <p v-if="shareMessage" role="status">{{ shareMessage }}</p>
-            <label v-if="shareFallback" class="share-fallback"
+            <p v-if="shareMessage" class="forum-detail__desktop-share" role="status">{{ shareMessage }}</p>
+            <label v-if="shareFallback" class="share-fallback forum-detail__desktop-share"
               >帖子链接<input
                 class="form-control"
                 :value="shareFallback"
@@ -219,11 +226,13 @@
                 class="btn btn--lg forum-detail__like-btn"
                 :class="post.likedByMe ? 'btn--primary' : 'btn--outline'"
                 @click="handleLike"
-                :disabled="!isAuthenticated"
+                :disabled="!isAuthenticated || submittingLike"
+                :aria-pressed="post.likedByMe"
                 :title="!isAuthenticated ? '请先登录' : ''"
               >
                 <ThumbsUp :size="18" :stroke-width="1.75" aria-hidden="true" />点赞 ({{ post.likeCount }})
               </button>
+              <p v-if="likeError" class="form-error" role="alert">{{ likeError }}</p>
             </div>
 
             <!-- Comments section -->
@@ -240,6 +249,8 @@
                   >
                 </h2>
               </ScrollReveal>
+
+              <div id="post-comment-composer-mobile" class="forum-detail__mobile-composer"></div>
 
               <!-- Comment list -->
               <div
@@ -259,7 +270,8 @@
               </div>
 
               <!-- Add comment -->
-              <ScrollReveal v-if="!post.isLocked && isAuthenticated">
+              <Teleport v-if="!post.isLocked && isAuthenticated" defer to="#post-comment-composer-mobile" :disabled="!isMobile">
+              <ScrollReveal>
                 <div
 
                   class="forum-detail__add-comment"
@@ -274,12 +286,18 @@
                   </div>
                   <div class="forum-detail__comment-form">
                     <textarea
+                      ref="commentInput"
                       v-model="newComment"
+                      aria-label="写下你的评论"
+                      :aria-describedby="commentError ? 'post-comment-error' : undefined"
                       class="form-control form-control--textarea"
                       placeholder="写下你的评论…"
                       rows="3"
                       @keydown.ctrl.enter="handleAddComment"
+                      @focus="isCommentFocused = true"
+                      @blur="isCommentFocused = false"
                     ></textarea>
+                    <p v-if="commentError" id="post-comment-error" class="form-error" role="alert">{{ commentError }}</p>
                     <div class="forum-detail__comment-actions">
                       <span class="forum-detail__comment-hint"
                         >Ctrl + Enter 发送</span
@@ -295,6 +313,7 @@
                   </div>
                 </div>
               </ScrollReveal>
+              </Teleport>
               <div v-else-if="post.isLocked" class="forum-detail__locked-msg">
                 <LockKeyhole :size="18" :stroke-width="1.75" aria-hidden="true" />该帖子已被锁定，无法添加评论
               </div>
@@ -332,6 +351,23 @@
     </section>
   </div>
   </Transition>
+  <Teleport to="body">
+    <nav v-if="post && !isLoadingPost" v-show="!isCommentFocused" class="forum-detail__mobile-bar" aria-label="帖子互动">
+      <p v-if="likeError" class="forum-detail__bar-error form-error" role="alert">{{ likeError }}</p>
+      <button type="button" class="forum-detail__bar-compose" :disabled="post.isLocked" @click="focusComment">
+        <FilePenLine :size="18" aria-hidden="true" />{{ post.isLocked ? '已锁定' : '写评论' }}
+      </button>
+      <a href="#post-comments" :aria-label="`查看 ${post.commentCount} 条评论`" class="forum-detail__bar-comments">
+        <MessageSquare :size="18" aria-hidden="true" /><span>{{ formatCount(post.commentCount) }}</span>
+      </a>
+      <button type="button" class="forum-detail__bar-like" :class="{ 'is-liked': post.likedByMe }"
+        :disabled="!isAuthenticated || submittingLike" :aria-pressed="post.likedByMe"
+        :aria-label="!isAuthenticated ? '登录后点赞' : `${post.likedByMe ? '取消点赞' : '点赞'}，${post.likeCount} 个赞`" @click="handleLike">
+        <ThumbsUp :size="18" aria-hidden="true" />
+        <span>{{ !isAuthenticated ? '登录后点赞' : formatCount(post.likeCount) }}</span>
+      </button>
+    </nav>
+  </Teleport>
   </div>
 </template>
 
@@ -405,6 +441,40 @@ const newComment = ref('')
 const actionError = ref('')
 const isLoadingPost = ref(!post.value)
 const submittingComment = ref(false)
+const submittingLike = ref(false)
+const likeError = ref('')
+const commentError = ref('')
+const commentInput = ref<HTMLTextAreaElement>()
+const isCommentFocused = ref(false)
+const isMobile = ref(false)
+let mobileMedia: MediaQueryList | undefined
+function updateMobileLayout() {
+  isMobile.value = !!mobileMedia?.matches
+}
+onMounted(() => {
+  mobileMedia = window.matchMedia('(max-width: 767.98px)')
+  updateMobileLayout()
+  mobileMedia.addEventListener('change', updateMobileLayout)
+})
+onBeforeUnmount(() => mobileMedia?.removeEventListener('change', updateMobileLayout))
+
+watch(postId, () => {
+  newComment.value = ''
+  commentError.value = ''
+  likeError.value = ''
+  isCommentFocused.value = false
+})
+
+async function focusComment() {
+  if (post.value?.isLocked) return
+  if (!isAuthenticated.value) {
+    await navigateTo('/login')
+    return
+  }
+  const input = commentInput.value
+  input?.focus({ preventScroll: true })
+  input?.scrollIntoView({ block: 'center', behavior: 'instant' })
+}
 
 // Update SEO title dynamically
 watchEffect(() => {
@@ -497,13 +567,18 @@ async function runAction(action: () => Promise<unknown>, fallback: string) {
 
 async function handleAddComment() {
   const text = newComment.value.trim()
-  if (!text || submittingComment.value) return
+  if (!text || submittingComment.value || !isAuthenticated.value || post.value?.isLocked) return
+  const id = postId.value
   submittingComment.value = true
-  await runAction(async () => {
-    await addComment(postId.value, text)
-    newComment.value = ''
-  }, '发表评论失败，请稍后重试。')
-  submittingComment.value = false
+  commentError.value = ''
+  try {
+    await addComment(id, text)
+    if (postId.value === id && newComment.value.trim() === text) newComment.value = ''
+  } catch (error: unknown) {
+    if (postId.value === id) commentError.value = extractApiErrorMessage(error, '发表评论失败，请稍后重试。')
+  } finally {
+    submittingComment.value = false
+  }
 }
 
 function handleDeleteComment(commentId: number) {
@@ -535,8 +610,17 @@ function handleDeletePost() {
   }
 }
 
-function handleLike() {
-  if (!isAuthenticated.value) return
-  void runAction(() => toggleLikePost(postId.value), '点赞失败，请稍后重试。')
+async function handleLike() {
+  if (!isAuthenticated.value || submittingLike.value) return
+  const id = postId.value
+  submittingLike.value = true
+  likeError.value = ''
+  try {
+    await toggleLikePost(id)
+  } catch (error: unknown) {
+    if (postId.value === id) likeError.value = extractApiErrorMessage(error, '点赞失败，请稍后重试。')
+  } finally {
+    submittingLike.value = false
+  }
 }
 </script>

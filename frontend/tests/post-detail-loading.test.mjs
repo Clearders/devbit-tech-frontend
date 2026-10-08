@@ -7,11 +7,11 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../app/pages/forum/[id].vue', import.meta.url), 'utf8')
   .match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
-const compiled = ts.transpileModule(source + '\nexport const loadingTest = { isLoadingPost, post }', {
+const compiled = ts.transpileModule(source + '\nexport const loadingTest = { isLoadingPost, post, handleLike, handleAddComment, focusComment, submittingLike, submittingComment, likeError, commentError, newComment, commentInput }', {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText
 
-function setup(cached = false) {
+function setup(cached = false, actions = {}) {
   const route = reactive({ params: { id: '1' } })
   const post = { id: 1, title: 'Cached title', content: 'Post content', category: 'tech',
     author: { id: 1, name: 'Author' }, tags: [], createdAt: '', updatedAt: '' }
@@ -24,6 +24,7 @@ function setup(cached = false) {
     async ensureInit() { calls.push('bootstrap'); posts.value = [post] },
     async loadPost(id) { calls.push(['post', id]) },
     async loadCommentsForPost(id) { calls.push(['comments', id]) },
+    ...actions,
   }
   runInNewContext(compiled, {
     exports, ref, computed,
@@ -34,6 +35,8 @@ function setup(cached = false) {
     useSeoMeta() {}, useRoute: () => route,
     useAuth: () => ({ user: ref({ id: 1 }), isAuthenticated: ref(true) }),
     onMounted: callback => mounted.push(callback),
+    onBeforeUnmount() {},
+    window: { matchMedia: () => ({ matches: false, addEventListener() {} }) },
     watch: (source, callback, options) => { watchers.push(callback); if (options?.immediate) callback(source.value) },
     watchEffect: callback => callback(),
   })
@@ -50,6 +53,62 @@ test('direct-link setup leaves loading HTML and serialized post data in sync unt
   assert.deepEqual(app.calls, ['bootstrap', ['post', 1], ['comments', 1]])
   assert.equal(app.isLoadingPost.value, false)
   assert.equal(app.post.value.title, 'Cached title')
+})
+
+test('like submissions are deduplicated and failures are visible without changing the post', async () => {
+  let rejectLike, requests = 0
+  const app = setup(true, { toggleLikePost: () => {
+    requests++
+    return new Promise((_resolve, reject) => { rejectLike = reject })
+  } })
+  const pending = app.handleLike()
+  assert.equal(app.submittingLike.value, true)
+  await app.handleLike()
+  assert.equal(requests, 1)
+  rejectLike(new Error('offline'))
+  await pending
+  assert.equal(app.submittingLike.value, false)
+  assert.equal(app.likeError.value, '点赞失败，请稍后重试。')
+})
+
+test('a failed comment preserves its draft and can be retried successfully', async () => {
+  let fail = true
+  const app = setup(true, { addComment: async (id, text) => {
+    assert.equal(id, 1)
+    assert.equal(text, '保留评论草稿')
+    if (fail) throw new Error('offline')
+  } })
+  app.newComment.value = '保留评论草稿'
+  await app.handleAddComment()
+  assert.equal(app.newComment.value, '保留评论草稿')
+  assert.equal(app.commentError.value, '发表评论失败，请稍后重试。')
+  assert.equal(app.submittingComment.value, false)
+  fail = false
+  await app.handleAddComment()
+  assert.equal(app.newComment.value, '')
+  assert.equal(app.commentError.value, '')
+})
+
+test('comment completion preserves edits made while the request was pending', async () => {
+  let resolveComment
+  const app = setup(true, { addComment: () => new Promise(resolve => { resolveComment = resolve }) })
+  app.newComment.value = '已发送的评论'
+  const pending = app.handleAddComment()
+  app.newComment.value = '下一条评论'
+  resolveComment()
+  await pending
+  assert.equal(app.newComment.value, '下一条评论')
+})
+
+test('the compose action focuses the existing input and ignores locked posts', async () => {
+  const app = setup(true)
+  const events = []
+  app.commentInput.value = { focus: () => events.push('focus'), scrollIntoView: () => events.push('scroll') }
+  await app.focusComment()
+  assert.deepEqual(events, ['focus', 'scroll'])
+  app.post.value.isLocked = true
+  await app.focusComment()
+  assert.deepEqual(events, ['focus', 'scroll'])
 })
 
 test('entering from a cached list keeps the body visible and route-param changes still refresh', async () => {

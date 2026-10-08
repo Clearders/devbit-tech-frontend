@@ -26,16 +26,17 @@
           size="sm"
         />
         <span class="post-card__author-name">
-          {{ post.author.name }}
+          <span class="post-card__author-label">{{ post.author.name }}</span>
           <ShieldCheck v-if="post.author.isAdmin" class="post-card__admin-mark" :size="14" :stroke-width="1.75" aria-label="管理员" />
         </span>
         <time class="post-card__time" :datetime="post.createdAt">{{ time }}</time>
       </div>
       <div class="post-card__tags" v-if="post.tags.length">
-        <span v-for="tag in post.tags" :key="tag" class="post-card__tag">{{ tag }}</span>
+        <span v-for="(tag, index) in post.tags" :key="tag" class="post-card__tag" :class="{ 'post-card__tag--extra': index > 1 }">{{ tag }}</span>
+        <span v-if="post.tags.length > 2" class="post-card__tag post-card__tag-count" :aria-label="`另外 ${post.tags.length - 2} 个标签`">+{{ post.tags.length - 2 }}</span>
       </div>
       <div class="post-card__meta">
-        <span class="post-card__stat" :aria-label="`${post.viewCount} 次浏览`" title="浏览量"><Eye :size="15" :stroke-width="1.75" />{{ formatCount(post.viewCount) }}</span>
+        <span class="post-card__stat post-card__stat--views" :aria-label="`${post.viewCount} 次浏览`" title="浏览量"><Eye :size="15" :stroke-width="1.75" />{{ formatCount(post.viewCount) }}</span>
         <span class="post-card__stat" :aria-label="`${post.likeCount} 个赞`" title="点赞数"><ThumbsUp :size="15" :stroke-width="1.75" />{{ formatCount(post.likeCount) }}</span>
         <span class="post-card__stat" :aria-label="`${post.commentCount} 条评论`" title="评论数"><MessageSquare :size="15" :stroke-width="1.75" />{{ formatCount(post.commentCount) }}</span>
       </div>

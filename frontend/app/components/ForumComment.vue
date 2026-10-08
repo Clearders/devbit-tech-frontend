@@ -11,7 +11,7 @@
     <div class="comment__body">
       <div class="comment__header">
         <span class="comment__author">
-          {{ comment.author.name }}
+          <span class="comment__author-name">{{ comment.author.name }}</span>
           <span v-if="comment.author.isAdmin" class="comment__admin-badge">管理员</span>
         </span>
         <span class="comment__time">{{ time }}</span>
@@ -23,9 +23,12 @@
         <button
           v-if="isAuthenticated && user?.id !== comment.author.id"
           class="comment__action-btn"
+          :class="{ 'comment__action-btn--open': isMessagingAuthor }"
+          :aria-expanded="isMessagingAuthor"
           @click="openMessagePanel(comment.author.id)"
           title="私信作者" aria-label="私信作者"
         >
+          <MessageSquare class="comment__action-icon" :size="15" :stroke-width="1.75" aria-hidden="true" />
           私信
         </button>
         <button v-if="canDelete" class="comment__action-btn comment__action-btn--danger" @click="$emit('delete', comment.id)" title="删除评论" aria-label="删除评论">
@@ -38,6 +41,7 @@
 
 <script setup lang="ts">
 import type { ForumComment } from '~~/shared/forum'
+import { MessageSquare } from '@lucide/vue'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
 import { formatRelativeTime } from '~/utils/forum'
@@ -52,7 +56,8 @@ defineEmits<{
 }>()
 
 const { user, isAuthenticated } = useAuth()
-const { openMessagePanel } = useForum()
+const { openMessagePanel, isMessagePanelOpen, activeMessagePartner } = useForum()
+const isMessagingAuthor = computed(() => isMessagePanelOpen.value && activeMessagePartner.value === props.comment.author.id)
 
 const time = computed(() => formatRelativeTime(props.comment.createdAt))
 </script>
