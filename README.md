@@ -44,6 +44,7 @@ cargo run --release
 | `pnpm dev` | 启动开发服务器（端口 3000） |
 | `pnpm build` | 构建生产版本 |
 | `pnpm typecheck` | 运行 Nuxt / TypeScript 类型检查 |
+| `pnpm test` | 运行前端业务与交互回归测试 |
 | `pnpm generate` | 生成静态站点 |
 | `pnpm preview` | 预览生产构建 |
 
@@ -84,5 +85,14 @@ cargo run --release
 - **移动端优化**：汉堡菜单、底部抽屉弹窗、触摸目标增强（≥44px）
 - **安全区域**：支持 iPhone 刘海屏 / Dynamic Island (`safe-area-inset-*`)
 - **性能优化**：Canvas 粒子系统根据 DPR 自动降级、`prefers-reduced-motion` 尊重用户偏好
-- **暗色模式**：全局暗色主题，支持 `color-scheme: dark`
+- **视觉主题**：暖白背景、蓝色强调，使用 `color-scheme: light`
 - **横屏适配**：针对移动端横屏场景优化布局高度
+
+## 好友与私信
+
+主导航提供独立好友中心 `/friends` 与私信工作台 `/messages`。好友中心支持申请、搜索、私人备注、星标和分组；私信工作台支持会话整理、分页历史、草稿及失败重试。默认保留旧单向联系人模式，新能力由后端完成接口后按配置开启。
+
+- [开发启动、配置与 Mock 演示](frontend/README.md)
+- [社交 API 契约与后端联调边界](frontend/doc/SOCIAL-API-V2.md)
+- [好友与私信实现、验证记录](frontend/doc/SOCIAL-WORKSPACE-IMPLEMENTATION.md)
+- [首页、账号、阅读与实验改进记录](frontend/doc/IMPLEMENTATION-REPORT.md)

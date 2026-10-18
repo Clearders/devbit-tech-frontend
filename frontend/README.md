@@ -9,6 +9,7 @@
 - **后端 API**：前端统一调用 `/api`，开发和生产都代理到 Rust 后端服务
 - **TypeScript**：全链路类型安全，共享类型定义在 `shared/` 目录
 - **论坛系统**：帖子浏览/发布/搜索、评论、私信、点赞、置顶/锁定管理
+- **好友与私信**：独立好友中心和私信工作台，共享按账号隔离的社交状态，支持 legacy / v2 / 开发 Mock 适配
 - **身份认证**：基于 JWT（HttpOnly Cookie），含注册、登录和验证码流程
 - **Canvas 动态背景**：基于设备 DPR 自适应粒子密度，尊重 `prefers-reduced-motion`
 - **启动与页面转场**：启动进度由客户端初始化（25%）、插件及会话检查完成（65%）、首屏挂载与水合完成（100%）推进，等待期间不自动增长；就绪后幕布上揭，普通页面使用淡入淡出和标题、正文、卡片分层显现。进出全屏游戏直接切换，减少动态效果偏好下关闭动画。
@@ -52,12 +53,16 @@ frontend/
 │   │   ├── leaderboard.vue        # 排行榜
 │   │   ├── login.vue              # 登录
 │   │   ├── register.vue           # 注册
+│   │   ├── forgot-password.vue    # 账号恢复（按能力开启）
+│   │   ├── friends.vue            # 好友中心
+│   │   ├── messages/[[userId]].vue # 私信列表与单聊共用页面
 │   │   └── forum/                 # 论坛页面
 │   ├── plugins/auth.ts            # 认证插件
 │   └── utils/                     # 工具函数
 ├── shared/                        # 前后端共享类型
 │   ├── auth.ts
-│   └── forum.ts
+│   ├── forum.ts
+│   └── social.ts
 ├── doc/API.md                     # API 接口文档
 └── public/                        # 静态资源
 ```
@@ -78,10 +83,33 @@ pnpm dev
 | `pnpm dev` | 启动开发服务器 |
 | `pnpm build` | 构建生产版本 |
 | `pnpm typecheck` | 运行 Nuxt / TypeScript 类型检查 |
+| `pnpm test` | 运行前端业务与交互回归测试 |
 | `pnpm generate` | 生成静态站点 |
 | `pnpm preview` | 预览生产构建 |
 
 ## 开发数据
+
+### 体验改进与后端适配
+
+实现范围见 [前端体验计划](doc/FRONTEND-IMPROVEMENT-PLAN.md)，新接口、类型和启用步骤见 [社交与账号恢复 V2 契约](doc/SOCIAL-API-V2.md)。默认 `legacy` 保留现有联系人功能，新好友申请及扩展能力等待后端适配后开启。
+
+本地隔离预览（PowerShell）：
+
+```powershell
+$env:NUXT_PUBLIC_SOCIAL_MODE='mock'
+$env:NUXT_PUBLIC_ACCOUNT_RECOVERY_MODE='mock'
+pnpm dev
+```
+
+打开 `http://localhost:3000/dev-preview` 查看好友、申请与私信；刷新重置演示数据。Mock 不调用真实写接口，生产构建禁止使用；构建前移除这两个环境变量或恢复默认值。账号恢复 Mock 不修改真实密码。
+
+```powershell
+Remove-Item Env:NUXT_PUBLIC_SOCIAL_MODE -ErrorAction SilentlyContinue
+Remove-Item Env:NUXT_PUBLIC_ACCOUNT_RECOVERY_MODE -ErrorAction SilentlyContinue
+pnpm test
+pnpm typecheck
+pnpm build
+```
 
 数据库迁移不会创建预置账户或共享密码。请通过注册流程创建本地账户；在 debug 开发环境中可不配置 SMTP，验证码会通过 `developmentCode` 返回。
 
@@ -91,3 +119,14 @@ pnpm dev
 - **生产模式**：Nginx 将 `/api/` 请求代理到 Rust 后端服务，前端仅负责页面渲染
 
 API 详细文档请参阅 [doc/API.md](doc/API.md)。
+
+## 好友中心与私信工作台
+
+- `/friends`：好友、在线、星标、申请、成员搜索、分组、隐私与屏蔽；资料栏支持私人备注、分组和申请留言。
+- `/messages`、`/messages/:userId`：会话搜索与整理、分页历史、发送失败重试、按会话保留草稿、文字/表情/图片/文件。
+- 原私信浮窗和帖子作者的私信入口统一进入独立页面。好友筛选与列表滚动在返回时恢复。
+- 从其他页面进入私信时使用全站过渡动画；私信内部复用固定页面实例，切换会话时保留搜索、筛选和草稿，不重播整页动画。
+- 本地设置 `NUXT_PUBLIC_SOCIAL_MODE=mock` 后，可直接访问这些页面或 `/dev-preview`。预览账号完全虚构，状态仅保存在内存，刷新重置，不写入真实后端。
+- 默认生产仍为 legacy 单向联系人；扩展能力默认关闭。后端交接契约见 [SOCIAL-API-V2.md](doc/SOCIAL-API-V2.md#好友中心与私信工作台扩展契约)。
+- 额外设置 `NUXT_PUBLIC_SOCIAL_DEMO_SCENARIO=large` 可验证 57 位好友、分页、长昵称和搜索尚未加载的成员。
+- 已完成的功能和验证范围见 [SOCIAL-WORKSPACE-IMPLEMENTATION.md](doc/SOCIAL-WORKSPACE-IMPLEMENTATION.md)。
