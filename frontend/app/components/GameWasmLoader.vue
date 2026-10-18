@@ -17,6 +17,7 @@ let pendingWasmLoad: Promise<void> | null = null
 </script>
 <script setup lang="ts">
 import { TriangleAlert, RotateCw } from '@lucide/vue'
+import { waitForGameCanvas } from '~/utils/gameLoading'
 interface Props {
   wasmPath: string
   title?: string
@@ -51,6 +52,9 @@ let mounted = false
 // in 'running' state to avoid a loading flash.
 const state = ref<LoadState>(savedCanvas ? 'running' : 'idle')
 const errorMessage = ref('')
+const loadingStage = ref<'program' | 'graphics'>('program')
+const waitingLong = ref(false)
+let longLoadTimer: ReturnType<typeof setTimeout> | undefined
 
 function styleCanvas(canvas: HTMLCanvasElement): void {
   canvas.style.position = 'fixed'
@@ -64,9 +68,9 @@ function styleCanvas(canvas: HTMLCanvasElement): void {
   canvas.style.maxWidth = 'none'
   canvas.style.maxHeight = 'none'
   canvas.style.margin = '0'
-  canvas.style.display = document.documentElement.classList.contains('is-game')
-    ? 'block'
-    : 'none'
+  // Child mounted hooks run before the layout adds its is-game class.
+  // Component ownership is the reliable signal on immediate canvas reuse.
+  canvas.style.display = mounted ? 'block' : 'none'
   canvas.style.zIndex = '100'
   // Prevent browser default touch gestures (pinch-zoom, double-tap)
   // from interfering with the game on mobile.
@@ -97,62 +101,47 @@ function isWebGLContextLost(canvas: HTMLCanvasElement): boolean {
 // permanently) to give the browser a chance to restore it.
 function onContextLost(event: Event): void {
   event.preventDefault()
-  console.warn('[GameWasmLoader] WebGL context lost — awaiting restore')
+  if (mounted) { state.value = 'error'; errorMessage.value = '图形环境连接已中断，请重试。' }
 }
 
 function onContextRestored(_event: Event): void {
-  console.log('[GameWasmLoader] WebGL context restored')
+  if (mounted && savedCanvas) { styleCanvas(savedCanvas); state.value = 'running'; errorMessage.value = '' }
   // Bevy should pick up the restored context and resume rendering.
   // If it doesn't, the user can use the "retry" button.
 }
 
 async function loadWasm(): Promise<void> {
   if (state.value === 'running' || state.value === 'loading') return
-
-  state.value = 'loading'
-  errorMessage.value = ''
-
+  state.value = 'loading'; errorMessage.value = ''; waitingLong.value = false
+  loadingStage.value = pendingWasmLoad ? 'graphics' : 'program'
+  clearTimeout(longLoadTimer)
+  longLoadTimer = setTimeout(() => { if (mounted && state.value === 'loading') waitingLong.value = true }, 15000)
   try {
-    // Dynamic import of the wasm-bindgen generated module
     if (!pendingWasmLoad) {
       pendingWasmLoad = (async () => {
         const module = await import(/* @vite-ignore */ props.wasmPath)
-        if (typeof module.default !== 'function')
-          throw new Error('WASM module does not export a default init function')
+        if (typeof module.default !== 'function') throw new Error('实验程序无法初始化，请重试。')
+        if (mounted) loadingStage.value = 'graphics'
         await module.default()
-      })().finally(() => {
-        pendingWasmLoad = null
-      })
+        // Save the canvas even if this route was left during initialization.
+        const canvas = await waitForGameCanvas(() => document.querySelector<HTMLCanvasElement>('body > canvas'))
+        styleCanvas(canvas)
+        canvas.tabIndex = 0
+        canvas.setAttribute('aria-label', props.title + ' 图形实验，按空格切换泛光')
+        savedCanvas = canvas
+        if (!mounted) canvas.style.display = 'none'
+      })().finally(() => { pendingWasmLoad = null })
     }
     await pendingWasmLoad
+    if (!mounted) return
+    if (!savedCanvas) throw new Error('画布初始化失败，请重试。')
+    styleCanvas(savedCanvas)
+    savedCanvas.addEventListener('webglcontextlost', onContextLost)
+    savedCanvas.addEventListener('webglcontextrestored', onContextRestored)
     state.value = 'running'
-
-    // ── Enforce full-viewport canvas ──────────────────────────────
-    // Bevy creates its <canvas> inside module.default(). Give it a
-    // frame to appear, then override any size constraints so the game
-    // always fills the entire viewport.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const canvas = document.querySelector(
-          'body > canvas',
-        ) as HTMLCanvasElement | null
-        if (canvas) {
-          styleCanvas(canvas)
-          savedCanvas = canvas
-          // Listen for GPU-triggered context loss (driver crash, etc.)
-          if (mounted) {
-            canvas.addEventListener('webglcontextlost', onContextLost)
-            canvas.addEventListener('webglcontextrestored', onContextRestored)
-          }
-        }
-      })
-    })
-  } catch (err: unknown) {
-    console.error('Failed to load WASM game:', err)
-    errorMessage.value =
-      err instanceof Error ? err.message : 'Unknown error loading game'
-    state.value = 'error'
-  }
+  } catch (error: unknown) {
+    if (mounted) { console.error('[GameWasmLoader] initialization failed', error); errorMessage.value = '实验未能启动，请检查网络或图形环境后重试。'; state.value = 'error' }
+  } finally { clearTimeout(longLoadTimer) }
 }
 
 function retry(): void {
@@ -215,6 +204,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   mounted = false
+  clearTimeout(longLoadTimer)
   window.removeEventListener('resize', handleViewportChange)
   window.removeEventListener('orientationchange', handleViewportChange)
 
@@ -242,9 +232,10 @@ onUnmounted(() => {
           <div class="wasm-loader__spinner" />
           <p class="wasm-loader__title">{{ title }}</p>
           <p v-if="hint" class="wasm-loader__hint">{{ hint }}</p>
-          <p class="wasm-loader__status">
-            {{ state === 'idle' ? '准备中...' : '加载中...' }}
+          <p class="wasm-loader__status" role="status" aria-live="polite">
+            {{ state === 'idle' ? '准备中…' : loadingStage === 'program' ? '正在加载实验程序…' : '正在准备图形环境…' }}
           </p>
+          <p v-if="waitingLong" class="wasm-loader__hint" role="status">首次加载可能较久，可继续等待或返回实验列表。</p>
         </div>
       </div>
 
@@ -252,8 +243,8 @@ onUnmounted(() => {
       <div v-else-if="state === 'error'" class="wasm-loader">
         <div class="wasm-loader__inner">
           <div class="wasm-loader__error-icon"><TriangleAlert :size="40" :stroke-width="1.75" aria-hidden="true" /></div>
-          <p class="wasm-loader__title">游戏加载失败</p>
-          <p class="wasm-loader__error">{{ errorMessage }}</p>
+          <p class="wasm-loader__title">实验加载失败</p>
+          <p class="wasm-loader__error" role="alert">{{ errorMessage }}</p>
           <button class="wasm-loader__retry btn btn--primary" @click="retry">
             <RotateCw :size="18" :stroke-width="1.75" aria-hidden="true" />重试
           </button>
@@ -319,7 +310,7 @@ onUnmounted(() => {
 
 .wasm-loader__status {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .wasm-loader__error-icon {
@@ -329,14 +320,14 @@ onUnmounted(() => {
 
 .wasm-loader__error {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.8);
   margin-bottom: 1.5rem;
   max-width: 320px;
   word-break: break-word;
 }
 
 .wasm-loader__retry {
-  gap: 8px; min-height: 44px; border-radius: 8px;
+  gap: 8px; min-height: 44px; border-radius: 12px;
   padding: 0.55rem 1.5rem;
   font-size: 0.9rem;
 }

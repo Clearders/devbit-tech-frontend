@@ -1,3 +1,4 @@
+import type { SocialEvent } from '~~/shared/social'
 /**
  * WebSocket client composable — singleton connection shared across the app.
  *
@@ -23,6 +24,15 @@ interface WsPresencePayload {
 }
 
 export interface WsEventMap {
+  friend_metadata_changed: Omit<SocialEvent, 'type'>
+  friend_group_changed: Omit<SocialEvent, 'type'>
+  conversation_changed: Omit<SocialEvent, 'type'>
+  conversation_read: Omit<SocialEvent, 'type'>
+  friend_request_received: Omit<SocialEvent, 'type'>
+  friend_request_updated: Omit<SocialEvent, 'type'>
+  friendship_changed: Omit<SocialEvent, 'type'>
+  presence_snapshot: Omit<SocialEvent, 'type'>
+  presence_changed: Omit<SocialEvent, 'type'>
   pong: Record<string, never>
   auth_ok: WsPresencePayload
   auth_error: { reason: string }
@@ -36,6 +46,7 @@ export interface WsEventMap {
 export type WsEventType = keyof WsEventMap
 
 export type WsServerMessage =
+  | SocialEvent
   | { type: 'pong' }
   | ({ type: 'auth_ok' } & WsPresencePayload)
   | { type: 'auth_error'; reason: string }
@@ -58,6 +69,16 @@ function isWsServerMessage(value: unknown): value is WsServerMessage {
   if (!isRecord(value) || typeof value.type !== 'string') return false
 
   switch (value.type) {
+    case 'friend_request_received':
+    case 'friend_metadata_changed':
+    case 'friend_group_changed':
+    case 'conversation_changed':
+    case 'conversation_read':
+    case 'friend_request_updated':
+    case 'friendship_changed':
+    case 'presence_snapshot':
+    case 'presence_changed':
+      return (value.userId === undefined || typeof value.userId === 'number') && (value.requestId === undefined || typeof value.requestId === 'number')
     case 'pong':
     case 'notification':
       return true
@@ -233,6 +254,19 @@ const useWebSocketState = () => {
           case 'subscribed':
             emit('subscribed', { channel: msg.channel })
             break
+          case 'friend_request_received':
+          case 'friend_metadata_changed':
+          case 'friend_group_changed':
+          case 'conversation_changed':
+          case 'conversation_read':
+          case 'friend_request_updated':
+          case 'friendship_changed':
+          case 'presence_snapshot':
+          case 'presence_changed': {
+            const { type, ...payload } = msg
+            emit(type, payload)
+            break
+          }
           case 'notification': {
             const { type: _type, ...payload } = msg
             emit('notification', payload)

@@ -23,8 +23,6 @@
         <button
           v-if="isAuthenticated && user?.id !== comment.author.id"
           class="comment__action-btn"
-          :class="{ 'comment__action-btn--open': isMessagingAuthor }"
-          :aria-expanded="isMessagingAuthor"
           @click="openMessagePanel(comment.author.id)"
           title="私信作者" aria-label="私信作者"
         >
@@ -40,11 +38,11 @@
 </template>
 
 <script setup lang="ts">
+const formatRelativeTime = useRelativeTime()
 import type { ForumComment } from '~~/shared/forum'
 import { MessageSquare } from '@lucide/vue'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
-import { formatRelativeTime } from '~/utils/forum'
 
 const props = defineProps<{
   comment: ForumComment
@@ -56,8 +54,7 @@ defineEmits<{
 }>()
 
 const { user, isAuthenticated } = useAuth()
-const { openMessagePanel, isMessagePanelOpen, activeMessagePartner } = useForum()
-const isMessagingAuthor = computed(() => isMessagePanelOpen.value && activeMessagePartner.value === props.comment.author.id)
+const { openMessagePanel } = useForum()
 
 const time = computed(() => formatRelativeTime(props.comment.createdAt))
 </script>

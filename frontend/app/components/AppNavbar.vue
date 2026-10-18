@@ -31,7 +31,7 @@
                   <NuxtLink :to="item.path" :class="{ 'is-selected': activePath === item.path }" :aria-current="activePath === item.path ? 'page' : undefined"
                     @pointerenter="onTabMagnetMove" @pointermove="onTabMagnetMove"
                     @pointerleave="resetTabMagnet" @pointercancel="resetTabMagnet" @blur="resetTabMagnet" @click="closeMenu">
-                    <span class="navbar__label"><span class="navbar__label-text">{{ item.label }}</span></span>
+                    <span class="navbar__label"><span class="navbar__label-text">{{ item.label }}<small v-if="item.path === '/leaderboard'" class="nav-status">筹备中</small></span></span>
                   </NuxtLink>
                 </li>
                 <li v-if="item.path === '/' && forumEnabled && searchDocked && !isMobile" class="navbar__search-slot">
@@ -43,7 +43,7 @@
 
           <div id="navigation-account" class="navbar__auth">
             <template v-if="isResolving">
-              <span class="navbar__user">Checking session...</span>
+              <span class="navbar__user">正在检查登录状态…</span>
             </template>
             <template v-else-if="isAuthenticated">
               <div class="navbar__user-area">
@@ -64,7 +64,7 @@
                 @pointerdown="onPointerDown"
                 @click="logout"
               >
-                Logout
+                退出登录
               </button>
             </template>
             <template v-else>
@@ -75,7 +75,7 @@
                 @pointerleave="resetMagnet"
                 @pointerdown="onPointerDown"
               >
-                Login
+                登录
               </NuxtLink>
               <NuxtLink
                 to="/register"
@@ -84,7 +84,7 @@
                 @pointerleave="resetMagnet"
                 @pointerdown="onPointerDown"
               >
-                Register
+                注册
               </NuxtLink>
             </template>
           </div>

@@ -8,6 +8,11 @@ apiProxyUrl.pathname = '/api/ws'
 apiProxyUrl.search = ''
 apiProxyUrl.hash = ''
 const developmentWsUrl = apiProxyUrl.toString()
+const socialMode = process.env.NUXT_PUBLIC_SOCIAL_MODE ?? 'legacy'
+const recoveryMode = process.env.NUXT_PUBLIC_ACCOUNT_RECOVERY_MODE ?? 'disabled'
+if (!['legacy', 'v2', 'mock'].includes(socialMode)) throw new Error('Invalid NUXT_PUBLIC_SOCIAL_MODE')
+if (!['disabled', 'v2', 'mock'].includes(recoveryMode)) throw new Error('Invalid NUXT_PUBLIC_ACCOUNT_RECOVERY_MODE')
+if (process.env.NODE_ENV === 'production' && [socialMode, recoveryMode].includes('mock')) throw new Error('Mock mode is development-only')
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -22,6 +27,19 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? '/api',
+      socialMode,
+      socialDemoScenario: process.env.NUXT_PUBLIC_SOCIAL_DEMO_SCENARIO ?? 'standard',
+      socialBlocksEnabled: false,
+      socialPreferencesEnabled: false,
+      socialPresenceEnabled: false,
+      socialHistoryEnabled: false,
+      socialDirectoryEnabled: false,
+      socialProfilesEnabled: false,
+      socialMetadataEnabled: false,
+      socialGroupsEnabled: false,
+      socialConversationsEnabled: false,
+      socialReceiptsEnabled: false,
+      accountRecoveryMode: recoveryMode,
       // Nitro's route-rule proxy is HTTP-only. In development the browser
       // connects directly to Axum; production uses same-origin Nginx proxying.
       wsUrl: process.env.NUXT_PUBLIC_WS_URL
@@ -101,10 +119,10 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
         { name: 'theme-color', content: '#f7f5f2' },
         { name: 'color-scheme', content: 'light' },
-        { name: 'description', content: 'DevBit Tech 是一个面向开发者的 Beta 社区，汇集论坛讨论、小游戏、排行榜与团队介绍。' },
+        { name: 'description', content: 'DevBit Tech 是一个学习与创作 Beta 社区，汇集技术与数学讨论、作品分享和图形实验。' },
         { property: 'og:site_name', content: 'DevBit Tech' },
         { property: 'og:title', content: 'DevBit Tech' },
-        { property: 'og:description', content: '面向开发者的 Beta 社区' },
+        { property: 'og:description', content: '学习与创作 Beta 社区' },
         { property: 'og:type', content: 'website' },
         { property: 'og:image', content: '/web-app-manifest-512x512.png?v=20260604' },
         { name: 'twitter:card', content: 'summary' },
@@ -115,7 +133,7 @@ export default defineNuxtConfig({
   },
 
   // CSS: import in app instead for better HMR
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/experience.css', '~/assets/css/social-workspace.css'],
 
   // Nuxt 4 optimizations
   experimental: {

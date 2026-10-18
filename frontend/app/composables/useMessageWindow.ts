@@ -138,6 +138,7 @@ export const useMessageWindow = () => {
 
   // Resize via edge drag
   function onResizePointerDown(e: PointerEvent, direction: ResizeDirection) {
+    if (window.innerWidth <= 760) return
     e.preventDefault()
     e.stopPropagation()
     resizeState = {
@@ -214,6 +215,7 @@ export const useMessageWindow = () => {
 
   // Drag via title bar
   function onDragPointerDown(e: PointerEvent) {
+    if (window.innerWidth <= 760 || (e.target as HTMLElement).closest('button, input, select, a')) return
     e.preventDefault()
     dragState = {
       startX: e.clientX,

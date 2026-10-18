@@ -46,11 +46,11 @@ onUnmounted(() => {
     <button
       class="game-layout__back"
       type="button"
-      aria-label="返回游戏列表"
+      aria-label="返回实验列表"
       @click="router.push('/games')"
     >
       <ArrowLeft :size="18" :stroke-width="1.75" aria-hidden="true" />
-      <span class="game-layout__back-text">返回游戏列表</span>
+      <span class="game-layout__back-text">返回实验列表</span>
     </button>
 
     <aside class="game-help" aria-label="游戏操作帮助">
@@ -86,8 +86,9 @@ onUnmounted(() => {
 
 .game-layout__back {
   position: fixed;
-  top: 1rem;
-  left: 1rem;
+  top: auto;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  left: calc(1rem + env(safe-area-inset-left, 0px));
   z-index: 300;
   pointer-events: auto;
   display: inline-flex;
@@ -128,8 +129,9 @@ onUnmounted(() => {
 
 @media (max-width: 640px) {
   .game-layout__back {
-    top: 0.75rem;
-    left: 0.75rem;
+    top: auto;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    left: calc(0.75rem + env(safe-area-inset-left, 0px));
     padding: 0.45rem 0.75rem;
     font-size: 0.8rem;
   }

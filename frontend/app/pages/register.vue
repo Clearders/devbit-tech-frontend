@@ -1,220 +1,56 @@
-<template>
-  <div class="inner-page auth-page">
-    <div class="container">
-      <div class="auth-card">
-        <ScrollReveal>
-          <h1 class="auth-card__title" data-transition-group="title"><UserRoundPlus :size="28" :stroke-width="1.75" aria-hidden="true" />Create an account</h1>
-        </ScrollReveal>
-        <ScrollReveal>
-          <p class="auth-card__subtitle" data-transition-group="content">Join DevBit Tech today</p>
-        </ScrollReveal>
-
-        <ScrollReveal>
-          <form class="auth-form" novalidate @submit.prevent="handleSubmit" data-transition-group="content">
-            <div v-if="apiError" class="form-error form-error--global">{{ apiError }}</div>
-            <div v-if="codeMessage" class="form-success">{{ codeMessage }}</div>
-
-            <div class="form-group">
-              <label class="form-label" for="name">Name</label>
-              <input
-                id="name"
-                v-model="form.name"
-                type="text"
-                class="form-control"
-                :class="{ 'form-control--error': errors.name }"
-                placeholder="Your full name"
-                autocomplete="name"
-              />
-              <span v-if="errors.name" class="form-error">{{ errors.name }}</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="email">Email</label>
-              <input
-                id="email"
-                v-model="form.email"
-                type="email"
-                class="form-control"
-                :class="{ 'form-control--error': errors.email }"
-                placeholder="you@example.com"
-                autocomplete="email"
-              />
-              <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="code">Email Verification Code</label>
-              <div class="verification-row">
-              <input
-                id="code"
-                v-model="form.code"
-                type="text"
-                class="form-control"
-                :class="{ 'form-control--error': errors.code }"
-                placeholder="Enter the code from your email"
-                autocomplete="one-time-code"
-              />
-              <button
-                type="button"
-                class="btn btn--outline"
-                :disabled="codeLoading || cooldown > 0"
-                @click="handleSendCode"
-              >
-                {{ codeLoading ? 'Sending...' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Send Verification Code' }}
-              </button>
-              </div>
-              <span v-if="errors.code" class="form-error">{{ errors.code }}</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="password">Password</label>
-              <input
-                id="password"
-                v-model="form.password"
-                type="password"
-                class="form-control"
-                :class="{ 'form-control--error': errors.password }"
-                placeholder="Min. 8 characters with letters and numbers"
-                autocomplete="new-password"
-              />
-              <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="confirmPassword">Confirm Password</label>
-              <input
-                id="confirmPassword"
-                v-model="form.confirmPassword"
-                type="password"
-                class="form-control"
-                :class="{ 'form-control--error': errors.confirmPassword }"
-                placeholder="Re-enter your password"
-                autocomplete="new-password"
-              />
-              <span v-if="errors.confirmPassword" class="form-error">{{ errors.confirmPassword }}</span>
-            </div>
-
-            <button type="submit" class="btn btn--primary btn--full" :disabled="loading">
-              {{ loading ? 'Creating account...' : 'Create Account' }}
-            </button>
-          </form>
-        </ScrollReveal>
-
-        <ScrollReveal>
-          <p class="auth-card__footer" data-transition-group="content">
-            Already have an account? <NuxtLink to="/login">Sign in</NuxtLink>
-          </p>
-        </ScrollReveal>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { UserRoundPlus } from '@lucide/vue'
-import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
-
-definePageMeta({
-  middleware: 'guest'
-})
-
-useSeoMeta({
-  title: 'Create Account - DevBit Tech',
-  description: 'Create a new DevBit Tech account.'
-})
-
+import { apiErrorMessage, applyApiFieldErrors } from '~/utils/apiError'
+definePageMeta({ middleware: 'guest' })
+useSeoMeta({ title: '注册 – DevBit Tech', description: '加入 DevBit 学习与创作社区。' })
 const { register, sendVerificationCode } = useAuth()
-const { validateEmail, validatePassword, validateCode, isValidEmail } = useValidation()
+const { validateEmail, validatePassword, validateCode } = useValidation()
 const { remaining: cooldown, start: startCooldown } = useCountdown()
-
 const form = reactive({ name: '', email: '', code: '', password: '', confirmPassword: '' })
 const errors = reactive({ name: '', email: '', code: '', password: '', confirmPassword: '' })
-const apiError = ref('')
-const codeMessage = ref('')
-const loading = ref(false)
-const codeLoading = ref(false)
-
-function validate() {
-  errors.name = ''
-  errors.email = ''
-  errors.code = ''
-  errors.password = ''
-  errors.confirmPassword = ''
-  let valid = true
-
-  if (!form.name.trim()) {
-    errors.name = 'Name is required.'
-    valid = false
-  }
-
-  errors.email = validateEmail(form.email)
-  if (errors.email) valid = false
-
-  errors.code = validateCode(form.code)
-  if (errors.code) valid = false
-
-  errors.password = validatePassword(form.password)
-  if (errors.password) valid = false
-
-  if (!form.confirmPassword) {
-    errors.confirmPassword = 'Please confirm your password.'
-    valid = false
-  } else if (form.password !== form.confirmPassword) {
-    errors.confirmPassword = 'Passwords do not match.'
-    valid = false
-  }
-
-  return valid
-}
-
+const apiError = ref(''), codeMessage = ref(''), loading = ref(false), codeLoading = ref(false)
+const confirmError = () => !form.confirmPassword ? '请再次输入密码。' : form.password !== form.confirmPassword ? '两次输入的密码不一致。' : ''
+watch(form, () => {
+  if (errors.name) errors.name = form.name.trim() ? '' : '请输入昵称。'
+  if (errors.email) errors.email = validateEmail(form.email)
+  if (errors.code) errors.code = validateCode(form.code)
+  if (errors.password) errors.password = validatePassword(form.password)
+  if (errors.confirmPassword) errors.confirmPassword = confirmError()
+})
+watch(() => form.email, () => { codeMessage.value = '' })
+async function focusError() { await nextTick(); document.querySelector<HTMLInputElement>('[aria-invalid="true"]')?.focus() }
 async function handleSendCode() {
-  apiError.value = ''
-  codeMessage.value = ''
-  errors.email = ''
-
-  const email = form.email.trim()
-  if (!email) {
-    errors.email = 'Email is required before sending code.'
-    return
-  }
-
-  if (!isValidEmail(email)) {
-    errors.email = 'Please enter a valid email address.'
-    return
-  }
-
-  codeLoading.value = true
-  try {
-    const response = await sendVerificationCode({ email })
-    codeMessage.value = response.developmentCode
-      ? `${response.message} Code: ${response.developmentCode}`
-      : response.message
-    startCooldown()
-  } catch (err: unknown) {
-    apiError.value = extractApiErrorMessage(err, 'Failed to send verification code. Please try again.')
-  } finally {
-    codeLoading.value = false
-  }
+  if (codeLoading.value || cooldown.value > 0) return
+  apiError.value = ''; codeMessage.value = ''; errors.email = validateEmail(form.email)
+  if (errors.email) { await focusError(); return }
+  const email = form.email.trim(); codeLoading.value = true
+  try { const result = await sendVerificationCode({ email }); if (form.email.trim() === email) codeMessage.value = result.developmentCode ? `开发验证码：${result.developmentCode}` : '验证码已发送，请查看邮箱。'; startCooldown() }
+  catch (e) { apiError.value = apiErrorMessage(e, '验证码发送失败，请稍后重试。'); if (applyApiFieldErrors(e, errors)) await focusError() }
+  finally { codeLoading.value = false }
 }
-
 async function handleSubmit() {
-  apiError.value = ''
-  codeMessage.value = ''
-  if (!validate()) return
-
+  if (loading.value) return
+  apiError.value = ''; errors.name = form.name.trim() ? '' : '请输入昵称。'; errors.email = validateEmail(form.email); errors.code = validateCode(form.code); errors.password = validatePassword(form.password); errors.confirmPassword = confirmError()
+  if (Object.values(errors).some(Boolean)) { await focusError(); return }
   loading.value = true
-  try {
-    await register({
-      name: form.name.trim(),
-      email: form.email.trim(),
-      password: form.password,
-      code: form.code.trim(),
-      confirmPassword: form.confirmPassword
-    })
-  } catch (err: unknown) {
-    apiError.value = extractApiErrorMessage(err, 'Registration failed. Please try again.')
-  } finally {
-    loading.value = false
-  }
+  try { await register({ name: form.name.trim(), email: form.email.trim(), code: form.code.trim(), password: form.password, confirmPassword: form.confirmPassword }) }
+  catch (e) { apiError.value = apiErrorMessage(e, '注册未完成，请检查填写信息和验证码。'); if (applyApiFieldErrors(e, errors)) await focusError() }
+  finally { loading.value = false }
 }
 </script>
+<template>
+  <div class="inner-page auth-page"><div class="container"><div class="auth-card">
+    <h1 class="auth-card__title" data-transition-group="title"><UserRoundPlus :size="28" aria-hidden="true" />加入 DevBit</h1>
+    <p class="auth-card__subtitle" data-transition-group="content">从一个问题、一份作品，认识下一位同行者。</p>
+    <form class="auth-form" novalidate data-transition-group="content" @submit.prevent="handleSubmit">
+      <div v-if="apiError" class="form-error form-error--global" role="alert">{{ apiError }}</div><p v-if="codeMessage" class="form-success" role="status">{{ codeMessage }}</p>
+      <div class="form-group"><label for="name" class="form-label">昵称</label><input id="name" v-model="form.name" class="form-control" autocomplete="nickname" placeholder="你希望大家如何称呼你" :aria-invalid="!!errors.name" :aria-describedby="errors.name ? 'name-error name-hint' : 'name-hint'"><p id="name-hint" class="form-hint">大家将通过这个名字认识你。</p><span v-if="errors.name" id="name-error" class="form-error">{{ errors.name }}</span></div>
+      <div class="form-group"><label for="email" class="form-label">邮箱</label><input id="email" v-model="form.email" class="form-control" type="email" autocomplete="email" placeholder="you@example.com" :aria-invalid="!!errors.email" :aria-describedby="errors.email ? 'email-error' : undefined"><span v-if="errors.email" id="email-error" class="form-error">{{ errors.email }}</span></div>
+      <div class="form-group"><label for="code" class="form-label">邮箱验证码</label><div class="verification-row"><input id="code" v-model="form.code" class="form-control" inputmode="numeric" autocomplete="one-time-code" placeholder="输入邮件中的验证码" :aria-invalid="!!errors.code" :aria-describedby="errors.code ? 'code-error' : undefined"><button type="button" class="btn btn--outline" :disabled="codeLoading || cooldown > 0" @click="handleSendCode">{{ codeLoading ? '正在发送…' : cooldown > 0 ? `${cooldown} 秒后重新发送` : '发送验证码' }}</button></div><span v-if="errors.code" id="code-error" class="form-error">{{ errors.code }}</span></div>
+      <PasswordField id="password" v-model="form.password" label="密码" placeholder="设置密码" hint="至少 8 位，包含字母和数字" :error="errors.password" />
+      <PasswordField id="confirmPassword" v-model="form.confirmPassword" label="确认密码" placeholder="再次输入密码" :error="errors.confirmPassword" />
+      <button type="submit" class="btn btn--primary btn--full" :disabled="loading">{{ loading ? '正在注册…' : '注册账号' }}</button>
+    </form>
+    <p class="auth-card__footer">已有账号？<NuxtLink to="/login">立即登录</NuxtLink></p>
+  </div></div></div>
+</template>

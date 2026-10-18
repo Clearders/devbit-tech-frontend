@@ -4,28 +4,28 @@
     <section class="hero">
       <div class="container hero__content">
         <ScrollReveal>
-          <p class="hero__badge" data-transition-group="title">Now in Beta</p>
+          <p class="hero__badge" data-transition-group="title">Beta · 学习与创作社区</p>
         </ScrollReveal>
         <ScrollReveal>
           <h1 class="hero__title" data-transition-group="title">
-            Enjoy Life With<br><span>DevBit Tech</span>
+            从一个问题开始，<br><span>和 DevBit 一起创造。</span>
           </h1>
         </ScrollReveal>
         <ScrollReveal>
           <p class="hero__subtitle" data-transition-group="content">
-            独乐乐不如众乐乐
+            交流技术与数学问题，分享作品，体验浏览器里的图形实验。
           </p>
         </ScrollReveal>
         <ScrollReveal>
           <div class="hero__actions" data-transition-group="content">
-            <NuxtLink to="/about" class="btn btn--primary">了解更多</NuxtLink>
-            <a href="https://github.com/Clearders/devbit-tech" target="_blank" rel="noopener" class="btn btn--outline">
-              github仓库
-            </a>
+            <NuxtLink to="/forum" class="btn btn--primary">进入论坛</NuxtLink>
+            <NuxtLink to="/games" class="btn btn--outline">探索实验</NuxtLink>
           </div>
         </ScrollReveal>
       </div>
     </section>
+
+    <HomeRecentDiscussions />
 
     <!-- Quick Navigation -->
     <section class="section quick-nav-section">
@@ -49,7 +49,7 @@
                 <QuickNavIcon :kind="nav.kind" />
               </div>
               <div class="quick-nav-card__copy">
-                <h3 class="quick-nav-card__title">{{ nav.title }}</h3>
+                <h3 class="quick-nav-card__title">{{ nav.title }} <small v-if="nav.kind === 'leaderboard'" class="nav-status">筹备中</small></h3>
                 <p class="quick-nav-card__desc">{{ nav.description }}</p>
               </div>
               <div class="quick-nav-card__bottom"><span>{{ nav.action }}</span><span class="quick-nav-card__arrow" aria-hidden="true">↗</span></div>
@@ -76,8 +76,8 @@ const quickNavItems = [
     to: '/forum'
   },
   {
-    kind: 'games', number: '02', eyebrow: '探索 · PLAY', action: '开始探索',
-    title: '游戏',
+    kind: 'games', number: '02', eyebrow: '探索 · EXPERIMENT', action: '开始探索',
+    title: '实验',
     description: '让代码走出编辑器，在光影与交互中，找回动手创造的乐趣。',
     to: '/games'
   },
@@ -98,7 +98,7 @@ const quickNavItems = [
 
 useSeoMeta({
   title: 'DevBit Tech - 首页',
-  description: 'DevBit Tech 社区首页：快速进入论坛、游戏、排行榜与团队介绍。'
+  description: 'DevBit Tech 学习与创作社区：技术与数学交流、作品分享和图形实验。'
 })
 </script>
 

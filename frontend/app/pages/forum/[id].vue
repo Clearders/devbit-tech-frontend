@@ -372,6 +372,7 @@
 </template>
 
 <script setup lang="ts">
+const formatRelativeTime = useRelativeTime()
 import { ArrowLeft, MessageSquare, Info, Ellipsis, Pin, LockKeyhole, UnlockKeyhole, FilePenLine, Trash2, Clock3, ThumbsUp, CircleHelp, Code2, Diamond, Layers, Megaphone } from '@lucide/vue'
 import ForumComment from '~/components/ForumComment.vue'
 import AvatarImage from '~/components/AvatarImage.vue'
@@ -379,7 +380,6 @@ import { useForum } from '~/composables/useForum'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 import {
   formatCount,
-  formatRelativeTime,
   getForumCategory,
 } from '~/utils/forum'
 

@@ -45,10 +45,11 @@
 </template>
 
 <script setup lang="ts">
+const formatRelativeTime = useRelativeTime()
 import { MessageSquare, Code2, Diamond, CircleHelp, Layers, Megaphone, Pin, LockKeyhole, Eye, ThumbsUp, ShieldCheck } from '@lucide/vue'
 import type { ForumPost } from '~~/shared/forum'
 import AvatarImage from '~/components/AvatarImage.vue'
-import { formatCount, formatRelativeTime, getForumCategory } from '~/utils/forum'
+import { formatCount, getForumCategory } from '~/utils/forum'
 import { stripMarkdown } from '~/utils/stripMarkdown'
 
 const props = defineProps<{

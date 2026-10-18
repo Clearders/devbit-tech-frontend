@@ -3,9 +3,9 @@
     <section class="page-header">
       <ScrollReveal>
         <div class="container" data-transition-group="title">
-          <h1 class="page-header__title"><Gamepad2 :size="28" :stroke-width="1.75" aria-hidden="true" />游戏</h1>
+          <h1 class="page-header__title"><Gamepad2 :size="28" :stroke-width="1.75" aria-hidden="true" />实验</h1>
           <p class="page-header__subtitle">
-            探索我们开发的小游戏，寓教于乐，提升技能。
+            让代码走出编辑器，探索光影、颜色与交互。
           </p>
         </div>
       </ScrollReveal>
@@ -18,14 +18,12 @@
           <ScrollReveal stretch>
             <article class="game-card" data-transition-group="card">
               <div class="game-card__cover">
-                <div class="game-card__cover-placeholder">
-                  <span class="game-card__cover-geometry"><Sparkles :size="80" :stroke-width="1.75" aria-hidden="true" /></span>
-                </div>
+                <img src="/images/heartstring-bloom.png" alt="Heartstring Blade 泛光实验中的发光圆形与六边形" class="game-card__cover-image" width="1440" height="900" loading="lazy">
               </div>
               <div class="game-card__body">
-                <h3 class="game-card__title">Heartstring Blade</h3>
+                <p class="game-card__eyebrow">交互图形实验 · 推荐桌面键盘</p><h3 class="game-card__title">Heartstring Blade</h3>
                 <p class="game-card__desc">
-                  在光影与颜色中探索交互式图形实验。
+                  对比泛光与色调映射，观察光晕、亮度和颜色的变化。
                 </p>
                 <InfoDisclosure title="技术介绍">
                   <p>基于 Bevy 引擎的 2D bloom 后期特效演示。交互式调整泛光强度、色调映射等参数，感受现代游戏渲染管线的魅力。</p>
@@ -42,7 +40,7 @@
                   to="/games/heartstring-blade"
                   no-prefetch
                   class="btn btn--primary"
-                  ><Play :size="18" :stroke-width="1.75" aria-hidden="true" />开始体验</NuxtLink
+                  ><Play :size="18" :stroke-width="1.75" aria-hidden="true" />开始实验</NuxtLink
                 ><button type="button" class="btn btn--outline" @click="openGuide"><BookOpen :size="18" :stroke-width="1.75" aria-hidden="true" />查看操作</button>
               </div>
             </article>
@@ -50,7 +48,7 @@
 
         </div>
         <ScrollReveal>
-          <div class="game-coming-soon" data-transition-group="content"><Construction :size="18" :stroke-width="1.75" aria-hidden="true" /><span>更多游戏正在准备中</span></div>
+          <div class="game-coming-soon" data-transition-group="content"><Construction :size="18" :stroke-width="1.75" aria-hidden="true" /><span>更多实验正在准备中</span></div>
         </ScrollReveal>
         <ScrollReveal>
           <section
@@ -73,7 +71,7 @@
             <details class="info-disclosure">
               <summary>为什么首次进入需要等待？</summary>
               <p>
-                首次启动需要下载并初始化游戏资源。查看本页说明不会启动游戏，点击“开始体验”后才会加载。
+                首次启动需要下载并初始化游戏资源。查看本页说明不会启动游戏，点击“开始实验”后才会加载。
               </p>
             </details>
             <details class="info-disclosure">
@@ -99,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { Gamepad2, Sparkles, Construction, Play, BookOpen } from '@lucide/vue'
+import { Gamepad2, Construction, Play, BookOpen } from '@lucide/vue'
 const guideOpen = ref(false)
 async function openGuide() {
   guideOpen.value = true
@@ -107,8 +105,8 @@ async function openGuide() {
   document.getElementById('game-guide')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })
 }
 useSeoMeta({
-  title: 'DevBit Tech – 游戏',
-  description: '探索我们精心开发的小游戏。',
+  title: 'DevBit Tech – 实验',
+  description: '探索浏览器里的图形与交互实验。',
 })
 </script>
 
@@ -121,13 +119,9 @@ useSeoMeta({
 .games-section > .container { max-width: 900px; }
 .games-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
 .game-card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--color-border-light); border-radius: 12px; background: var(--color-surface); box-shadow: var(--shadow-xs); }
-.game-card__cover { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); }
-.game-card__cover::before, .game-card__cover::after { content: ''; position: absolute; pointer-events: none; border: 1px solid rgb(180 206 250 / .14); }
-.game-card__cover::before { width: 42%; aspect-ratio: 1; left: 29%; top: 12%; border-radius: 50%; }
-.game-card__cover::after { width: 25%; aspect-ratio: 1; left: 37.5%; top: 28%; transform: rotate(45deg); border-radius: 8px; }
-.game-card__cover-placeholder { display: grid; place-items: center; position: absolute; inset: 0; }
-.game-card__cover-geometry { display: grid; place-items: center; color: #d9e7ff; }
-.game-card__cover-geometry svg { width: 80px; height: 80px; }
+.game-card__cover { position: relative; aspect-ratio: 16 / 6; overflow: hidden; background: #10101a; }
+.game-card__cover-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.game-card__eyebrow { color: var(--color-link); font-size: 13px; margin-bottom: 10px; }
 .game-card__body { padding: 24px 24px 12px; }
 .game-card__title { font: 700 20px/1.4 var(--font-display); margin-bottom: 8px; }
 .game-card__desc { color: var(--color-text-secondary); font-size: 14px; margin-bottom: 16px; }
@@ -139,6 +133,5 @@ useSeoMeta({
   .games-page .page-header { padding: 32px 0 16px; }
   .game-card__body { padding: 20px 20px 8px; }
   .game-card__actions { padding: 0 20px 20px; }
-  .game-card__cover-geometry svg { width: 64px; height: 64px; }
 }
 </style>

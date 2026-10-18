@@ -32,7 +32,7 @@ function setup(cached = false, actions = {}) {
       : name === '~/utils/extractApiErrorMessage' ? { extractApiErrorMessage: (_error, fallback) => fallback }
       : name === '~/composables/useForum' ? { useForum: () => forum }
       : {},
-    useSeoMeta() {}, useRoute: () => route,
+    useSeoMeta() {}, useRoute: () => route, useRelativeTime: () => () => '',
     useAuth: () => ({ user: ref({ id: 1 }), isAuthenticated: ref(true) }),
     onMounted: callback => mounted.push(callback),
     onBeforeUnmount() {},

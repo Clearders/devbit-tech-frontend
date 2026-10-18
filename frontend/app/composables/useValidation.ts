@@ -13,21 +13,21 @@ export const useValidation = () => {
   const isValidCode = (code: string) => CODE_REGEX.test(code.trim())
 
   const validateEmail = (email: string): string => {
-    if (!email) return 'Email is required.'
-    if (!isValidEmail(email)) return 'Please enter a valid email address.'
+    if (!email) return '请输入邮箱。'
+    if (!isValidEmail(email)) return '请输入有效的邮箱地址。'
     return ''
   }
 
   const validatePassword = (password: string): string => {
-    if (!password) return 'Password is required.'
+    if (!password) return '请输入密码。'
     if (!isValidPassword(password))
-      return 'Password must be at least 8 characters and include letters and numbers.'
+      return '密码至少 8 位，且包含字母和数字。'
     return ''
   }
 
   const validateCode = (code: string): string => {
-    if (!code.trim()) return 'Email verification code is required.'
-    if (!isValidCode(code)) return 'Please enter a valid verification code.'
+    if (!code.trim()) return '请输入邮箱验证码。'
+    if (!isValidCode(code)) return '请输入 4–8 位数字验证码。'
     return ''
   }
 

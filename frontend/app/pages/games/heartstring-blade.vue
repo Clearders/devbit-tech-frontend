@@ -7,7 +7,7 @@
 definePageMeta({ layout: 'game' })
 
 useSeoMeta({
-  title: 'Heartstring Blade – DevBit 游戏',
+  title: 'Heartstring Blade – DevBit 实验',
   description: 'Bevy 2D bloom 后期特效演示 — 交互式调整 bloom 参数和色调映射',
 })
 </script>

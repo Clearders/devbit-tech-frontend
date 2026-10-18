@@ -9,6 +9,7 @@ import type {
 } from '~~/shared/forum'
 import type { EffectScope } from 'vue'
 import { useForumApi } from './useForumApi'
+import { mergeMessages } from '~/utils/socialWorkspace'
 
 // ---------- legacy localStorage cleanup ----------
 const MESSAGES_STORAGE_PREFIX = 'devbit_messages'
@@ -64,10 +65,11 @@ export const useForum = () => {
   const runtime = getForumRuntime(nuxtApp)
   const { user } = useAuth()
   const api = useForumApi()
+  const social = useSocialWorkspace()
 
   const posts = useState<ForumPost[]>('forum_posts', () => [])
   const comments = useState<ForumComment[]>('forum_comments', () => [])
-  const messages = useState<ForumMessage[]>('forum_messages', () => [])
+  const messages = computed<ForumMessage[]>({ get: () => social.state.value.messages, set: value => { social.state.value.messages = value } })
   const users = useState<ForumUser[]>('forum_users', () => [])
   const friends = useState<FriendInfo[]>('forum_friends', () => [])
   const initialized = useState<boolean>('forum_initialized', () => false)
@@ -104,11 +106,10 @@ export const useForum = () => {
 
   // ── WebSocket real-time message integration ───────────────────────────────
   const openMessagePanel = (partnerId?: number) => {
-    isMessagePanelOpen.value = true
-    if (partnerId) {
-      activeMessagePartner.value = partnerId
-      markConversationAsRead(partnerId).catch(() => {})
-    }
+    isMessagePanelOpen.value = false
+    if (partnerId) activeMessagePartner.value = partnerId
+    const destination = partnerId ? `/messages/${partnerId}` : messagePanelTab.value === 'friends' ? '/friends' : messagePanelTab.value === 'addFriend' ? '/friends?view=discover' : '/messages'
+    void navigateTo(destination)
   }
 
   const ensureInit = (force = false): Promise<void> => {
@@ -130,13 +131,6 @@ export const useForum = () => {
     const request = (async () => {
       const bootstrap = await api.fetchBootstrap()
 
-      let fetchedFriends: FriendInfo[] | null = null
-      try {
-        fetchedFriends = await api.fetchFriends()
-      } catch {
-        // The friends list is non-critical and may be unavailable anonymously.
-      }
-
       // Bootstrap posts contain viewer-specific fields such as likedByMe, so
       // no part of a response may cross an account/session boundary.
       if (
@@ -147,8 +141,10 @@ export const useForum = () => {
       users.value = bootstrap.users
       posts.value = sortPosts(bootstrap.posts)
       comments.value = bootstrap.comments
-      messages.value = bootstrap.messages
-      if (fetchedFriends) friends.value = fetchedFriends
+      if (!social.api.value.capabilities.conversations) messages.value = mergeMessages(messages.value, bootstrap.messages)
+      void api.fetchFriends().then(value => {
+        if (authenticatedUserId.value === requestedUserId && runtime.sessionGeneration === requestGeneration) friends.value = value
+      }).catch(() => { /* The independent friends panel exposes its own retry state. */ })
       initializedUserId.value = requestedUserId
       initialized.value = true
       apiReachable.value = true
@@ -187,20 +183,6 @@ export const useForum = () => {
       const preserveHydratedState = initialized.value
         && initializedUserId.value === authenticatedUserId.value
       switchMessageAccount(preserveHydratedState)
-
-      const { on: wsOn } = useWebSocket()
-      wsOn('new_message', (message) => {
-        if (messages.value.some(item => item.id === message.message_id)) return
-
-        const receivingUserId = authenticatedUserId.value
-        void api.fetchBootstrap().then((bootstrap) => {
-          if (authenticatedUserId.value === receivingUserId) {
-            messages.value = bootstrap.messages
-          }
-        }).catch(() => {
-          // A later bootstrap will reconcile the message list.
-        })
-      })
 
       watch(authenticatedUserId, () => {
         switchMessageAccount()
@@ -256,10 +238,7 @@ export const useForum = () => {
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       )
 
-  const getUnreadMessageCount = () =>
-    messages.value.filter(
-      (message) => !message.isRead && message.recipient.id === (user.value?.id ?? 0)
-    ).length
+  const getUnreadMessageCount = () => social.unread.value
 
   const getConversations = () => {
     const currentUserId = user.value?.id ?? 0

@@ -2,7 +2,7 @@
 import { Search, X } from '@lucide/vue'
 
 const props = withDefaults(defineProps<{ modelValue: string; label?: string; placeholder?: string }>(), {
-  label: '搜索帖子', placeholder: '搜索帖子标题、内容或标签',
+  label: '搜索帖子', placeholder: '搜索帖子',
 })
 const emit = defineEmits<{ 'update:modelValue': [value: string]; composition: [active: boolean] }>()
 const input = ref<HTMLInputElement>()

@@ -35,7 +35,7 @@ function group(kind, parent = null) {
   }
 }
 
-function setup({ reducedMotion = false, startup = false } = {}) {
+function setup({ reducedMotion = false, startup = false, initialMeta = {} } = {}) {
   const callbacks = {}
   const motionEvents = new Map()
   const disposals = []
@@ -55,6 +55,7 @@ function setup({ reducedMotion = false, startup = false } = {}) {
     require: () => navigation,
     shallowRef: value => ({ value }),
     useRouter: () => ({
+      currentRoute: { value: { meta: initialMeta } },
       beforeResolve: register('beforeResolve'),
       afterEach: register('afterEach'),
       onError: register('routerError'),
@@ -94,6 +95,40 @@ test('page fade has no initial appearance and includes the final staggered group
   assert.deepEqual(app.groups.map(g => g.style.getPropertyValue('--route-reveal-delay')),
     ['0ms', '40ms', '60ms', '80ms', '100ms', '100ms', '100ms', '100ms'])
   assert.equal(app.groups[0].getAttribute('data-route-reveal'), 'title')
+})
+test('explicitly disabled pages start without a transition wrapper', () => {
+  const app = setup({ initialMeta: { pageTransition: false } })
+  assert.equal(app.transition.value, false)
+  app.navigate({ pageTransition: false }, { pageTransition: false }, '/messages/1010', '/messages/1001')
+  assert.equal(app.transition.value, false)
+  app.navigate({}, { pageTransition: false }, '/friends', '/messages/1010')
+  assert.equal(app.transition.value.name, 'page')
+})
+
+test('messages animate on external entry and retain the same keyed transition wrapper between conversations', () => {
+  let meta
+  const pageSource = readFileSync(new URL('../app/pages/messages/[[userId]].vue', import.meta.url), 'utf8')
+  const script = pageSource.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
+  runInNewContext(ts.transpileModule(script, {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+  }).outputText, {
+    definePageMeta: value => { meta = value },
+    useSeoMeta: () => {}, useRoute: () => ({ params: {} }), computed: () => {},
+  })
+  assert.equal(meta.key, 'messages-workspace')
+  assert.notEqual(meta.pageTransition, false)
+  for (const initialMeta of [{}, meta]) {
+    const app = setup({ initialMeta })
+    assert.equal(app.transition.value.name, 'page')
+    for (const [from, to] of [
+      ['/friends', '/messages'], ['/messages', '/messages/1001'],
+      ['/messages/1001', '/messages/1010'], ['/messages/1010', '/messages'],
+    ]) {
+      app.navigate(meta, from === '/friends' ? {} : meta, to, from)
+      assert.equal(app.transition.value.name, 'page')
+      assert.equal(app.transition.value.duration.enter, 480)
+    }
+  }
 })
 
 test('nested groups and content arriving later cannot acquire a second animation', () => {

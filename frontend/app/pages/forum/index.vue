@@ -44,7 +44,7 @@
               <ForumSortMenu v-model="sortMode" :active="!sortDocked" :dismiss="popup === 'search'" @open-change="controls.setSortOpen" />
             </div>
           </div>
-          <div class="forum-filter-nav" role="group" aria-label="帖子分类">
+          <div class="forum-filter-nav" :style="{ '--category-overflow': categoryScroll.after ? 1 : 0 }" role="group" aria-label="帖子分类">
             <button type="button" class="forum-filter-nav__arrow" data-forum-control aria-label="查看前面的分类"
               aria-controls="forum-category-list" :disabled="!categoryScroll.before" @click="scrollCategories(-1)">
               <span class="forum-filter-nav__wash" data-forum-wash aria-hidden="true"></span>
@@ -151,15 +151,16 @@
                 <MessageSquare v-else :size="36" :stroke-width="1.5" />
               </div>
               <h3 class="forum-empty__title">
-                {{ searchQuery ? '未找到匹配的帖子' : '暂无帖子' }}
+                {{ searchQuery ? '未找到匹配的帖子' : activeCategory !== 'all' ? '这个分类还没有帖子' : '暂无帖子' }}
               </h3>
               <p class="forum-empty__desc">
                 {{
                   searchQuery
                     ? '尝试其他关键词或浏览不同分类'
-                    : '成为第一个发帖的人吧！'
+                    : activeCategory !== 'all' ? '换个分类看看，或者分享这个分类的第一个问题。' : '成为第一个发帖的人吧！'
                 }}
               </p>
+              <button v-if="hasFilters" type="button" class="btn btn--outline" @click="clearFilters">清除筛选</button>
               <NuxtLink
                 v-if="!searchQuery && isAuthenticated"
                 to="/forum/new"

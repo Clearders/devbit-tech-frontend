@@ -114,7 +114,8 @@ export const usePageTransition = () => {
 
   if (import.meta.client) {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
-    transition.value = options(motion.matches)
+    const initialMeta = router.currentRoute?.value.meta
+    transition.value = initialMeta?.pageTransition === false || initialMeta?.layout === 'game' ? false : options(motion.matches)
     const removeGuard = router.beforeResolve((to, from) => {
       freezeReveals()
       clearTransitionState()

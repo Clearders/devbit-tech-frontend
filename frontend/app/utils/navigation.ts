@@ -3,7 +3,9 @@ export const navigationItems = [
   { path: '/', label: '首页' },
   { path: '/forum', label: '论坛' },
   { path: '/forum/myposts', label: '我的帖子', authenticated: true },
-  { path: '/games', label: '游戏' },
+  { path: '/friends', label: '好友', authenticated: true },
+  { path: '/messages', label: '私信', authenticated: true },
+  { path: '/games', label: '实验' },
   { path: '/leaderboard', label: '排行榜' },
   { path: '/about', label: '团队介绍' },
 ]

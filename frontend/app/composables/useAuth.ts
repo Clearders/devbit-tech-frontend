@@ -4,7 +4,6 @@ import type {
   RegisterPayload,
   SendCodeResponse
 } from '~~/shared/auth'
-import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'anonymous'
 type RegisterFormInput = RegisterPayload & { confirmPassword: string }
@@ -30,7 +29,9 @@ export const useAuth = () => {
   const user = useState<AuthUser | null>('auth_user', () => null)
   const status = useState<AuthStatus>('auth_status', () => 'idle')
   const isAuthenticated = computed(() => status.value === 'authenticated' && !!user.value)
-  const isResolving = computed(() => status.value === 'idle' || status.value === 'loading')
+  // A failed session check returns to idle so it can retry. Keep login reachable
+  // during that outage instead of leaving the navbar in an endless loading state.
+  const isResolving = computed(() => status.value === 'loading')
 
   const syncCurrentUser = async (force = false) => {
     if (!force) {
@@ -97,13 +98,7 @@ export const useAuth = () => {
     } catch (error: unknown) {
       user.value = null
       status.value = 'anonymous'
-      throw createError({
-        statusCode: 401,
-        statusMessage: extractApiErrorMessage(
-          error,
-          'Login failed. Please check your email and password.'
-        )
-      })
+      throw error
     }
   }
 
@@ -116,13 +111,7 @@ export const useAuth = () => {
         }
       })
     } catch (error: unknown) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: extractApiErrorMessage(
-          error,
-          'Failed to send verification code. Please try again.'
-        )
-      })
+      throw error
     }
   }
 
@@ -130,7 +119,7 @@ export const useAuth = () => {
     if (payload.password !== payload.confirmPassword) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Passwords do not match.'
+        statusMessage: '两次输入的密码不一致。'
       })
     }
 
@@ -146,15 +135,9 @@ export const useAuth = () => {
         method: 'POST',
         body: normalizedPayload
       })
-      await navigateTo('/login')
+      await navigateTo('/login?registered=1')
     } catch (error: unknown) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: extractApiErrorMessage(
-          error,
-          'Registration failed. Please verify your information and try again.'
-        )
-      })
+      throw error
     }
   }
 
