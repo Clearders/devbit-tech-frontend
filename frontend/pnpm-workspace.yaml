@@ -1,3 +1,5 @@
+# Only these reviewed package versions may run dependency build scripts.
 onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - esbuild
+  - '@parcel/watcher@2.5.6'
+  - esbuild@0.28.2
+strictDepBuilds: true

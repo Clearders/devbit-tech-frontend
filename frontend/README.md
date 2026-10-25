@@ -69,12 +69,26 @@ frontend/
 
 ## 快速开始
 
+使用 Node.js **24.22.1 LTS**（版本固定在 `.nvmrc`）和 **pnpm 10.34.7**
+（版本固定在 `package.json`）。开发、构建和生产 SSR 服务均需要 Node.js；
+Rust/Axum API 服务独立运行。若使用 nvm，请先运行 `nvm install 24.22.1` 和 `nvm use 24.22.1`。
+
 ```bash
-pnpm install
+corepack enable
+pnpm install --frozen-lockfile
 pnpm dev
 ```
 
 开发服务器将在 <http://localhost:3000> 启动。
+
+### 依赖更新与信任
+
+提交 `package.json` 与 `pnpm-lock.yaml` 的配套更新。依赖存储完整性校验保持开启；
+依赖包的安装构建脚本仅允许执行 `pnpm-workspace.yaml` 中明确批准的包及版本。
+遇到新的构建脚本请求时，先检查包的来源和脚本内容，再按需更新信任名单。
+
+更新后运行 `pnpm audit`、`pnpm test`、`pnpm typecheck` 和 `pnpm build`。
+最近一次更新与尚未修复的上游告警见 [依赖更新记录](doc/DEPENDENCY-UPDATE-2026-10-22.md)。
 
 ## 可用脚本
 

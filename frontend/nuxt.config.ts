@@ -190,10 +190,6 @@ export default defineNuxtConfig({
     css: {
       devSourcemap: true,
     },
-    esbuild: {
-      // Strip legal comments (faster + smaller output)
-      legalComments: 'none',
-    },
   },
 
   // Sourcemaps: disable in production for faster builds

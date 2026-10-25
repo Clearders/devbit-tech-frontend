@@ -1,10 +1,12 @@
+import type { AnyServerRouteMethod, TypedFetchOptions } from 'nuxt/app'
 import { ApiFault } from '~/utils/apiError'
 /**
  * Shared API fetch wrapper — used by useAuth and useForumApi.
  * Avoids duplicating header setup, base URL, and error handling.
  */
 
-type ApiOptions = Parameters<typeof $fetch>[1]
+// The Rust API accepts dynamic paths and all HTTP methods, outside Nuxt's route schema.
+type ApiOptions = TypedFetchOptions<string, AnyServerRouteMethod>
 
 export const useApiFetch = () => {
   const config = useRuntimeConfig()
@@ -23,7 +25,7 @@ export const useApiFetch = () => {
     }
 
     const requestFetch = import.meta.server ? useRequestFetch() : $fetch
-    return requestFetch<T>(path, {
+    return requestFetch<T, string, AnyServerRouteMethod>(path, {
       ...options,
       baseURL: config.public.apiBase as string,
       credentials: 'same-origin',
