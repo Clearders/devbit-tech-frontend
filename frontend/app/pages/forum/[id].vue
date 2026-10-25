@@ -232,7 +232,18 @@
               >
                 <ThumbsUp :size="18" :stroke-width="1.75" aria-hidden="true" />点赞 ({{ post.likeCount }})
               </button>
+              <button
+                class="btn btn--lg forum-detail__repost-btn"
+                :class="post.repostedByMe ? 'btn--primary' : 'btn--outline'"
+                @click="handleRepost"
+                :disabled="!isAuthenticated || submittingRepost"
+                :aria-pressed="post.repostedByMe"
+                :title="!isAuthenticated ? '请先登录' : '转发到好友动态'"
+              >
+                <Repeat2 :size="18" :stroke-width="1.75" aria-hidden="true" />{{ post.repostedByMe ? '已转发' : '转发' }} ({{ post.repostCount }})
+              </button>
               <p v-if="likeError" class="form-error" role="alert">{{ likeError }}</p>
+              <p v-if="repostError" class="form-error" role="alert">{{ repostError }}</p>
             </div>
 
             <!-- Comments section -->
@@ -243,7 +254,7 @@
             >
               <ScrollReveal>
                 <h2 class="forum-detail__comments-title">
-                  <MessageSquare :size="22" :stroke-width="1.75" aria-hidden="true" />评论 ({{ postComments.length }})
+                  <MessageSquare :size="22" :stroke-width="1.75" aria-hidden="true" />评论 ({{ post.commentCount }})
                   <span v-if="post.isLocked" class="forum-detail__locked-hint"
                     >— 帖子已锁定，无法添加新评论</span
                   >
@@ -260,8 +271,8 @@
                 <ScrollReveal v-for="comment in postComments" :key="comment.id">
                   <ForumComment
                     :comment="comment"
-                    :can-delete="canDeleteComment(comment)"
                     @delete="handleDeleteComment"
+                    @reply="startReply"
                   />
                 </ScrollReveal>
               </div>
@@ -285,13 +296,17 @@
                     />
                   </div>
                   <div class="forum-detail__comment-form">
+                    <p v-if="replyTo" class="forum-detail__reply-chip">
+                      回复 <strong>@{{ replyTo.author.name }}</strong>
+                      <button type="button" class="comment__action-btn" @click="cancelReply">取消</button>
+                    </p>
                     <textarea
                       ref="commentInput"
                       v-model="newComment"
-                      aria-label="写下你的评论"
+                      :aria-label="replyTo ? `回复 ${replyTo.author.name}` : '写下你的评论'"
                       :aria-describedby="commentError ? 'post-comment-error' : undefined"
                       class="form-control form-control--textarea"
-                      placeholder="写下你的评论…"
+                      :placeholder="replyTo ? `回复 @${replyTo.author.name}…` : '写下你的评论…'"
                       rows="3"
                       @keydown.ctrl.enter="handleAddComment"
                       @focus="isCommentFocused = true"
@@ -307,7 +322,7 @@
                         :disabled="submittingComment || !newComment.trim()"
                         @click="handleAddComment"
                       >
-                        {{ submittingComment ? '发表中...' : '发表评论' }}
+                        {{ submittingComment ? '发表中...' : replyTo ? '发表回复' : '发表评论' }}
                       </button>
                     </div>
                   </div>
@@ -366,6 +381,12 @@
         <ThumbsUp :size="18" aria-hidden="true" />
         <span>{{ !isAuthenticated ? '登录后点赞' : formatCount(post.likeCount) }}</span>
       </button>
+      <button type="button" class="forum-detail__bar-like" :class="{ 'is-liked': post.repostedByMe }"
+        :disabled="!isAuthenticated || submittingRepost" :aria-pressed="post.repostedByMe"
+        :aria-label="!isAuthenticated ? '登录后转发' : `${post.repostedByMe ? '取消转发' : '转发'}，${post.repostCount} 次转发`" @click="handleRepost">
+        <Repeat2 :size="18" aria-hidden="true" />
+        <span>{{ !isAuthenticated ? '登录后转发' : formatCount(post.repostCount) }}</span>
+      </button>
     </nav>
   </Teleport>
   </div>
@@ -373,8 +394,9 @@
 
 <script setup lang="ts">
 const formatRelativeTime = useRelativeTime()
-import { ArrowLeft, MessageSquare, Info, Ellipsis, Pin, LockKeyhole, UnlockKeyhole, FilePenLine, Trash2, Clock3, ThumbsUp, CircleHelp, Code2, Diamond, Layers, Megaphone } from '@lucide/vue'
+import { ArrowLeft, MessageSquare, Info, Ellipsis, Pin, LockKeyhole, UnlockKeyhole, FilePenLine, Trash2, Clock3, ThumbsUp, CircleHelp, Code2, Diamond, Layers, Megaphone, Repeat2 } from '@lucide/vue'
 import ForumComment from '~/components/ForumComment.vue'
+import type { ForumComment as ForumCommentType } from '~~/shared/forum'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { useForum } from '~/composables/useForum'
 import { extractApiErrorMessage } from '~/utils/extractApiErrorMessage'
@@ -397,13 +419,14 @@ const route = useRoute()
 const { user, isAuthenticated } = useAuth()
 const {
   getPostById,
-  getCommentsByPostId,
+  getCommentTreeByPostId,
   addComment,
   deletePost,
   deleteComment,
   togglePinPost,
   toggleLockPost,
   toggleLikePost,
+  toggleRepostPost,
   posts,
   ensureInit,
   loadPost,
@@ -436,14 +459,17 @@ async function copyPostLink() {
     shareFallback.value = link
   }
 }
-const postComments = computed(() => getCommentsByPostId(postId.value))
+const postComments = computed(() => getCommentTreeByPostId(postId.value))
 const newComment = ref('')
 const actionError = ref('')
 const isLoadingPost = ref(!post.value)
 const submittingComment = ref(false)
 const submittingLike = ref(false)
+const submittingRepost = ref(false)
 const likeError = ref('')
+const repostError = ref('')
 const commentError = ref('')
+const replyTo = ref<ForumCommentType | null>(null)
 const commentInput = ref<HTMLTextAreaElement>()
 const isCommentFocused = ref(false)
 const isMobile = ref(false)
@@ -462,8 +488,29 @@ watch(postId, () => {
   newComment.value = ''
   commentError.value = ''
   likeError.value = ''
+  repostError.value = ''
+  replyTo.value = null
   isCommentFocused.value = false
 })
+
+function startReply(comment: ForumCommentType) {
+  if (post.value?.isLocked) return
+  if (!isAuthenticated.value) {
+    void navigateTo('/login')
+    return
+  }
+  replyTo.value = comment
+  nextTick(() => {
+    const input = commentInput.value
+    input?.focus({ preventScroll: true })
+    input?.scrollIntoView({ block: 'center', behavior: 'instant' })
+  })
+}
+
+function cancelReply() {
+  replyTo.value = null
+  commentInput.value?.focus({ preventScroll: true })
+}
 
 async function focusComment() {
   if (post.value?.isLocked) return
@@ -541,11 +588,6 @@ async function loadCurrentPost(id: number) {
 onMounted(() => { void loadCurrentPost(postId.value) })
 watch(postId, (newId) => { void loadCurrentPost(newId) })
 
-function canDeleteComment(comment: { author: { id: number } }) {
-  if (!user.value) return false
-  return user.value.id === comment.author.id || user.value.isAdmin
-}
-
 const relatedPosts = computed(() => {
   if (!post.value) return []
   return posts.value
@@ -569,15 +611,36 @@ async function handleAddComment() {
   const text = newComment.value.trim()
   if (!text || submittingComment.value || !isAuthenticated.value || post.value?.isLocked) return
   const id = postId.value
+  const parentId = replyTo.value?.id
   submittingComment.value = true
   commentError.value = ''
   try {
-    await addComment(id, text)
-    if (postId.value === id && newComment.value.trim() === text) newComment.value = ''
+    await addComment(id, text, parentId)
+    if (postId.value === id && newComment.value.trim() === text) {
+      newComment.value = ''
+      replyTo.value = null
+    }
   } catch (error: unknown) {
     if (postId.value === id) commentError.value = extractApiErrorMessage(error, '发表评论失败，请稍后重试。')
   } finally {
     submittingComment.value = false
+  }
+}
+
+async function handleRepost() {
+  if (!isAuthenticated.value) {
+    await navigateTo('/login')
+    return
+  }
+  if (submittingRepost.value) return
+  submittingRepost.value = true
+  repostError.value = ''
+  try {
+    await toggleRepostPost(postId.value)
+  } catch (error: unknown) {
+    repostError.value = extractApiErrorMessage(error, '转发失败，请稍后重试。')
+  } finally {
+    submittingRepost.value = false
   }
 }
 

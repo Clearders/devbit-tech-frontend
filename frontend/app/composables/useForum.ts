@@ -238,6 +238,22 @@ export const useForum = () => {
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       )
 
+  // The API returns a flat, chronological list. Build the tree in one pass so
+  // arbitrarily deep replies render without a query per comment.
+  const getCommentTreeByPostId = (postId: number): ForumComment[] => {
+    const rows = getCommentsByPostId(postId)
+    const byId = new Map<number, ForumComment>()
+    for (const row of rows) byId.set(row.id, { ...row, replies: [] })
+    const roots: ForumComment[] = []
+    for (const row of rows) {
+      const node = byId.get(row.id)!
+      const parent = row.parentId ? byId.get(row.parentId) : undefined
+      if (parent) parent.replies!.push(node)
+      else roots.push(node)
+    }
+    return roots
+  }
+
   const getUnreadMessageCount = () => social.unread.value
 
   const getConversations = () => {
@@ -292,11 +308,12 @@ export const useForum = () => {
     return post
   }
 
-  const addComment = async (postId: number, content: string) => {
+  const addComment = async (postId: number, content: string, parentId?: number) => {
     const session = captureSession()
-    const comment = await api.createComment(postId, content)
+    const comment = await api.createComment(postId, content, parentId)
     if (!isCurrentSession(session)) return comment
-    comments.value = [...comments.value, comment]
+    const parent = parentId ? comments.value.find((entry) => entry.id === parentId) : undefined
+    comments.value = [...comments.value, { ...comment, replyTo: comment.replyTo ?? parent?.author }]
     const post = posts.value.find((entry) => entry.id === postId)
     if (post) {
       post.commentCount += 1
@@ -335,12 +352,23 @@ export const useForum = () => {
     const session = captureSession()
     await api.deleteComment(commentId)
     if (!isCurrentSession(session)) return
+    const removed = new Set<number>([commentId])
+    let changed = true
+    while (changed) {
+      changed = false
+      for (const item of comments.value) {
+        if (item.parentId && removed.has(item.parentId) && !removed.has(item.id)) {
+          removed.add(item.id)
+          changed = true
+        }
+      }
+    }
     const comment = comments.value.find((item) => item.id === commentId)
-    comments.value = comments.value.filter((item) => item.id !== commentId)
+    comments.value = comments.value.filter((item) => !removed.has(item.id))
     if (comment) {
       const post = posts.value.find((entry) => entry.id === comment.postId)
       if (post) {
-        post.commentCount = Math.max(0, post.commentCount - 1)
+        post.commentCount = Math.max(0, post.commentCount - removed.size)
       }
     }
   }
@@ -371,6 +399,12 @@ export const useForum = () => {
   const toggleLikePost = async (postId: number) => {
     const session = captureSession()
     const updated = await api.toggleLike(postId)
+    if (isCurrentSession(session)) updatePost(updated)
+  }
+
+  const toggleRepostPost = async (postId: number) => {
+    const session = captureSession()
+    const updated = await api.toggleRepost(postId)
     if (isCurrentSession(session)) updatePost(updated)
   }
 
@@ -465,6 +499,7 @@ export const useForum = () => {
     getPostsByCategory,
     getPostById,
     getCommentsByPostId,
+    getCommentTreeByPostId,
     getUnreadMessageCount,
     getConversations,
     createPost,
@@ -476,6 +511,7 @@ export const useForum = () => {
     togglePinPost,
     toggleLockPost,
     toggleLikePost,
+    toggleRepostPost,
     sendMessage,
     markAsRead,
     markConversationAsRead,

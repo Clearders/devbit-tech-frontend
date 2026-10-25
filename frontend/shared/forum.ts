@@ -27,6 +27,8 @@ export interface ForumPost {
   commentCount: number
   likeCount: number
   likedByMe: boolean
+  repostCount: number
+  repostedByMe: boolean
   isPinned: boolean
   isLocked: boolean
 }
@@ -34,9 +36,12 @@ export interface ForumPost {
 export interface ForumComment {
   id: number
   postId: number
+  parentId?: number
+  replyTo?: ForumUser
   author: ForumUser
   content: string
   createdAt: string
+  replies?: ForumComment[]
 }
 
 export interface ForumMessage {
@@ -64,6 +69,7 @@ export interface CreatePostPayload {
 
 export interface CreateCommentPayload {
   content: string
+  parentId?: number
 }
 
 export interface SendMessagePayload {

@@ -72,6 +72,10 @@ export const useForumApi = () => {
       return forumApi(`/forum/posts/${id}/like`, { method: 'PUT' })
     },
 
+    toggleRepost(id: number): Promise<ForumPost> {
+      return forumApi(`/forum/posts/${id}/repost`, { method: 'PUT' })
+    },
+
     searchPosts(query: string): Promise<ForumPost[]> {
       if (isMock) return Promise.resolve(mockForumPosts().filter(p => (p.title + p.content).includes(query)))
       return forumApi('/forum/posts/search', {
@@ -84,10 +88,10 @@ export const useForumApi = () => {
       return forumApi(`/forum/posts/${postId}/comments`)
     },
 
-    createComment(postId: number, content: string): Promise<ForumComment> {
+    createComment(postId: number, content: string, parentId?: number): Promise<ForumComment> {
       return forumApi(`/forum/posts/${postId}/comments`, {
         method: 'POST',
-        body: { content }
+        body: { content, ...(parentId ? { parentId } : {}) }
       })
     },
 
@@ -120,8 +124,10 @@ export const useForumApi = () => {
       })
     },
 
-    fetchFriends(): Promise<FriendInfo[]> {
+    async fetchFriends(): Promise<FriendInfo[]> {
       if (isMock) return social().listFriends().then(p => p.items)
+      const service = social()
+      if (service.mode === 'v2') return service.listFriends().then(p => p.items.map(f => ({ user: f.user, createdAt: f.createdAt })))
       return forumApi('/forum/friends')
     },
 

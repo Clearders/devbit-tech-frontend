@@ -38,6 +38,7 @@
       <div class="post-card__meta">
         <span class="post-card__stat post-card__stat--views" :aria-label="`${post.viewCount} 次浏览`" title="浏览量"><Eye :size="15" :stroke-width="1.75" />{{ formatCount(post.viewCount) }}</span>
         <span class="post-card__stat" :aria-label="`${post.likeCount} 个赞`" title="点赞数"><ThumbsUp :size="15" :stroke-width="1.75" />{{ formatCount(post.likeCount) }}</span>
+        <span class="post-card__stat" :aria-label="`${post.repostCount} 次转发`" title="转发数"><Repeat2 :size="15" :stroke-width="1.75" />{{ formatCount(post.repostCount) }}</span>
         <span class="post-card__stat" :aria-label="`${post.commentCount} 条评论`" title="评论数"><MessageSquare :size="15" :stroke-width="1.75" />{{ formatCount(post.commentCount) }}</span>
       </div>
     </div>
@@ -46,7 +47,7 @@
 
 <script setup lang="ts">
 const formatRelativeTime = useRelativeTime()
-import { MessageSquare, Code2, Diamond, CircleHelp, Layers, Megaphone, Pin, LockKeyhole, Eye, ThumbsUp, ShieldCheck } from '@lucide/vue'
+import { MessageSquare, Code2, Diamond, CircleHelp, Layers, Megaphone, Pin, LockKeyhole, Eye, ThumbsUp, Repeat2, ShieldCheck } from '@lucide/vue'
 import type { ForumPost } from '~~/shared/forum'
 import AvatarImage from '~/components/AvatarImage.vue'
 import { formatCount, getForumCategory } from '~/utils/forum'

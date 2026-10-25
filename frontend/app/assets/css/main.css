@@ -1395,6 +1395,31 @@ select.form-control {
   text-align: center;
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.forum-detail__reply-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.6rem;
+  background: var(--color-primary-o06, rgba(49, 95, 185, 0.06));
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+.forum-detail__reply-chip strong {
+  color: var(--color-primary);
+}
+
+.forum-detail__comment-list .comment-thread + .comment-thread {
+  margin-top: 0.75rem;
 }
 
 .forum-detail__like-btn {

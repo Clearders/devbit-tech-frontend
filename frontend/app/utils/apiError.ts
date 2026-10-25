@@ -29,6 +29,9 @@ const messages: Record<string, string> = {
   USER_NOT_FOUND: '该用户已不存在，请刷新列表。',
   BAD_RESPONSE: '服务返回的数据暂时无法使用，请稍后重试。',
   INVALID_CODE: '验证码不正确或已过期，请重新获取。',
+  MESSAGE_LIMIT_REACHED: '对方回复前，你只能发送一条私信。',
+  MESSAGE_CONFLICT: '这条消息已经发送过，请刷新会话。',
+  CONFLICT: '操作冲突，请刷新后重试。',
 }
 
 export function apiErrorMessage(error: unknown, fallback = '操作未完成，请稍后重试。'): string {

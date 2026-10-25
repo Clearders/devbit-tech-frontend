@@ -8,11 +8,22 @@ apiProxyUrl.pathname = '/api/ws'
 apiProxyUrl.search = ''
 apiProxyUrl.hash = ''
 const developmentWsUrl = apiProxyUrl.toString()
-const socialMode = process.env.NUXT_PUBLIC_SOCIAL_MODE ?? 'legacy'
+const socialMode = process.env.NUXT_PUBLIC_SOCIAL_MODE ?? 'v2'
 const recoveryMode = process.env.NUXT_PUBLIC_ACCOUNT_RECOVERY_MODE ?? 'disabled'
 if (!['legacy', 'v2', 'mock'].includes(socialMode)) throw new Error('Invalid NUXT_PUBLIC_SOCIAL_MODE')
 if (!['disabled', 'v2', 'mock'].includes(recoveryMode)) throw new Error('Invalid NUXT_PUBLIC_ACCOUNT_RECOVERY_MODE')
 if (process.env.NODE_ENV === 'production' && [socialMode, recoveryMode].includes('mock')) throw new Error('Mock mode is development-only')
+
+// Capability flags must be read explicitly. Leaving them hardcoded to `false`
+// silently disabled preferences, blocks, presence and history even when the
+// operator set NUXT_PUBLIC_SOCIAL_*_ENABLED=true. Defaults are enabled because
+// backend 0.6.0 implements the complete contract; an operator can still opt
+// out with =false.
+const flag = (name: string) => {
+  const value = process.env[name]
+  if (value === undefined || value === '') return true
+  return value === 'true' || value === '1'
+}
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -29,16 +40,16 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? '/api',
       socialMode,
       socialDemoScenario: process.env.NUXT_PUBLIC_SOCIAL_DEMO_SCENARIO ?? 'standard',
-      socialBlocksEnabled: false,
-      socialPreferencesEnabled: false,
-      socialPresenceEnabled: false,
-      socialHistoryEnabled: false,
-      socialDirectoryEnabled: false,
-      socialProfilesEnabled: false,
-      socialMetadataEnabled: false,
-      socialGroupsEnabled: false,
-      socialConversationsEnabled: false,
-      socialReceiptsEnabled: false,
+      socialBlocksEnabled: flag('NUXT_PUBLIC_SOCIAL_BLOCKS_ENABLED'),
+      socialPreferencesEnabled: flag('NUXT_PUBLIC_SOCIAL_PREFERENCES_ENABLED'),
+      socialPresenceEnabled: flag('NUXT_PUBLIC_SOCIAL_PRESENCE_ENABLED'),
+      socialHistoryEnabled: flag('NUXT_PUBLIC_SOCIAL_HISTORY_ENABLED'),
+      socialDirectoryEnabled: flag('NUXT_PUBLIC_SOCIAL_DIRECTORY_ENABLED'),
+      socialProfilesEnabled: flag('NUXT_PUBLIC_SOCIAL_PROFILES_ENABLED'),
+      socialMetadataEnabled: flag('NUXT_PUBLIC_SOCIAL_METADATA_ENABLED'),
+      socialGroupsEnabled: flag('NUXT_PUBLIC_SOCIAL_GROUPS_ENABLED'),
+      socialConversationsEnabled: flag('NUXT_PUBLIC_SOCIAL_CONVERSATIONS_ENABLED'),
+      socialReceiptsEnabled: flag('NUXT_PUBLIC_SOCIAL_RECEIPTS_ENABLED'),
       accountRecoveryMode: recoveryMode,
       // Nitro's route-rule proxy is HTTP-only. In development the browser
       // connects directly to Axum; production uses same-origin Nginx proxying.
